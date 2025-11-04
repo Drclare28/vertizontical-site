@@ -12,7 +12,8 @@
 .background-grad {
   background-image: linear-gradient(
     to bottom,
-    #1f1f29 0,
+    #20293b 0,
+    #1f1f29 450px,
     #17182a 1100px,
     #141741 2150px
   );
