@@ -1,0 +1,67 @@
+@import url("https://fonts.googleapis.com/css2?family=PT+Sans+Caption:wght@400;700&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=PT+Serif+Caption:ital@0;1&display=swap");
+
+@import "tailwindcss";
+.home-background-grad {
+  background-image: linear-gradient(
+    to bottom,
+    #292929 0,
+    #17182a 1100px,
+    #141741 2150px
+  );
+}
+.background-grad {
+  background-image: linear-gradient(
+    to bottom,
+    #1f1f29 0,
+    #17182a 1100px,
+    #141741 2150px
+  );
+}
+
+.pt-sans-regular {
+  font-family: "PT Sans", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.pt-sans-bold {
+  font-family: "PT Sans", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.pt-sans-regular-italic {
+  font-family: "PT Sans", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.pt-sans-bold-italic {
+  font-family: "PT Sans", sans-serif;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.pt-sans-caption-regular {
+  font-family: "PT Sans Caption", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.pt-sans-caption-bold {
+  font-family: "PT Sans Caption", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.pt-serif-caption-regular {
+  font-family: "PT Serif Caption", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.pt-serif-caption-regular-italic {
+  font-family: "PT Serif Caption", serif;
+  font-weight: 400;
+  font-style: italic;
+}
