@@ -20,6 +20,11 @@ export default define.page(function GWJ() {
             class="mx-auto max-w-[460px]"
           />
         </a>
+        <nav>
+          <ul>
+            <li>Home</li>
+          </ul>
+        </nav>
       </header>
       <main class="mt-[-7vw] flex flex-col justify-center items-center">
       </main>

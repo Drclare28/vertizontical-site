@@ -22,7 +22,7 @@ export default define.page(function Home() {
           web and app development and design
         </span>
       </header>
-      <main class="mt-[-7vw] flex flex-col justify-center items-center">
+      <main class="mt-[-7vw] flex flex-col items-center min-h-200">
         <div class="gwj flex flex-col justify-center items-center">
           <a href="apps/glorious-whiskey-journal">
             <img
