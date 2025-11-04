@@ -8,7 +8,7 @@ export default define.page(function App({ Component }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Vertizontical Studios</title>
       </head>
-      <body class="pt-sans-regular">
+      <body class="pt-sans-regular bg-black">
         <Component />
       </body>
     </html>

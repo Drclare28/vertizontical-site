@@ -28,7 +28,7 @@ export default define.page(function Home() {
             <img
               src="/images/GWJicon.png"
               alt="The Glorious Whiskey Journal"
-              class="w-32 md:w-48 drop-shadow-xl/20"
+              class="w-32 md:w-48 drop-shadow-xl/20 mx-auto"
             />
             <span class="w-max max-w-48 block pt-serif-caption-regular text-xl mt-4 text-center text-gray-400">
               The Glorious Whiskey Journal
