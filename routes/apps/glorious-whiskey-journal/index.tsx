@@ -80,7 +80,7 @@ export default define.page(function GWJ() {
           <h2 class="text-2xl pt-serif-caption-regular text-center">Support</h2>
           <p class="mt-4">
             For help with the app, or to report bugs, please send an email to
-            <a href="gwj@icloud.com" class="text-blue-400 ml-1">
+            <a href="mailto:gwj@icloud.com" class="text-blue-400 ml-1">
               gwj@icloud.com
             </a>.
           </p>
