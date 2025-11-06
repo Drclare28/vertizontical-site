@@ -13,7 +13,10 @@ export default define.page(function GWJ() {
           alt="The Glorious Whiskey Journal"
           class="w-[370px] mt-12"
         />
-        <a href="#" class="w-36 block mt-8">
+        <a
+          href="https://apps.apple.com/us/app/the-glorious-whiskey-journal/id6754341010"
+          class="w-36 block mt-8"
+        >
           <img
             src="/images/DownloadOnAppStore.svg"
             alt="Download on the App Store"
@@ -69,7 +72,10 @@ export default define.page(function GWJ() {
             />
           </li>
         </ul>
-        <a href="#" class="w-36 block mt-8 mb-8">
+        <a
+          href="https://apps.apple.com/us/app/the-glorious-whiskey-journal/id6754341010"
+          class="w-36 block mt-8 mb-8"
+        >
           <img
             src="/images/DownloadOnAppStore.svg"
             alt="Download on the App Store"

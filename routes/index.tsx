@@ -34,7 +34,10 @@ export default define.page(function Home() {
               The Glorious Whiskey Journal
             </span>
           </a>
-          <a href="#" class="mt-4 w-36 block">
+          <a
+            href="https://apps.apple.com/us/app/the-glorious-whiskey-journal/id6754341010"
+            class="mt-4 w-36 block"
+          >
             <img
               src="/images/DownloadOnAppStore.svg"
               alt="Download on the App Store"
