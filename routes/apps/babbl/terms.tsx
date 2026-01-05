@@ -1,8 +1,7 @@
 export default function Terms() {
   return (
     <div class="legal-container">
-      {
-        /* <style>
+      <style>
         {`
         .legal-container {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -12,17 +11,16 @@ export default function Terms() {
           padding: 20px;
           color: #333;
         }
-        .legal-container h1 { color: #6200EE; margin-top: 40px; }
-        .legal-container h2 { color: #6200EE; margin-top: 30px; }
-        .legal-container .last-updated { color: #666; font-style: italic; }
-        .legal-container a { color: #6200EE; }
+        .legal-container h1 { color: white; margin-top: 40px; }
+        .legal-container h2 { color: white; margin-top: 30px; }
+        .legal-container .last-updated { color: white; font-style: italic; }
+        .legal-container a { color: white; }
         .legal-container ul { margin: 10px 0; }
         .legal-container li { margin: 5px 0; }
       `}
-      </style> */
-      }
+      </style>
 
-      <h1>Terms of Service</h1>
+      <h1>Babbl Terms of Service</h1>
       <p class="last-updated">Last Updated: January 5, 2026</p>
 
       <h2>1. Acceptance of Terms</h2>
@@ -162,7 +160,7 @@ export default function Terms() {
       </p>
 
       <hr style="margin: 40px 0;" />
-      <p style="text-align: center; color: #666;">
+      <p style="text-align: center; color: white;">
         <a href="/apps/babbl/privacy">Privacy Policy</a> |
         <a href="mailto:babbl@vertizonticalstudios.com">Contact Us</a>
       </p>
