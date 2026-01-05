@@ -102,7 +102,7 @@ export default define.page(function InvitePage() {
 
             if (token) {
               // 2. Construct the deep link
-              const deepLink = "kidquotes://invite?token=" + token;
+              const deepLink = "babbl://invite?token=" + token;
 
               // 3. Set the button link
               btn.href = deepLink;
