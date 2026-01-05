@@ -1,7 +1,8 @@
 export default function Terms() {
   return (
     <div class="legal-container">
-      <style>
+      {
+        /* <style>
         {`
         .legal-container {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -18,7 +19,8 @@ export default function Terms() {
         .legal-container ul { margin: 10px 0; }
         .legal-container li { margin: 5px 0; }
       `}
-      </style>
+      </style> */
+      }
 
       <h1>Terms of Service</h1>
       <p class="last-updated">Last Updated: January 5, 2026</p>
