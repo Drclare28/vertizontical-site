@@ -18,6 +18,7 @@ export default function Privacy() {
         .legal-container a { color: white; }
         .legal-container ul { margin: 10px 0; }
         .legal-container li { margin: 5px 0; }
+        p, li, ul { color: white; }
       `}
       </style>
 
