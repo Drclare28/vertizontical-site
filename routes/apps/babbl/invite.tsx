@@ -116,7 +116,7 @@ export default define.page(function InvitePage() {
               // Handle case where token is missing
               statusText.innerText = "Download the app to get started.";
               btn.innerText = "Open Babbl";
-              btn.href = "#"; // Or link to App Store
+              btn.href = "https://apps.apple.com/app/id6757442463"; // Redirect to App Store
               btn.onclick = function (e) {
                 e.preventDefault();
                 alert(
@@ -144,7 +144,7 @@ export default define.page(function InvitePage() {
         <div className="store-links">
           {/* Replace with your actual App Store URL */}
           <a
-            href="https://apps.apple.com/us/app/babbl/id123456789"
+            href="https://apps.apple.com/app/id6757442463"
             target="_blank"
           >
             <img
@@ -155,7 +155,7 @@ export default define.page(function InvitePage() {
           </a>
           {/* Replace with your actual Google Play Store URL */}
           <a
-            href="#"
+            href="https://play.google.com/store/apps/details?id=com.vertizonticalstudios.babbl"
             target="_blank"
           >
             <img
