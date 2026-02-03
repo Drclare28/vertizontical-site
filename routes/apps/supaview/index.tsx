@@ -9,7 +9,7 @@ export default define.page(function Supaview() {
       </Head>
       <main class="flex flex-col justify-center items-center px-4 max-w-[1224px] mx-auto">
         <img
-          src="/images/SupaView_Logo.png"
+          src="/images/SupaView_Logo-no-bkgd.png"
           alt="Supaview"
           class="w-[370px] mt-12"
         />
@@ -23,7 +23,8 @@ export default define.page(function Supaview() {
             class="w-full"
           />
         </a>
-        <a
+        {
+          /* <a
           href="https://apps.apple.com/app/id6758403420"
           class="w-36 block mt-8 mb-8"
         >
@@ -32,7 +33,8 @@ export default define.page(function Supaview() {
             alt="Download on the App Store"
             class="w-full"
           />
-        </a>
+        </a> */
+        }
         <div class="support mt-8 mb-48">
           <h2 class="text-2xl pt-serif-caption-regular text-center">Support</h2>
           <p class="mt-4">
