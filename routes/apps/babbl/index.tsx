@@ -31,24 +31,31 @@ export default define.page(function Babbl() {
         </div>
         <ul class="screenshots flex gap-8 flex-wrap mt-10 mx-auto justify-center">
           <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
-            <img src="/images/babbl-main-screen.png" alt="Home Screen" />
+            <img
+              src="/images/babbl-main-screen.png"
+              alt="Home Screen"
+              class="rounded-xl"
+            />
           </li>
           <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
             <img
               src="/images/babbl-family-screen.png"
               alt=""
+              class="rounded-xl"
             />
           </li>
           <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
             <img
               src="/images/babbl-child-screen.png"
               alt=""
+              class="rounded-xl"
             />
           </li>
           <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
             <img
               src="/images/babbl-sharing-screen.png"
               alt=""
+              class="rounded-xl"
             />
           </li>
         </ul>
