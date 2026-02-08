@@ -40,10 +40,10 @@ export default define.page(function Baseview() {
           <p class="mt-4">
             For help with the app, or to report bugs, please send an email to
             <a
-              href="mailto:baseview@icloud.com"
+              href="mailto:baseview_support@icloud.com"
               class="text-blue-400 ml-1"
             >
-              baseview@icloud.com
+              baseview_support@icloud.com
             </a>
             .
           </p>
