@@ -1,16 +1,16 @@
 import { Head } from "fresh/runtime";
 import { define } from "../../../utils.ts";
 
-export default define.page(function Supaview() {
+export default define.page(function Baseview() {
   return (
     <div>
       <Head>
-        <title>Supaview</title>
+        <title>Baseview</title>
       </Head>
       <main class="flex flex-col justify-center items-center px-4 max-w-[1224px] mx-auto">
         <img
-          src="/images/SupaView_Logo-no-bkgd.png"
-          alt="Supaview"
+          src="/images/BaseView_Logo.png"
+          alt="Baseview"
           class="w-[370px] mt-12"
         />
         <a
@@ -40,10 +40,10 @@ export default define.page(function Supaview() {
           <p class="mt-4">
             For help with the app, or to report bugs, please send an email to
             <a
-              href="mailto:supaview@icloud.com"
+              href="mailto:baseview@icloud.com"
               class="text-blue-400 ml-1"
             >
-              supaview@icloud.com
+              baseview@icloud.com
             </a>
             .
           </p>

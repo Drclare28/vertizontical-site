@@ -119,6 +119,15 @@ export default function AppLayout({ Component }: { Component: any }) {
                 />
               </a>
             </li>
+            <li>
+              <a href="/apps/babbl" class="block w-9">
+                <img
+                  src="/images/babbl-icon.png"
+                  alt="Babbl"
+                  class="rounded-xl"
+                />
+              </a>
+            </li>
           </ul>
         </nav>
       </header>

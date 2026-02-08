@@ -23,7 +23,30 @@ export default define.page(function Home() {
         </span>
       </header>
       <main class="mt-[-7vw] flex flex-col items-center min-h-200">
-        <div class="gwj flex flex-col justify-center items-center">
+        <div class="babbl flex flex-col justify-center items-center">
+          <a href="apps/babbl">
+            <img
+              src="/images/babbl-icon.png"
+              alt="Babbl"
+              class="w-32 md:w-48 drop-shadow-xl/20 mx-auto rounded-[27.5%]"
+            />
+            <span class="max-w-48 block w-full pt-serif-caption-regular text-xl mt-4 text-center text-gray-400">
+              Babbl
+            </span>
+          </a>
+          <a
+            href="https://apps.apple.com/us/app/..."
+            class="mt-4 w-36 block"
+          >
+            <img
+              src="/images/DownloadOnAppStore.svg"
+              alt="Download on the App Store"
+              class="w-full"
+            />
+          </a>
+        </div>
+        <hr class="w-50 border-gray-500/25 mt-12" />
+        <div class="gwj flex flex-col justify-center items-center mt-12">
           <a href="apps/glorious-whiskey-journal">
             <img
               src="/images/GWJicon.png"
