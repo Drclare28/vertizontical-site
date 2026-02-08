@@ -26,38 +26,28 @@ export default define.page(function Babbl() {
         <div class="text max-w-3xl mt-8">
           <p class="mb-4">
             Babbl is a new app for connecting with friends and family. It's a
-            simple, private way to share your life with the people who matter
-            most.
+            simple, way to share your life with the people who matter most.
           </p>
-          <h2 class="text-2xl pt-serif-caption-regular">Features</h2>
-          <ul class="list-disc pl-4">
-            <li>
-              Private Family Groups: Securely share photos and quotes with your
-              family.
-            </li>
-            <li>
-              Digital Memory Book: Catalog precious moments and funny quotes
-              from your children.
-            </li>
-            <li>
-              Multi-member Access: Invite family members to contribute and view
-              memories.
-            </li>
-            <li>
-              Secure & Private: Your data is protected and never sold.
-            </li>
-          </ul>
         </div>
         <ul class="screenshots flex gap-8 flex-wrap mt-10 mx-auto justify-center">
           <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
-            <img src="/images/HomeScreenshot.png" alt="Home Screen" />
-          </li>
-          <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
-            <img src="/images/JournalScreenShot.png" alt="My Journal Screen" />
+            <img src="/images/iPhone - Main Screenshot.png" alt="Home Screen" />
           </li>
           <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
             <img
-              src="/images/WhiskeyViewScreenshot.png"
+              src="/images/iPhone - Family Screenshot.png"
+              alt="My Journal Screen"
+            />
+          </li>
+          <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
+            <img
+              src="/images/iPhone - Child Screenshot.png"
+              alt="View Whiskey Screen"
+            />
+          </li>
+          <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
+            <img
+              src="/images/iPhone - Sharing Screenshot.png"
               alt="View Whiskey Screen"
             />
           </li>
