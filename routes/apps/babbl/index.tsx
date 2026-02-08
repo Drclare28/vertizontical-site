@@ -31,24 +31,24 @@ export default define.page(function Babbl() {
         </div>
         <ul class="screenshots flex gap-8 flex-wrap mt-10 mx-auto justify-center">
           <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
-            <img src="/images/iPhone - Main Screenshot.png" alt="Home Screen" />
+            <img src="/images/babbl-main-screen.png" alt="Home Screen" />
           </li>
           <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
             <img
-              src="/images/iPhone - Family Screenshot.png"
-              alt="My Journal Screen"
+              src="/images/babbl-family-screen.png"
+              alt=""
             />
           </li>
           <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
             <img
-              src="/images/iPhone - Child Screenshot.png"
-              alt="View Whiskey Screen"
+              src="/images/babbl-child-screen.png"
+              alt=""
             />
           </li>
           <li class="md:w-[392px] max-w-[85%] md:max-w-[31%] block">
             <img
-              src="/images/iPhone - Sharing Screenshot.png"
-              alt="View Whiskey Screen"
+              src="/images/babbl-sharing-screen.png"
+              alt=""
             />
           </li>
         </ul>
