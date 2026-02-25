@@ -13,16 +13,28 @@ export default define.page(function Babbl() {
           alt="Babbl"
           class="w-[370px] mt-12"
         />
-        <a
-          href="https://apps.apple.com/app/id6757442463"
-          class="w-36 block mt-8"
-        >
-          <img
-            src="/images/DownloadOnAppStore.svg"
-            alt="Download on the App Store"
-            class="w-full"
-          />
-        </a>
+        <div class="flex gap-4 mt-8 items-center">
+          <a
+            href="https://apps.apple.com/app/id6757442463"
+            class="h-12 block"
+          >
+            <img
+              src="/images/DownloadOnAppStore.svg"
+              alt="Download on the App Store"
+              class="h-full w-auto"
+            />
+          </a>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.vertizonticalstudios.babbl"
+            class="h-12 block"
+          >
+            <img
+              src="/images/GetItOnGooglePlay.svg"
+              alt="Get it on Google Play"
+              class="h-full w-auto"
+            />
+          </a>
+        </div>
         <div class="text max-w-3xl mt-8">
           <p class="mb-4">
             Babbl is a new app for connecting with friends and family. It's a
@@ -59,16 +71,28 @@ export default define.page(function Babbl() {
             />
           </li>
         </ul>
-        <a
-          href="https://apps.apple.com/app/id6757442463"
-          class="w-36 block mt-8 mb-8"
-        >
-          <img
-            src="/images/DownloadOnAppStore.svg"
-            alt="Download on the App Store"
-            class="w-full"
-          />
-        </a>
+        <div class="flex gap-4 mt-8 mb-8 items-center">
+          <a
+            href="https://apps.apple.com/app/id6757442463"
+            class="h-12 block"
+          >
+            <img
+              src="/images/DownloadOnAppStore.svg"
+              alt="Download on the App Store"
+              class="h-full w-auto"
+            />
+          </a>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.vertizonticalstudios.babbl"
+            class="h-12 block"
+          >
+            <img
+              src="/images/GetItOnGooglePlay.svg"
+              alt="Get it on Google Play"
+              class="h-full w-auto"
+            />
+          </a>
+        </div>
         <div class="support mt-8 mb-48">
           <h2 class="text-2xl pt-serif-caption-regular text-center">Support</h2>
           <p class="mt-4">
