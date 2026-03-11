@@ -45,6 +45,42 @@ export interface Dimensions {
   heightInches: number;
 }
 
+export interface BookTheme {
+  id: string;
+  name: string;
+  bgColor: string;
+  textColor: string;
+  fontFamily: string; // Tailwind class like font-serif, font-sans
+  accentColor: string;
+}
+
+export const THEMES: Record<string, BookTheme> = {
+  playful_pastel: {
+    id: "playful_pastel",
+    name: "Playful Pastel",
+    bgColor: "bg-orange-50",
+    textColor: "text-orange-900",
+    fontFamily: "font-sans",
+    accentColor: "bg-orange-400",
+  },
+  classic_minimal: {
+    id: "classic_minimal",
+    name: "Classic Minimal",
+    bgColor: "bg-white",
+    textColor: "text-gray-900",
+    fontFamily: "font-serif",
+    accentColor: "bg-gray-800",
+  },
+  deep_night: {
+    id: "deep_night",
+    name: "Deep Night",
+    bgColor: "bg-slate-900",
+    textColor: "text-slate-100",
+    fontFamily: "font-serif",
+    accentColor: "bg-slate-500",
+  },
+};
+
 export const BOOK_DIMENSIONS: Record<BookFormat, Dimensions> = {
   mini: {
     widthInches: 5.5,
