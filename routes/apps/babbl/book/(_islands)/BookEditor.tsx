@@ -27,13 +27,10 @@ export default function BookEditor(
     const updateScale = (width: number) => {
       const physicalWidthPx = dimensions.widthInches * 96;
 
-      if (width > 0 && physicalWidthPx > width) {
-        // Scale down if the physical size is larger than available width
-        // We use a small buffer (40px)
-        const availableWidth = width - 40;
-        setScale(Math.max(0.1, availableWidth / physicalWidthPx));
-      } else {
-        setScale(1);
+      if (width > 0) {
+        // Target 95% of the available width for maximum visibility
+        const targetWidth = width * 0.95;
+        setScale(targetWidth / physicalWidthPx);
       }
     };
 
@@ -92,7 +89,7 @@ export default function BookEditor(
       {/* Book Preview Area */}
       <div
         ref={containerRef}
-        class="relative w-full max-w-2xl px-4 flex flex-col items-center"
+        class="relative w-full px-4 flex flex-col items-center overflow-visible"
       >
         {
           /*

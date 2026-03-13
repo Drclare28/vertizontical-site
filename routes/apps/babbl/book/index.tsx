@@ -68,6 +68,29 @@ export default define.page(function Book() {
     <div class="bg-gray-100 min-h-screen">
       <Head>
         <title>Babbl Book Generator</title>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+          html, body { 
+            overflow: hidden !important; 
+            height: 100%; 
+            position: fixed; 
+            width: 100%; 
+          }
+          ::-webkit-scrollbar {
+            display: none;
+          }
+          * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `,
+          }}
+        />
       </Head>
       <main>
         <BookEditor
