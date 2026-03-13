@@ -3,71 +3,131 @@ import { RouteConfig } from "fresh";
 import { define } from "../../../../utils.ts";
 import BookEditor from "./(_islands)/BookEditor.tsx";
 import { BookPayload } from "./_data.ts";
+import { getSupabaseClient } from "../../../../lib/supabase.ts";
 
 export const config: RouteConfig = {
   skipAppWrapper: true,
   skipInheritedLayouts: true,
 };
 
-// Simulate the data fetch based on the user's JSON structure
-const sampleData: BookPayload = {
-  "book": {
-    "id": "b8a9c2f1-4e7d-4b9a-8f3c-1a2b3c4d5e6f",
-    "family_id": "f1a2b3c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
-    "title": "The Early Years: 2024-2026",
-    "theme": "playful_pastel",
-    "status": "draft",
-    "created_at": "2026-03-10T14:30:00Z",
-  },
-  "pages": [
-    {
-      "page_number": 1,
-      "layout_style": "single_quote_large",
-      "quote": {
-        "id": "q1w2e3r4-t5y6-u7i8-o9p0-a1s2d3f4g5h6",
-        "text": "I don't need a nap, my eyes are just blinking really slowly.",
-        "context": "Trying to stay awake during a movie",
-        "date": "2025-11-15T18:00:00Z",
-        "child": {
-          "id": "c1x2y3z4",
-          "name": "Leo",
-          "avatar_url":
-            "https://your-supabase-url.com/storage/v1/object/public/avatars/leo.jpg",
-        },
-        "parent": {
-          "name": "Ryan",
-        },
-        "media": [
-          {
-            "type": "image",
-            "url":
-              "https://your-supabase-url.com/storage/v1/object/public/quotes/sleepy_leo.jpg",
-          },
-        ],
-      },
-    },
-    {
-      "page_number": 2,
-      "layout_style": "text_only_split",
-      "quote": {
-        "id": "q1w2e3r4-t5y6-u7p0",
-        "text":
-          "Mom, did you know that dinosaurs probably sounded like giant chickens?",
-        "date": "2026-01-10T09:00:00Z",
-        "child": {
-          "id": "c1x2y3z4",
-          "name": "Leo",
-        },
-      },
-    },
-  ],
-};
+export default define.page(async function Book(ctx) {
+  const url = new URL(ctx.url);
+  const bookId = url.searchParams.get("bookId");
+  const token = url.searchParams.get("token");
 
-export default define.page(function Book() {
+  // Authentication & Data Fetching
+  let payload: BookPayload | null = null;
+  let error: string | null = null;
+
+  if (!bookId || !token) {
+    error = "Unauthorized: Missing authentication credentials.";
+  } else {
+    try {
+      const supabase = getSupabaseClient(token);
+
+      // Verify user session
+      const { data: { user }, error: authError } = await supabase.auth
+        .getUser();
+      if (authError || !user) {
+        throw new Error("Invalid or expired session.");
+      }
+
+      // Fetch book metadata
+      const { data: book, error: bookError } = await supabase
+        .from("books")
+        .select("*")
+        .eq("id", bookId)
+        .single();
+
+      if (bookError || !book) {
+        throw new Error("Book not found.");
+      }
+
+      // Fetch book quotes
+      const { data: bookQuotes, error: quotesError } = await supabase
+        .from("book_quotes")
+        .select(`
+          order_index,
+          quote:quotes (
+            id,
+            quote_text,
+            context,
+            quote_date,
+            child:children (
+              id,
+              name,
+              avatar_url
+            )
+          )
+        `)
+        .eq("book_id", bookId)
+        .order("order_index");
+
+      if (quotesError) {
+        throw new Error("Error loading book content.");
+      }
+
+      payload = {
+        book: {
+          id: book.id,
+          family_id: book.family_id,
+          title: book.title,
+          theme: book.theme_id,
+          status: book.status,
+          created_at: book.created_at,
+        },
+        pages: (bookQuotes as any[]).map((bq) => ({
+          page_number: bq.order_index + 1,
+          layout_style: "single_quote_large",
+          quote: {
+            id: bq.quote.id,
+            text: bq.quote.quote_text,
+            context: bq.quote.context,
+            date: bq.quote.quote_date,
+            child: bq.quote.child,
+          },
+        })),
+      };
+    } catch (e) {
+      error = e instanceof Error ? e.message : String(e);
+    }
+  }
+
+  if (error || !payload) {
+    return (
+      <div class="flex flex-col items-center justify-center min-h-screen bg-white p-6 text-center">
+        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mb-4">
+          <svg
+            class="w-8 h-8 text-red-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </div>
+        <h1 class="text-xl font-bold text-gray-900 mb-2">
+          Unable to Load Preview
+        </h1>
+        <p class="text-gray-600 max-w-xs mx-auto">
+          {error || "Something went wrong while preparing your book."}
+        </p>
+        <p class="text-gray-400 text-sm mt-8">
+          Please try opening the preview again from the Babbl app.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div class="bg-gray-100 min-h-screen">
+    <div class="bg-gray-100 min-h-screen overflow-hidden">
       <Head>
-        <title>Babbl Book Generator</title>
+        <title>Babbl Book Preview</title>
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
@@ -109,7 +169,8 @@ export default define.page(function Book() {
       <main>
         <BookEditor
           initialFormat="mini"
-          pages={sampleData.pages}
+          initialTheme={payload.book.theme}
+          pages={payload.pages}
         />
       </main>
     </div>
