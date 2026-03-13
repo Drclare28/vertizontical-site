@@ -57,6 +57,10 @@ export default define.page(async function Book(ctx) {
               id,
               name,
               avatar_url
+            ),
+            parent:profiles!recorded_by (
+              full_name,
+              avatar_url
             )
           )
         `)
@@ -85,6 +89,12 @@ export default define.page(async function Book(ctx) {
             context: bq.quote.context,
             date: bq.quote.quote_date,
             child: bq.quote.child,
+            parent: bq.quote.parent
+              ? {
+                name: bq.quote.parent.full_name,
+                avatar_url: bq.quote.parent.avatar_url,
+              }
+              : undefined,
           },
         })),
       };
