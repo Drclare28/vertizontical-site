@@ -72,21 +72,35 @@ export default define.page(function Book() {
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&display=swap"
+          rel="stylesheet"
+        />
         <style
           dangerouslySetInnerHTML={{
             __html: `
-          html, body { 
-            overflow: hidden !important; 
-            height: 100%; 
-            position: fixed; 
-            width: 100%; 
+          body {
+            background-color: #FFFFFF;
+            font-family: 'Rosario', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #4A4A4A;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrolling */
           }
+          /* Hide scrollbars for a native app feel */
           ::-webkit-scrollbar {
             display: none;
           }
           * {
             -ms-overflow-style: none;
             scrollbar-width: none;
+            -webkit-tap-highlight-color: transparent;
           }
         `,
           }}

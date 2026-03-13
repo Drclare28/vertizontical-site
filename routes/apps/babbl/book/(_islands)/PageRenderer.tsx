@@ -18,10 +18,14 @@ export default function PageRenderer(
 
   return (
     <div
-      class={`shadow-xl relative overflow-hidden shrink-0 ${theme.bgColor} ${theme.fontFamily}`}
+      class="relative bg-white shadow-2xl overflow-hidden flex flex-col"
       style={{
         width: `${dimensions.widthInches}in`,
         height: `${dimensions.heightInches}in`,
+        padding: "0.25in",
+        backgroundColor: theme.backgroundColor,
+        color: theme.textColor || "#4A4A4A",
+        fontFamily: theme.fontFamily || "'Rosario', sans-serif",
         // To simulate paper texture slightly
         backgroundImage:
           "url('https://www.transparenttextures.com/patterns/clean-gray-paper.png')",

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "preact/hooks";
-import { BOOK_DIMENSIONS, BookFormat, BookPageData, THEMES } from "../_data.ts";
+import { BOOK_DIMENSIONS, BookFormat, BookPageData } from "../_data.ts";
 import PageRenderer from "./PageRenderer.tsx";
 
 interface BookEditorProps {
@@ -13,36 +13,41 @@ export default function BookEditor(
     BookEditorProps,
 ) {
   const [format, setFormat] = useState<BookFormat>(initialFormat);
-  const [themeId, setThemeId] = useState(initialTheme);
+  const [themeId] = useState(initialTheme);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const dimensions = BOOK_DIMENSIONS[format];
 
-  // Calculate scale to fit the physical dimension within the available browser window width
   useEffect(() => {
     if (!containerRef.current) return;
 
-    const updateScale = (width: number) => {
+    const updateScale = (width: number, height: number) => {
       const physicalWidthPx = dimensions.widthInches * 96;
+      const physicalHeightPx = dimensions.heightInches * 96;
 
-      if (width > 0) {
-        // Target 95% of the available width for maximum visibility
-        const targetWidth = width * 0.95;
-        setScale(targetWidth / physicalWidthPx);
+      if (width > 0 && height > 0) {
+        // Reserve space for controls (top: 80px, bottom: 80px)
+        const availableHeight = height - 160;
+        const availableWidth = width * 0.95;
+
+        const scaleW = availableWidth / physicalWidthPx;
+        const scaleH = availableHeight / physicalHeightPx;
+
+        setScale(Math.min(scaleW, scaleH));
       }
     };
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        updateScale(entry.contentRect.width);
+        updateScale(entry.contentRect.width, entry.contentRect.height);
       }
     });
 
-    observer.observe(containerRef.current);
+    observer.observe(document.body);
     return () => observer.disconnect();
-  }, [format, dimensions.widthInches]);
+  }, [format, dimensions.widthInches, dimensions.heightInches]);
 
   const goToNextPage = () => {
     if (currentPageIndex < pages.length - 1) {
@@ -57,65 +62,52 @@ export default function BookEditor(
   };
 
   return (
-    <div class="flex flex-col items-center w-full min-h-screen bg-transparent py-8">
-      {/* Top Control Bar */}
-      <div class="mb-6 flex flex-wrap gap-4 bg-white p-4 rounded-xl shadow-sm z-10 mx-auto">
-        <div class="flex items-center gap-2">
-          <label class="text-sm font-semibold text-gray-700">Format:</label>
-          <select
-            class="border rounded px-3 py-1 bg-gray-50 text-gray-800"
-            value={format}
-            onChange={(e) => setFormat(e.currentTarget.value as BookFormat)}
+    <div class="flex flex-col items-center justify-between w-full h-screen bg-white py-4 overflow-hidden">
+      {/* 1. Header/Controls */}
+      <div class="mt-4 flex flex-col items-center gap-4 z-10">
+        <div class="flex gap-3 bg-gray-50 p-1.5 rounded-2xl border border-gray-100 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setFormat("mini")}
+            class={`px-6 py-2 rounded-xl text-sm font-bold transition-all font-['Rosario'] ${
+              format === "mini"
+                ? "bg-[#9B51E0] text-white shadow-md"
+                : "text-[#9B9B9B]"
+            }`}
           >
-            <option value="mini">Mini (5.5" x 5.5")</option>
-            <option value="classic">Classic (8" x 8")</option>
-          </select>
-        </div>
-
-        <div class="flex items-center gap-2 border-l pl-4">
-          <label class="text-sm font-semibold text-gray-700">Theme:</label>
-          <select
-            class="border rounded px-3 py-1 bg-gray-50 text-gray-800"
-            value={themeId}
-            onChange={(e) => setThemeId(e.currentTarget.value)}
+            MINI
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormat("classic")}
+            class={`px-6 py-2 rounded-xl text-sm font-bold transition-all font-['Rosario'] ${
+              format === "classic"
+                ? "bg-[#9B51E0] text-white shadow-md"
+                : "text-[#9B9B9B]"
+            }`}
           >
-            {Object.values(THEMES).map((t) => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
+            CLASSIC
+          </button>
         </div>
       </div>
 
-      {/* Book Preview Area */}
+      {/* 2. Book Preview Area */}
       <div
         ref={containerRef}
-        class="relative w-full px-4 flex flex-col items-center overflow-visible"
+        class="flex-1 w-full flex flex-col items-center justify-center relative overflow-visible"
       >
-        {
-          /*
-          This wrapper maintains the scaled height/width in the normal document flow
-          so the pagination buttons sit correctly below it.
-        */
-        }
+        {/* The Box that represents the visible book area */}
         <div
-          class="relative flex justify-center"
+          class="relative shadow-2xl transition-all duration-300"
           style={{
-            width: "100%",
+            width: `${dimensions.widthInches * 96 * scale}px`,
             height: `${dimensions.heightInches * 96 * scale}px`,
-            transition: "height 0.2s",
           }}
         >
-          {
-            /*
-            The actual physical page, scaled down via transform to fit the wrapper
-          */
-          }
           <div
-            class="shadow-2xl"
             style={{
               transform: `scale(${scale})`,
-              transformOrigin: "top center",
-              transition: "transform 0.2s ease-out",
+              transformOrigin: "top left",
             }}
           >
             <PageRenderer
@@ -127,28 +119,40 @@ export default function BookEditor(
         </div>
       </div>
 
-      {/* Pagination Controls */}
-      <div class="mt-8 flex flex-wrap sm:flex-nowrap items-center justify-center gap-4 sm:gap-6 z-10 w-full px-4">
-        <button
-          type="button"
-          onClick={goToPrevPage}
-          disabled={currentPageIndex === 0}
-          class="px-6 py-3 bg-indigo-600 text-white rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-700 transition-colors shadow flex-1 sm:flex-none text-center"
-        >
-          Previous
-        </button>
-        <span class="text-gray-600 font-medium whitespace-nowrap order-first sm:order-0 w-full sm:w-auto text-center mb-2 sm:mb-0">
-          Page {currentPageIndex + 1} of {pages.length}
-        </span>
-        <button
-          type="button"
-          onClick={goToNextPage}
-          disabled={currentPageIndex === pages.length - 1}
-          class="px-6 py-3 bg-indigo-600 text-white rounded-full font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-indigo-700 transition-colors shadow flex-1 sm:flex-none text-center"
-        >
-          Next
-        </button>
+      {/* 3. Footer/Pagination Controls */}
+      <div class="mb-8 flex flex-col items-center gap-4 w-full px-6 z-10 pb-10 pb-safe">
+        <div class="flex items-center justify-between w-full max-w-md gap-4">
+          <button
+            type="button"
+            onClick={goToPrevPage}
+            disabled={currentPageIndex === 0}
+            class="h-12 px-8 bg-[#9B51E0] text-white rounded-2xl font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#8244bd] active:scale-95 transition-all shadow-md flex-1 font-['Rosario']"
+          >
+            Previous
+          </button>
+
+          <div class="text-[#9B9B9B] font-bold text-sm bg-gray-50 px-4 py-2 rounded-xl border border-gray-100 whitespace-nowrap font-['Rosario']">
+            {currentPageIndex + 1} / {pages.length}
+          </div>
+
+          <button
+            type="button"
+            onClick={goToNextPage}
+            disabled={currentPageIndex === pages.length - 1}
+            class="h-12 px-8 bg-[#9B51E0] text-white rounded-2xl font-bold disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#8244bd] active:scale-95 transition-all shadow-md flex-1 font-['Rosario']"
+          >
+            Next
+          </button>
+        </div>
       </div>
+
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+      `,
+        }}
+      />
     </div>
   );
 }
