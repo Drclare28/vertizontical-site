@@ -88,6 +88,10 @@ export default define.page(async function Book(ctx) {
           },
         })),
       };
+
+      console.log("--- BOOK DATA FETCHED ---");
+      console.log(JSON.stringify(payload, null, 2));
+      console.log("-------------------------");
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
     }
