@@ -61,7 +61,8 @@ export default define.page(async function Book(ctx) {
             parent:profiles!recorded_by (
               full_name,
               avatar_url
-            )
+            ),
+            media_url
           )
         `)
         .eq("book_id", bookId)
@@ -95,6 +96,7 @@ export default define.page(async function Book(ctx) {
                 avatar_url: bq.quote.parent.avatar_url,
               }
               : undefined,
+            photo_url: bq.quote.media_url,
           },
         })),
       };

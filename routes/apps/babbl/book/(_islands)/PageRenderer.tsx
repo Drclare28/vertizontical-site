@@ -71,7 +71,16 @@ export default function PageRenderer(
       >
         {/* Placeholder Layout Logic */}
         {page.layout_style === "single_quote_large" && page.quote && (
-          <div class="text-center">
+          <div class="text-center w-full">
+            {page.quote.photo_url && (
+              <div class="mb-6 flex justify-center">
+                <img
+                  src={page.quote.photo_url}
+                  class="max-h-[3in] object-contain rounded-lg shadow-sm border border-black/5"
+                  alt="Quote visual"
+                />
+              </div>
+            )}
             <h2
               class={`${theme.textColor} leading-relaxed`}
               style={{ fontSize: format === "mini" ? "1.5rem" : "2.2rem" }}

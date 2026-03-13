@@ -12,6 +12,7 @@ export interface BabblQuote {
     name: string;
     avatar_url?: string;
   };
+  photo_url?: string;
   media?: Array<{
     type: "image" | "video";
     url: string;
