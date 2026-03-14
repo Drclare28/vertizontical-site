@@ -18,7 +18,6 @@ export default function BookEditor(
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
   const [animating, setAnimating] = useState(false);
   const [animationClass, setAnimationClass] = useState("");
 
@@ -87,28 +86,22 @@ export default function BookEditor(
     touchStartX.current = e.changedTouches[0].screenX;
   };
 
-  const handleTouchMove = (e: TouchEvent) => {
-    touchEndX.current = e.changedTouches[0].screenX;
-  };
+  const handleTouchEnd = (e: TouchEvent) => {
+    if (touchStartX.current === 0) return;
 
-  const handleTouchEnd = () => {
-    if (touchStartX.current === 0 || touchEndX.current === 0) return;
-
-    const swipeDistance = touchStartX.current - touchEndX.current;
+    const touchEndX = e.changedTouches[0].screenX;
+    const swipeDistance = touchStartX.current - touchEndX;
 
     // Swipe Left
     if (swipeDistance > 50) {
       goToNextPage();
-    }
-
-    // Swipe Right
-    if (swipeDistance < -50) {
+    } // Swipe Right
+    else if (swipeDistance < -50) {
       goToPrevPage();
     }
 
     // Reset values
     touchStartX.current = 0;
-    touchEndX.current = 0;
   };
 
   return (
@@ -145,8 +138,8 @@ export default function BookEditor(
       <div
         ref={containerRef}
         class="flex-1 w-full flex flex-col items-center justify-center relative overflow-visible"
+        style={{ touchAction: "pan-y" }}
         onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         {/* The Box that represents the visible book area */}
