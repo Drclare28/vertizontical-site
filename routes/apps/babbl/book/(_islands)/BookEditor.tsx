@@ -17,6 +17,8 @@ export default function BookEditor(
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   const dimensions = BOOK_DIMENSIONS[format];
 
@@ -61,6 +63,34 @@ export default function BookEditor(
     }
   };
 
+  const handleTouchStart = (e: TouchEvent) => {
+    touchStartX.current = e.changedTouches[0].screenX;
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    touchEndX.current = e.changedTouches[0].screenX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current === 0 || touchEndX.current === 0) return;
+
+    const swipeDistance = touchStartX.current - touchEndX.current;
+
+    // Swipe Left
+    if (swipeDistance > 50) {
+      goToNextPage();
+    }
+
+    // Swipe Right
+    if (swipeDistance < -50) {
+      goToPrevPage();
+    }
+
+    // Reset values
+    touchStartX.current = 0;
+    touchEndX.current = 0;
+  };
+
   return (
     <div class="flex flex-col items-center justify-between w-full h-screen bg-white py-4 overflow-hidden">
       {/* 1. Header/Controls */}
@@ -95,6 +125,9 @@ export default function BookEditor(
       <div
         ref={containerRef}
         class="flex-1 w-full flex flex-col items-center justify-center relative overflow-visible"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         {/* The Box that represents the visible book area */}
         <div
