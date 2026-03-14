@@ -87,7 +87,9 @@ export default define.page(async function Book(ctx) {
             layout_style: "cover",
             title: book.title,
           },
-          ...(bookQuotes as any[]).map((bq) => ({
+          ...(bookQuotes as Array<{ order_index: number; quote: any }>).map((
+            bq,
+          ) => ({
             page_number: bq.order_index + 1,
             layout_style: "single_quote_large",
             quote: {
@@ -152,13 +154,28 @@ export default define.page(async function Book(ctx) {
   }
 
   return (
-    <div class="bg-gray-100 min-h-screen overflow-hidden">
+    <div class="bg-gray-100 h-dvh w-screen overflow-hidden flex flex-col">
       <Head>
         <title>Babbl Book Preview</title>
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
+        {/* Priority Scripts */}
+        <script
+          type="module"
+          crossOrigin="anonymous"
+          src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"
+        >
+        </script>
+        <script
+          nomodule
+          crossOrigin="anonymous"
+          src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"
+        >
+        </script>
+
+        {/* Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -169,18 +186,23 @@ export default define.page(async function Book(ctx) {
           href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&family=Charter:ital,wght@0,400;0,700;1,400;1,700&display=swap"
           rel="stylesheet"
         />
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
+
+        <style>
+          {`
           body {
             background-color: #FFFFFF;
             font-family: 'Rosario', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             color: #4A4A4A;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Prevent scrolling */
+            overflow: hidden;
           }
-          /* Hide scrollbars for a native app feel */
+          ion-icon {
+            display: inline-block;
+            vertical-align: middle;
+            line-height: 1;
+            visibility: visible !important;
+          }
           ::-webkit-scrollbar {
             display: none;
           }
@@ -189,15 +211,28 @@ export default define.page(async function Book(ctx) {
             scrollbar-width: none;
             -webkit-tap-highlight-color: transparent;
           }
-        `,
-          }}
-        />
+          @keyframes slideNextOut { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(-30px); opacity: 0; } }
+          @keyframes slideNextIn { 0% { transform: translateX(30px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+          @keyframes slidePrevOut { 0% { transform: translateX(0); opacity: 1; } 100% { transform: translateX(30px); opacity: 0; } }
+          @keyframes slidePrevIn { 0% { transform: translateX(-30px); opacity: 0; } 100% { transform: translateX(0); opacity: 1; } }
+          @keyframes slideUp { 0% { transform: translateY(10px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+          .animate-turn-next-out { animation: slideNextOut 0.15s forwards ease-in; }
+          .animate-turn-next-in { animation: slideNextIn 0.2s forwards ease-out; }
+          .animate-turn-prev-out { animation: slidePrevOut 0.15s forwards ease-in; }
+          .animate-turn-prev-in { animation: slidePrevIn 0.2s forwards ease-out; }
+          .animate-slide-up { animation: slideUp 0.2s forwards ease-out; }
+          `}
+        </style>
       </Head>
-      <main>
+      <main class="flex-1 overflow-hidden relative">
         <BookEditor
           initialFormat="mini"
           initialTheme={payload.book.theme}
           pages={payload.pages}
+          bookId={bookId}
+          token={token}
+          supabaseUrl={Deno.env.get("SUPABASE_URL") || ""}
+          supabaseAnonKey={Deno.env.get("SUPABASE_ANON_KEY") || ""}
         />
       </main>
     </div>
