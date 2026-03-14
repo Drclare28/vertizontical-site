@@ -63,8 +63,8 @@ export default function BookEditor(
         setTimeout(() => {
           setAnimationClass("");
           setAnimating(false);
-        }, 150);
-      }, 250);
+        }, 200);
+      }, 150);
     }
   };
 
@@ -78,8 +78,8 @@ export default function BookEditor(
         setTimeout(() => {
           setAnimationClass("");
           setAnimating(false);
-        }, 250);
-      }, 100);
+        }, 200);
+      }, 150);
     }
   };
 
@@ -204,27 +204,27 @@ export default function BookEditor(
           __html: `
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         
-        @keyframes pageTurnNextOut {
-          0% { transform: perspective(1200px) rotateY(0); filter: brightness(1); }
-          100% { transform: perspective(1200px) rotateY(-90deg); filter: brightness(0.8); opacity: 0; }
+        @keyframes slideNextOut {
+          0% { transform: translateX(0); opacity: 1; }
+          100% { transform: translateX(-50px); opacity: 0; }
         }
-        @keyframes pageFadeIn {
-          0% { opacity: 0; }
-          100% { opacity: 1; }
+        @keyframes slideNextIn {
+          0% { transform: translateX(50px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
         }
-        @keyframes pageFadeOut {
-          0% { opacity: 1; }
-          100% { opacity: 0; }
+        @keyframes slidePrevOut {
+          0% { transform: translateX(0); opacity: 1; }
+          100% { transform: translateX(50px); opacity: 0; }
         }
-        @keyframes pageTurnPrevIn {
-          0% { transform: perspective(1200px) rotateY(-90deg); filter: brightness(0.8); opacity: 0; }
-          100% { transform: perspective(1200px) rotateY(0deg); filter: brightness(1); opacity: 1; }
+        @keyframes slidePrevIn {
+          0% { transform: translateX(-50px); opacity: 0; }
+          100% { transform: translateX(0); opacity: 1; }
         }
         
-        .animate-turn-next-out { transform-origin: left center; animation: pageTurnNextOut 0.25s forwards ease-in; }
-        .animate-turn-next-in { transform-origin: center; animation: pageFadeIn 0.15s forwards ease-out; }
-        .animate-turn-prev-out { transform-origin: center; animation: pageFadeOut 0.1s forwards ease-in; }
-        .animate-turn-prev-in { transform-origin: left center; animation: pageTurnPrevIn 0.25s forwards ease-out; }
+        .animate-turn-next-out { animation: slideNextOut 0.15s forwards ease-in; }
+        .animate-turn-next-in { animation: slideNextIn 0.2s forwards ease-out; }
+        .animate-turn-prev-out { animation: slidePrevOut 0.15s forwards ease-in; }
+        .animate-turn-prev-in { animation: slidePrevIn 0.2s forwards ease-out; }
       `,
         }}
       />
