@@ -18,14 +18,11 @@ export default function PageRenderer(
 
   return (
     <div
-      class="relative bg-white shadow-2xl overflow-hidden flex flex-col"
+      class={`relative shadow-2xl overflow-hidden flex flex-col ${theme.bgColor} ${theme.textColor} ${theme.fontFamily}`}
       style={{
         width: `${dimensions.widthInches}in`,
         height: `${dimensions.heightInches}in`,
         padding: "0.25in",
-        backgroundColor: theme.backgroundColor,
-        color: theme.textColor || "#4A4A4A",
-        fontFamily: theme.fontFamily || "'Rosario', sans-serif",
         // To simulate paper texture slightly
         backgroundImage:
           "url('https://www.transparenttextures.com/patterns/clean-gray-paper.png')",
@@ -75,6 +72,7 @@ export default function PageRenderer(
             {page.quote.photo_url && (
               <div class="mb-6 flex justify-center">
                 <img
+                  key={page.quote.photo_url}
                   src={page.quote.photo_url}
                   class="max-h-[3in] object-contain rounded-lg shadow-sm border border-black/5"
                   alt="Quote visual"
@@ -108,6 +106,7 @@ export default function PageRenderer(
           <div class="flex flex-col items-center text-center">
             {page.quote.child?.avatar_url && (
               <img
+                key={page.quote.child.avatar_url}
                 src={page.quote.child.avatar_url}
                 class="w-24 h-24 rounded-full border-4 border-white shadow-lg mb-6 object-cover"
                 alt={page.quote.child.name}
