@@ -56,30 +56,30 @@ export default function BookEditor(
   const goToNextPage = () => {
     if (currentPageIndex < pages.length - 1 && !animating) {
       setAnimating(true);
-      setAnimationClass("animate-flip-out-left");
+      setAnimationClass("animate-turn-next-out");
       setTimeout(() => {
         setCurrentPageIndex((prev) => prev + 1);
-        setAnimationClass("animate-flip-in-right");
+        setAnimationClass("animate-turn-next-in");
         setTimeout(() => {
           setAnimationClass("");
           setAnimating(false);
-        }, 200);
-      }, 200);
+        }, 150);
+      }, 250);
     }
   };
 
   const goToPrevPage = () => {
     if (currentPageIndex > 0 && !animating) {
       setAnimating(true);
-      setAnimationClass("animate-flip-out-right");
+      setAnimationClass("animate-turn-prev-out");
       setTimeout(() => {
         setCurrentPageIndex((prev) => prev - 1);
-        setAnimationClass("animate-flip-in-left");
+        setAnimationClass("animate-turn-prev-in");
         setTimeout(() => {
           setAnimationClass("");
           setAnimating(false);
-        }, 200);
-      }, 200);
+        }, 250);
+      }, 100);
     }
   };
 
@@ -204,27 +204,27 @@ export default function BookEditor(
           __html: `
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         
-        @keyframes flipOutLeft {
-          0% { transform: perspective(1200px) rotateY(0); opacity: 1; }
-          100% { transform: perspective(1200px) rotateY(-90deg); opacity: 0; }
+        @keyframes pageTurnNextOut {
+          0% { transform: perspective(1200px) rotateY(0); filter: brightness(1); }
+          100% { transform: perspective(1200px) rotateY(-90deg); filter: brightness(0.8); opacity: 0; }
         }
-        @keyframes flipInRight {
-          0% { transform: perspective(1200px) rotateY(90deg); opacity: 0; }
-          100% { transform: perspective(1200px) rotateY(0); opacity: 1; }
+        @keyframes pageFadeIn {
+          0% { opacity: 0; }
+          100% { opacity: 1; }
         }
-        @keyframes flipOutRight {
-          0% { transform: perspective(1200px) rotateY(0); opacity: 1; }
-          100% { transform: perspective(1200px) rotateY(90deg); opacity: 0; }
+        @keyframes pageFadeOut {
+          0% { opacity: 1; }
+          100% { opacity: 0; }
         }
-        @keyframes flipInLeft {
-          0% { transform: perspective(1200px) rotateY(-90deg); opacity: 0; }
-          100% { transform: perspective(1200px) rotateY(0); opacity: 1; }
+        @keyframes pageTurnPrevIn {
+          0% { transform: perspective(1200px) rotateY(-90deg); filter: brightness(0.8); opacity: 0; }
+          100% { transform: perspective(1200px) rotateY(0deg); filter: brightness(1); opacity: 1; }
         }
         
-        .animate-flip-out-left { animation: flipOutLeft 0.2s forwards ease-in; }
-        .animate-flip-in-right { animation: flipInRight 0.2s forwards ease-out; }
-        .animate-flip-out-right { animation: flipOutRight 0.2s forwards ease-in; }
-        .animate-flip-in-left { animation: flipInLeft 0.2s forwards ease-out; }
+        .animate-turn-next-out { transform-origin: left center; animation: pageTurnNextOut 0.25s forwards ease-in; }
+        .animate-turn-next-in { transform-origin: center; animation: pageFadeIn 0.15s forwards ease-out; }
+        .animate-turn-prev-out { transform-origin: center; animation: pageFadeOut 0.1s forwards ease-in; }
+        .animate-turn-prev-in { transform-origin: left center; animation: pageTurnPrevIn 0.25s forwards ease-out; }
       `,
         }}
       />
