@@ -19,6 +19,8 @@ export default function BookEditor(
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
+  const [animating, setAnimating] = useState(false);
+  const [animationClass, setAnimationClass] = useState("");
 
   const dimensions = BOOK_DIMENSIONS[format];
 
@@ -52,14 +54,32 @@ export default function BookEditor(
   }, [format, dimensions.widthInches, dimensions.heightInches]);
 
   const goToNextPage = () => {
-    if (currentPageIndex < pages.length - 1) {
-      setCurrentPageIndex((prev) => prev + 1);
+    if (currentPageIndex < pages.length - 1 && !animating) {
+      setAnimating(true);
+      setAnimationClass("animate-flip-out-left");
+      setTimeout(() => {
+        setCurrentPageIndex((prev) => prev + 1);
+        setAnimationClass("animate-flip-in-right");
+        setTimeout(() => {
+          setAnimationClass("");
+          setAnimating(false);
+        }, 200);
+      }, 200);
     }
   };
 
   const goToPrevPage = () => {
-    if (currentPageIndex > 0) {
-      setCurrentPageIndex((prev) => prev - 1);
+    if (currentPageIndex > 0 && !animating) {
+      setAnimating(true);
+      setAnimationClass("animate-flip-out-right");
+      setTimeout(() => {
+        setCurrentPageIndex((prev) => prev - 1);
+        setAnimationClass("animate-flip-in-left");
+        setTimeout(() => {
+          setAnimationClass("");
+          setAnimating(false);
+        }, 200);
+      }, 200);
     }
   };
 
@@ -131,7 +151,7 @@ export default function BookEditor(
       >
         {/* The Box that represents the visible book area */}
         <div
-          class="relative shadow-2xl transition-all duration-300"
+          class={`relative shadow-2xl transition-all duration-300 ${animationClass}`}
           style={{
             width: `${dimensions.widthInches * 96 * scale}px`,
             height: `${dimensions.heightInches * 96 * scale}px`,
@@ -183,6 +203,28 @@ export default function BookEditor(
         dangerouslySetInnerHTML={{
           __html: `
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        
+        @keyframes flipOutLeft {
+          0% { transform: perspective(1200px) rotateY(0); opacity: 1; }
+          100% { transform: perspective(1200px) rotateY(-90deg); opacity: 0; }
+        }
+        @keyframes flipInRight {
+          0% { transform: perspective(1200px) rotateY(90deg); opacity: 0; }
+          100% { transform: perspective(1200px) rotateY(0); opacity: 1; }
+        }
+        @keyframes flipOutRight {
+          0% { transform: perspective(1200px) rotateY(0); opacity: 1; }
+          100% { transform: perspective(1200px) rotateY(90deg); opacity: 0; }
+        }
+        @keyframes flipInLeft {
+          0% { transform: perspective(1200px) rotateY(-90deg); opacity: 0; }
+          100% { transform: perspective(1200px) rotateY(0); opacity: 1; }
+        }
+        
+        .animate-flip-out-left { animation: flipOutLeft 0.2s forwards ease-in; }
+        .animate-flip-in-right { animation: flipInRight 0.2s forwards ease-out; }
+        .animate-flip-out-right { animation: flipOutRight 0.2s forwards ease-in; }
+        .animate-flip-in-left { animation: flipInLeft 0.2s forwards ease-out; }
       `,
         }}
       />
