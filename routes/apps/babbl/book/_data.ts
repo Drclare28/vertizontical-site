@@ -23,6 +23,7 @@ export interface BookPageData {
   page_number: number;
   layout_style: string;
   quote?: BabblQuote;
+  title?: string;
 }
 
 export interface BookMetadata {

@@ -146,8 +146,34 @@ export default function PageRenderer(
           </div>
         )}
 
-        {/* Fallback layout if unrecognized or missing quote */}
-        {!page.quote && (
+        {page.layout_style === "cover" && (
+          <div class="flex flex-col items-center justify-center w-full h-full text-center">
+            <h1
+              class={`${theme.textColor} font-bold leading-tight mb-8`}
+              style={{ fontSize: format === "mini" ? "2.5rem" : "3.5rem" }}
+            >
+              {page.title || "My Babbl Book"}
+            </h1>
+            <div
+              class={`w-16 h-1 mt-4 rounded-full ${theme.textColor} opacity-20`}
+            >
+            </div>
+          </div>
+        )}
+
+        {page.layout_style === "back_cover" && (
+          <div class="flex flex-col items-center justify-center w-full h-full">
+            <img
+              src="/images/babbl-book.svg"
+              alt="Babbl Book"
+              class="w-32 h-32 opacity-40 object-contain"
+            />
+          </div>
+        )}
+
+        {/* Fallback layout if unrecognized or missing quote and not a cover */}
+        {page.layout_style !== "cover" && page.layout_style !== "back_cover" &&
+          !page.quote && (
           <p class="text-gray-400 italic">
             Empty Page Component [{page.layout_style}]
           </p>

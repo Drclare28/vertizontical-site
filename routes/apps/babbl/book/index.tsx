@@ -81,24 +81,35 @@ export default define.page(async function Book(ctx) {
           status: book.status,
           created_at: book.created_at,
         },
-        pages: (bookQuotes as any[]).map((bq) => ({
-          page_number: bq.order_index + 1,
-          layout_style: "single_quote_large",
-          quote: {
-            id: bq.quote.id,
-            text: bq.quote.quote_text,
-            context: bq.quote.context,
-            date: bq.quote.quote_date,
-            child: bq.quote.child,
-            parent: bq.quote.parent
-              ? {
-                name: bq.quote.parent.full_name,
-                avatar_url: bq.quote.parent.avatar_url,
-              }
-              : undefined,
-            photo_url: bq.quote.media_url,
+        pages: [
+          {
+            page_number: 0,
+            layout_style: "cover",
+            title: book.title,
           },
-        })),
+          ...(bookQuotes as any[]).map((bq) => ({
+            page_number: bq.order_index + 1,
+            layout_style: "single_quote_large",
+            quote: {
+              id: bq.quote.id,
+              text: bq.quote.quote_text,
+              context: bq.quote.context,
+              date: bq.quote.quote_date,
+              child: bq.quote.child,
+              parent: bq.quote.parent
+                ? {
+                  name: bq.quote.parent.full_name,
+                  avatar_url: bq.quote.parent.avatar_url,
+                }
+                : undefined,
+              photo_url: bq.quote.media_url,
+            },
+          })),
+          {
+            page_number: bookQuotes.length + 1,
+            layout_style: "back_cover",
+          },
+        ],
       };
 
       console.log("--- BOOK DATA FETCHED ---");
