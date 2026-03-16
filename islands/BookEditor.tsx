@@ -285,6 +285,7 @@ function CustomSelect(
                     : "text-gray-700"
                 }`}
               >
+                <Icon name={opt.icon} class="text-[#9B51E0] text-lg" />
                 <span class="font-bold text-sm">{opt.label}</span>
                 {value === opt.value && (
                   <Icon
@@ -511,7 +512,7 @@ export default function BookEditor(
             <Icon name="book-outline" style={{ fontSize: "14px" }} />
             <div class="flex flex-col items-start leading-tight">
               <span>Mini</span>
-              <span class="text-[9px] opacity-60">5.5x5.5"</span>
+              <span class="text-[11px] opacity-70">5.5x5.5"</span>
             </div>
           </button>
           <button
@@ -523,10 +524,10 @@ export default function BookEditor(
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
-            <Icon name="book" style={{ fontSize: "18px" }} />
+            <Icon name="book-outline" style={{ fontSize: "22px" }} />
             <div class="flex flex-col items-start leading-tight">
               <span>Classic</span>
-              <span class="text-[9px] opacity-60">8x8"</span>
+              <span class="text-[11px] opacity-70">8x8"</span>
             </div>
           </button>
         </div>
