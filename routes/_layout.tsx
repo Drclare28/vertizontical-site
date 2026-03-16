@@ -1,6 +1,7 @@
+import { PageProps } from "fresh";
 import Footer from "../components/footer.tsx";
 
-export default function AppLayout({ Component }: { Component: any }) {
+export default function AppLayout({ Component }: PageProps) {
   return (
     <div class="layout mx-auto home-background-grad min-h-screen text-white">
       <Component />

@@ -1,6 +1,6 @@
-import { define } from "../utils.ts";
+import { PageProps } from "fresh";
 
-export default define.page(function App({ Component }) {
+export default function App({ Component }: PageProps) {
   return (
     <html>
       <head>
@@ -18,4 +18,4 @@ export default define.page(function App({ Component }) {
       </body>
     </html>
   );
-});
+}

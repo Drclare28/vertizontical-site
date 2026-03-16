@@ -1,4 +1,6 @@
-export default function AppLayout({ Component }: { Component: any }) {
+import { PageProps } from "fresh";
+
+export default function AppLayout({ Component }: PageProps) {
   return (
     <div class="content-layout background-grad min-h-screen">
       <header class="py-2 flex items-center justify-between gap-4 border-b border-gray-500/75 mx-4">

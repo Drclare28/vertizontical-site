@@ -3,7 +3,15 @@ import { fresh } from "@fresh/plugin-vite";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [fresh(), tailwindcss()],
+  plugins: [
+    fresh({
+      serverEntry: "./main.ts",
+      clientEntry: "./client.ts",
+      islandsDir: "./islands",
+      routeDir: "./routes",
+    }),
+    tailwindcss(),
+  ],
   server: {
     host: true,
   },

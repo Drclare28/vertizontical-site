@@ -1,4 +1,9 @@
-import { BOOK_DIMENSIONS, BookFormat, BookPageData, THEMES } from "../_data.ts";
+import {
+  BOOK_DIMENSIONS,
+  BookFormat,
+  BookPageData,
+  THEMES,
+} from "../routes/apps/babbl/book/_data.ts";
 
 interface PageRendererProps {
   format: BookFormat;

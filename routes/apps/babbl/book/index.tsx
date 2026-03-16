@@ -1,12 +1,12 @@
 import { Head } from "fresh/runtime";
 import { RouteConfig } from "fresh";
 import { define } from "../../../../utils.ts";
-import BookEditor from "./(_islands)/BookEditor.tsx";
-import { BookPayload } from "./_data.ts";
+import BookEditor from "../../../../islands/BookEditor.tsx";
+import { BookPageData, BookPayload } from "./_data.ts";
 import { getSupabaseClient } from "../../../../lib/supabase.ts";
 
 export const config: RouteConfig = {
-  skipAppWrapper: true,
+  skipAppWrapper: false,
   skipInheritedLayouts: true,
 };
 
@@ -72,6 +72,16 @@ export default define.page(async function Book(ctx) {
         throw new Error("Error loading book content.");
       }
 
+      interface SupabaseQuote {
+        id: string;
+        quote_text: string;
+        context: string | null;
+        quote_date: string;
+        child: Array<{ id: string; name: string; avatar_url: string | null }>;
+        parent: Array<{ full_name: string; avatar_url: string | null }>;
+        media_url: string | null;
+      }
+
       payload = {
         book: {
           id: book.id,
@@ -87,26 +97,36 @@ export default define.page(async function Book(ctx) {
             layout_style: "cover",
             title: book.title,
           },
-          ...(bookQuotes as Array<{ order_index: number; quote: any }>).map((
+          ...(bookQuotes as Array<{
+            order_index: number;
+            quote: SupabaseQuote[];
+          }>).map((
             bq,
-          ) => ({
-            page_number: bq.order_index + 1,
-            layout_style: "single_quote_large",
-            quote: {
-              id: bq.quote.id,
-              text: bq.quote.quote_text,
-              context: bq.quote.context,
-              date: bq.quote.quote_date,
-              child: bq.quote.child,
-              parent: bq.quote.parent
-                ? {
-                  name: bq.quote.parent.full_name,
-                  avatar_url: bq.quote.parent.avatar_url,
-                }
-                : undefined,
-              photo_url: bq.quote.media_url,
-            },
-          })),
+          ) => {
+            const quoteData = Array.isArray(bq.quote) ? bq.quote[0] : bq.quote;
+            if (!quoteData) return null;
+
+            return {
+              page_number: bq.order_index + 1,
+              layout_style: "single_quote_large",
+              quote: {
+                id: quoteData.id,
+                text: quoteData.quote_text,
+                context: quoteData.context || undefined,
+                date: quoteData.quote_date,
+                child: Array.isArray(quoteData.child)
+                  ? quoteData.child[0]
+                  : quoteData.child,
+                parent: quoteData.parent && quoteData.parent[0]
+                  ? {
+                    name: quoteData.parent[0].full_name,
+                    avatar_url: quoteData.parent[0].avatar_url,
+                  }
+                  : undefined,
+                photo_url: quoteData.media_url || undefined,
+              },
+            };
+          }).filter(Boolean) as BookPageData[],
           {
             page_number: bookQuotes.length + 1,
             layout_style: "back_cover",
@@ -229,8 +249,8 @@ export default define.page(async function Book(ctx) {
           initialFormat="mini"
           initialTheme={payload.book.theme}
           pages={payload.pages}
-          bookId={bookId}
-          token={token}
+          bookId={bookId!}
+          token={token!}
           supabaseUrl={Deno.env.get("SUPABASE_URL") || ""}
           supabaseAnonKey={Deno.env.get("SUPABASE_ANON_KEY") || ""}
         />

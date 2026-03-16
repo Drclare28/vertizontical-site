@@ -1,7 +1,11 @@
 import { JSX } from "preact";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { createClient } from "@supabase/supabase-js";
-import { BOOK_DIMENSIONS, BookFormat, BookPageData } from "../_data.ts";
+import {
+  BOOK_DIMENSIONS,
+  BookFormat,
+  BookPageData,
+} from "../routes/apps/babbl/book/_data.ts";
 import PageRenderer from "./PageRenderer.tsx";
 
 declare module "preact" {
@@ -37,9 +41,9 @@ interface CustomSelectProps {
   disabled?: boolean;
 }
 
-const FALLBACK_ICONS: Record<string, JSX.Element> = {
-  "color-wand-outline": (
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const SVG_ICONS: Record<string, (props: any) => JSX.Element> = {
+  "color-wand-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -48,24 +52,144 @@ const FALLBACK_ICONS: Record<string, JSX.Element> = {
       />
     </svg>
   ),
-  "chevron-down-outline": (
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  "color-palette-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
         stroke-width="2"
-        d="M19 9l-7 7-7-7"
+        d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-3M9.707 3.293l3-3a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-3 3a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
       />
     </svg>
   ),
-  "chevron-up-outline": (
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  "pencil-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
         stroke-width="2"
-        d="M5 15l7-7 7 7"
+        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
       />
+    </svg>
+  ),
+  "moon-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+      />
+    </svg>
+  ),
+  "grid-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+      />
+    </svg>
+  ),
+  "book-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+      />
+    </svg>
+  ),
+  "book": (props) => (
+    <svg {...props} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+    </svg>
+  ),
+  "chevron-back-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M15 19l-7-7 7-7"
+      />
+    </svg>
+  ),
+  "chevron-forward-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M9 5l7 7-7 7"
+      />
+    </svg>
+  ),
+  "checkmark-circle": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  ),
+  "text-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 6h16M4 12h16M4 18h7"
+      />
+    </svg>
+  ),
+  "person-circle-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
+    </svg>
+  ),
+  "reorder-two-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 8h16M4 16h16"
+      />
+    </svg>
+  ),
+  "image-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+      />
+    </svg>
+  ),
+  "apps-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+      />
+    </svg>
+  ),
+  "square-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="4" y="4" width="16" height="16" rx="2" stroke-width="2" />
     </svg>
   ),
 };
@@ -75,21 +199,24 @@ function Icon({ name, class: className, style }: {
   class?: string;
   style?: JSX.CSSProperties | string;
 }) {
+  const SvgIcon = SVG_ICONS[name];
+  if (SvgIcon) {
+    return (
+      <div
+        class={`inline-flex items-center justify-center ${className || ""}`}
+        style={style}
+      >
+        <SvgIcon class="w-[1em] h-[1em]" />
+      </div>
+    );
+  }
+
   return (
     <div
-      class={`inline-flex items-center justify-center ${className}`}
+      class={`inline-flex items-center justify-center ${className || ""}`}
       style={style}
     >
-      <ion-icon
-        name={name}
-        class="peer"
-        style="font-size: inherit; visibility: visible;"
-      >
-      </ion-icon>
-      {/* Fallback only shows if ion-icon is NOT hydrated */}
-      <div class="hidden [ion-icon:not(.hydrated)+&]:block peer-[.hydrated]:hidden pointer-events-none">
-        {FALLBACK_ICONS[name] || null}
-      </div>
+      <ion-icon name={name} style="font-size: inherit;" />
     </div>
   );
 }
@@ -137,12 +264,12 @@ function CustomSelect(
         </span>
         <Icon
           name={isOpen ? "chevron-up-outline" : "chevron-down-outline"}
-          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4"
         />
       </button>
 
       {isOpen && !disabled && (
-        <div class="absolute bottom-full mb-2 left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-100 overflow-hidden animate-slide-up">
+        <div class="absolute bottom-full mb-2 left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
           <div class="max-h-60 overflow-y-auto py-2">
             {options.map((opt) => (
               <button
@@ -158,7 +285,6 @@ function CustomSelect(
                     : "text-gray-700"
                 }`}
               >
-                <Icon name={opt.icon} class="text-lg" />
                 <span class="font-bold text-sm">{opt.label}</span>
                 {value === opt.value && (
                   <Icon
@@ -201,6 +327,7 @@ export default function BookEditor(
 
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
+
   const touchStartX = useRef(0);
   const [animating, setAnimating] = useState(false);
   const [animationClass, setAnimationClass] = useState("");
@@ -225,16 +352,16 @@ export default function BookEditor(
         const physicalWidthPx = dimensions.widthInches * 96;
         const physicalHeightPx = dimensions.heightInches * 96;
 
-        const availableHeight = height - 10;
-        const availableWidth = width;
+        const availableHeight = height - 12;
+        const availableWidth = width - 4;
 
         const scaleW = availableWidth / physicalWidthPx;
         const scaleH = availableHeight / physicalHeightPx;
 
+        // Fit to the smaller dimension
         const newScale = Math.min(scaleW, scaleH);
-        if (newScale > 0) {
-          setScale(newScale);
-        }
+
+        setScale(newScale);
       }
     };
 
@@ -370,7 +497,7 @@ export default function BookEditor(
   return (
     <div class="flex flex-col items-center w-full h-full bg-[#FDFDFD] overflow-hidden font-['Rosario']">
       {/* HEADER: Format Toggle */}
-      <header class="w-full px-6 pt-4 pb-2 flex justify-end z-30">
+      <header class="w-full px-6 pt-4 pb-2 flex justify-end items-center relative z-50 shrink-0">
         <div class="flex bg-gray-100/50 backdrop-blur-sm p-1 rounded-2xl shadow-inner border border-gray-200/50">
           <button
             type="button"
@@ -436,7 +563,7 @@ export default function BookEditor(
       </div>
 
       {/* FOOTER: Controls (No Background) */}
-      <footer class="w-full max-w-xl px-6 pt-4 pb-10 flex flex-col gap-6 z-40">
+      <footer class="w-full max-w-xl px-6 pt-4 pb-6 flex flex-col gap-6 relative z-50 shrink-0">
         {/* Selectors Row */}
         <div class="flex gap-4">
           <CustomSelect
