@@ -12,8 +12,24 @@ export const config: RouteConfig = {
 
 export default define.page(async function Book(ctx) {
   const url = new URL(ctx.url);
-  const bookId = url.searchParams.get("bookId");
-  const token = url.searchParams.get("token");
+  let bookId = url.searchParams.get("bookId");
+  let token = url.searchParams.get("token");
+
+  const isLocal = url.hostname === "localhost" ||
+    url.hostname === "127.0.0.1" ||
+    url.hostname.startsWith("192.168.") ||
+    url.hostname.startsWith("10.");
+
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  // On local network, use the service role key to avoid session issues
+  const isDevBypass = isLocal && !!serviceRoleKey;
+
+  if (isDevBypass) {
+    token = serviceRoleKey;
+    bookId = bookId || Deno.env.get("DEV_BOOK_ID") || null;
+    console.log(`[DEV AUTH] Admin bypass active for BookID: ${bookId}`);
+  }
 
   // Authentication & Data Fetching
   let payload: BookPayload | null = null;
@@ -25,11 +41,13 @@ export default define.page(async function Book(ctx) {
     try {
       const supabase = getSupabaseClient(token);
 
-      // Verify user session
-      const { data: { user }, error: authError } = await supabase.auth
-        .getUser();
-      if (authError || !user) {
-        throw new Error("Invalid or expired session.");
+      // Verify user session (Skip for Service Role dev bypass)
+      if (!isDevBypass) {
+        const { data: { user }, error: authError } = await supabase.auth
+          .getUser();
+        if (authError || !user) {
+          throw new Error("Invalid or expired session.");
+        }
       }
 
       // Fetch book metadata
