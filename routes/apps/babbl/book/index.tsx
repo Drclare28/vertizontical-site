@@ -66,6 +66,8 @@ export default define.page(async function Book(ctx) {
         .from("book_quotes")
         .select(`
           order_index,
+          layout_style,
+          show_context,
           quote:quotes (
             id,
             quote_text,
@@ -117,6 +119,8 @@ export default define.page(async function Book(ctx) {
           },
           ...(bookQuotes as Array<{
             order_index: number;
+            layout_style: string | null;
+            show_context: boolean | null;
             quote: SupabaseQuote[];
           }>).map((
             bq,
@@ -126,7 +130,8 @@ export default define.page(async function Book(ctx) {
 
             return {
               page_number: bq.order_index + 1,
-              layout_style: "single_quote_large",
+              layout_style: bq.layout_style || "photo_window_top_quote_bottom",
+              show_context: bq.show_context !== false,
               quote: {
                 id: quoteData.id,
                 text: quoteData.quote_text,

@@ -39,6 +39,7 @@ interface CustomSelectProps {
   icon: string;
   placeholder?: string;
   disabled?: boolean;
+  openDirection?: "up" | "down";
 }
 
 const SVG_ICONS: Record<string, (props: any) => JSX.Element> = {
@@ -222,7 +223,7 @@ function Icon({ name, class: className, style }: {
 }
 
 function CustomSelect(
-  { value, options, onChange, icon, placeholder, disabled }: CustomSelectProps,
+  { value, options, onChange, icon, placeholder, disabled, openDirection = "up" }: CustomSelectProps,
 ) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -249,7 +250,7 @@ function CustomSelect(
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        class={`w-full flex items-center bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 py-3 pl-10 pr-10 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#9B51E0] transition-all ${
+        class={`w-full h-14 flex items-center bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 px-10 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#9B51E0] transition-all ${
           disabled
             ? "opacity-30 cursor-not-allowed"
             : "cursor-pointer hover:bg-white/90"
@@ -269,8 +270,8 @@ function CustomSelect(
       </button>
 
       {isOpen && !disabled && (
-        <div class="absolute bottom-full mb-2 left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
-          <div class="max-h-60 overflow-y-auto py-2">
+        <div class={`absolute ${openDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"} left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden`}>
+          <div class="max-h-96 overflow-y-auto py-2 custom-scrollbar">
             {options.map((opt) => (
               <button
                 type="button"
@@ -305,7 +306,7 @@ function CustomSelect(
 export default function BookEditor(
   {
     initialFormat = "mini",
-    initialTheme = "playful_pastel",
+    initialTheme = "babbl_theme",
     pages,
     bookId,
     token,
@@ -339,10 +340,16 @@ export default function BookEditor(
 
   const dimensions = BOOK_DIMENSIONS[format];
 
-  // Sync with props if they change from parent
+  // Sync with props if they change from parent, but don't overwrite if we just updated locally unless length changed
   useEffect(() => {
-    setLocalPages(pages);
-  }, [pages.length]);
+    // Only resync if the number of pages changes (e.g. initial load or refetch), to prevent resetting our local optimistic state
+    setLocalPages((currentLocal) => {
+      if (currentLocal.length !== pages.length || currentLocal === pages) {
+        return pages;
+      }
+      return currentLocal;
+    });
+  }, [pages]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -452,82 +459,105 @@ export default function BookEditor(
     }
   };
 
+  const handleContextChange = async (showContext: boolean) => {
+    const currentPage = localPages[currentPageIndex];
+    if (!currentPage.quote) return;
+    const updatedPages = [...localPages];
+    const originalContextState = updatedPages[currentPageIndex].show_context;
+    updatedPages[currentPageIndex].show_context = showContext;
+    setLocalPages(updatedPages);
+    setIsSaving(true);
+    try {
+      const { error } = await supabase.from("book_quotes").update({
+        show_context: showContext,
+      }).eq("book_id", bookId).eq("quote_id", currentPage.quote.id);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Save Context Error:", err);
+      const reverted = [...localPages];
+      reverted[currentPageIndex].show_context = originalContextState;
+      setLocalPages(reverted);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const currentPage = localPages[currentPageIndex];
-  const isCover = currentPage.layout_style === "cover" ||
-    currentPage.layout_style === "back_cover";
+  const isFirstPage = currentPageIndex === 0;
+  const isLastPage = currentPageIndex === localPages.length - 1;
+  const isCoverOrBackCover = isFirstPage || isLastPage;
+
+  // Force layout style for rendering purposes if it is the first or last page
+  const effectiveLayoutStyle = isFirstPage
+    ? "cover"
+    : isLastPage
+    ? "back_cover"
+    : currentPage.layout_style;
 
   const themeOptions = [
     {
-      label: "Playful Pastel",
-      value: "playful_pastel",
+      label: "Babbl Theme",
+      value: "babbl_theme",
       icon: "color-wand-outline",
     },
-    {
-      label: "Classic Minimal",
-      value: "classic_minimal",
-      icon: "pencil-outline",
-    },
-    { label: "Deep Night", value: "deep_night", icon: "moon-outline" },
   ];
 
   const layoutOptions = [
-    { label: "Quote Only", value: "single_quote_large", icon: "text-outline" },
-    {
-      label: "Quote + Avatar",
-      value: "quote_with_avatar",
-      icon: "person-circle-outline",
-    },
-    {
-      label: "Split Quote",
-      value: "text_only_split",
-      icon: "reorder-two-outline",
-    },
-    {
-      label: "Full Page Photo",
-      value: "full_page_photo",
-      icon: "image-outline",
-    },
-    { label: "Circles Layout", value: "circles", icon: "apps-outline" },
-    {
-      label: "Rounded Rectangles",
-      value: "rounded_rectangles",
-      icon: "square-outline",
-    },
+    { label: "Circle Image", value: "circle_image", icon: "image-outline" },
+    { label: "Quote top, image bottom", value: "quote_top_image_bottom", icon: "reorder-two-outline" },
+    { label: "Full page photo, quote centered", value: "full_page_photo_quote_centered", icon: "image-outline" },
+    { label: "Full width photo top, quote bottom", value: "full_width_photo_top_quote_bottom", icon: "reorder-two-outline" },
+    { label: "Full screen photo, short quote", value: "full_screen_photo_short_quote", icon: "image-outline" },
+    { label: "Photo window top, quote bottom", value: "photo_window_top_quote_bottom", icon: "image-outline" },
+    { label: "Quote only, centered", value: "quote_only_centered", icon: "text-outline" },
   ];
+
+  const allowsContextToggle = ["quote_top_image_bottom", "full_page_photo_quote_centered", "full_width_photo_top_quote_bottom", "quote_only_centered"].includes(effectiveLayoutStyle) && !!currentPage.quote?.context;
 
   return (
     <div class="flex flex-col items-center w-full h-full bg-[#FDFDFD] overflow-hidden font-['Rosario']">
       {/* HEADER: Format Toggle */}
-      <header class="w-full px-6 pt-4 pb-2 flex justify-end items-center relative z-50 shrink-0">
-        <div class="flex bg-gray-100/50 backdrop-blur-sm p-1 rounded-2xl shadow-inner border border-gray-200/50">
+      <header class="w-full max-w-xl mx-auto px-6 pt-4 pb-2 flex justify-start items-center gap-2 md:gap-4 relative z-60 shrink-0">
+        <div class="flex-1 min-w-[8rem] bg-gray-100/50 backdrop-blur-sm rounded-2xl shadow-inner border border-gray-200/50">
+           <CustomSelect
+            value={themeId}
+            options={themeOptions}
+            onChange={handleThemeChange}
+            icon="color-palette-outline"
+            placeholder="Select Theme"
+            openDirection="down"
+          />
+        </div>
+
+        <div class="flex bg-gray-100/50 backdrop-blur-sm p-1 rounded-2xl shadow-inner border border-gray-200/50 h-14 items-center shrink-0">
           <button
             type="button"
             onClick={() => setFormat("mini")}
-            class={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            class={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 h-full rounded-xl text-xs font-bold transition-all ${
               format === "mini"
                 ? "bg-white text-[#9B51E0] shadow-sm"
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
             <Icon name="book-outline" style={{ fontSize: "14px" }} />
-            <div class="flex flex-col items-start leading-tight">
+            <div class="flex flex-col items-start leading-none justify-center">
               <span>Mini</span>
-              <span class="text-[11px] opacity-70">5.5x5.5"</span>
+              <span class="text-[10px] opacity-70">5.5x5.5"</span>
             </div>
           </button>
           <button
             type="button"
             onClick={() => setFormat("classic")}
-            class={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            class={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 h-full rounded-xl text-xs font-bold transition-all ${
               format === "classic"
                 ? "bg-white text-[#9B51E0] shadow-sm"
                 : "text-gray-400 hover:text-gray-600"
             }`}
           >
             <Icon name="book-outline" style={{ fontSize: "22px" }} />
-            <div class="flex flex-col items-start leading-tight">
+            <div class="flex flex-col items-start leading-none justify-center">
               <span>Classic</span>
-              <span class="text-[11px] opacity-70">8x8"</span>
+              <span class="text-[10px] opacity-70">8x8"</span>
             </div>
           </button>
         </div>
@@ -555,7 +585,10 @@ export default function BookEditor(
             }}
           >
             <PageRenderer
-              page={localPages[currentPageIndex]}
+              page={{
+                ...localPages[currentPageIndex],
+                layout_style: effectiveLayoutStyle,
+              }}
               format={format}
               themeId={themeId}
             />
@@ -564,58 +597,64 @@ export default function BookEditor(
       </div>
 
       {/* FOOTER: Controls (No Background) */}
-      <footer class="w-full max-w-xl px-6 pt-4 pb-6 flex flex-col gap-6 relative z-50 shrink-0">
+      <footer class="w-full max-w-xl px-6 pt-4 pb-6 flex flex-col gap-4 relative z-50 shrink-0">
         {/* Selectors Row */}
-        <div class="flex gap-4">
-          <CustomSelect
-            value={themeId}
-            options={themeOptions}
-            onChange={handleThemeChange}
-            icon="color-palette-outline"
-            placeholder="Select Theme"
-          />
-
-          {!isCover && (
-            <CustomSelect
-              value={currentPage.layout_style}
-              options={layoutOptions}
-              onChange={handleLayoutChange}
-              icon="grid-outline"
-              placeholder="Select Layout"
-            />
-          )}
-          {isCover && (
-            <div class="flex-1 flex items-center justify-center text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-white/80 backdrop-blur-md rounded-xl border border-gray-100/30">
-              Cover Content
+        {!isCoverOrBackCover && (
+          <div class="flex items-center gap-2 md:gap-4 w-full">
+            <div class="flex-1 min-w-0">
+              <CustomSelect
+                value={effectiveLayoutStyle}
+                options={layoutOptions}
+                onChange={handleLayoutChange}
+                icon="grid-outline"
+                placeholder="Select Layout"
+              />
             </div>
-          )}
-        </div>
+          
+            {allowsContextToggle && (
+              <label class="shrink-0 flex items-center justify-center gap-2 md:gap-3 bg-white/80 backdrop-blur-md border border-gray-200/50 h-14 px-3 md:px-4 rounded-xl cursor-pointer hover:bg-white/90 transition-colors shadow-sm">
+                <span class="text-sm font-bold text-gray-700 capitalize">Context</span>
+                <div class="relative inline-flex items-center">
+                  <input 
+                    type="checkbox" 
+                    class="sr-only peer" 
+                    checked={currentPage.show_context !== false}
+                    onChange={(e) => handleContextChange((e.target as HTMLInputElement).checked)}
+                  />
+                  <div class="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[16px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#9B51E0]"></div>
+                </div>
+              </label>
+            )}
+          </div>
+        )}
 
         {/* Pagination Row */}
-        <div class="flex items-center justify-between gap-4">
-          <button
-            type="button"
-            onClick={goToPrevPage}
-            disabled={currentPageIndex === 0}
-            class="flex-1 h-14 flex items-center justify-center gap-2 bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl text-gray-700 font-bold disabled:opacity-20 shadow-sm hover:shadow-md transition-all active:scale-95"
-          >
-            <Icon name="chevron-back-outline" />
-            Prev
-          </button>
-
-          <div class="px-5 py-2 bg-white/80 backdrop-blur-md rounded-xl text-xs font-bold text-gray-500 shadow-sm border border-gray-100/50">
-            {currentPageIndex + 1} / {localPages.length}
+        <div class="flex items-center justify-between gap-2 w-full">
+          <div class="flex-1 flex items-center bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-sm h-14 overflow-hidden min-w-0">
+            <button
+              type="button"
+              onClick={goToPrevPage}
+              disabled={currentPageIndex === 0}
+              class="w-12 md:flex-1 shrink-0 h-full flex items-center justify-center text-gray-700 hover:bg-[#9B51E0]/5 hover:text-[#9B51E0] disabled:opacity-20 transition-all active:bg-[#9B51E0]/10 border-r border-gray-100/50"
+              aria-label="Previous Page"
+            >
+              <Icon name="chevron-back-outline" />
+            </button>
+            <div class="flex-1 flex items-center justify-center h-full min-w-16 px-2 truncate">
+               <span class="text-xs font-bold text-gray-700 whitespace-nowrap">
+                  {currentPageIndex + 1} / {localPages.length}
+               </span>
+            </div>
+            <button
+              type="button"
+              onClick={goToNextPage}
+              disabled={currentPageIndex === localPages.length - 1}
+              class="w-12 md:flex-1 shrink-0 h-full flex items-center justify-center text-gray-700 hover:bg-[#9B51E0]/5 hover:text-[#9B51E0] disabled:opacity-20 transition-all active:bg-[#9B51E0]/10 border-l border-gray-100/50"
+              aria-label="Next Page"
+            >
+              <Icon name="chevron-forward-outline" />
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={goToNextPage}
-            disabled={currentPageIndex === localPages.length - 1}
-            class="flex-1 h-14 flex items-center justify-center gap-2 bg-[#9B51E0] text-white rounded-2xl font-bold disabled:opacity-20 shadow-lg shadow-purple-200 hover:shadow-xl transition-all active:scale-95 hover:bg-[#8A46D0]"
-          >
-            Next
-            <Icon name="chevron-forward-outline" />
-          </button>
         </div>
 
         {/* Status */}

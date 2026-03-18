@@ -22,6 +22,7 @@ export interface BabblQuote {
 export interface BookPageData {
   page_number: number;
   layout_style: string;
+  show_context?: boolean;
   quote?: BabblQuote;
   title?: string;
 }
@@ -90,29 +91,13 @@ export const APP_ICONS = {
 };
 
 export const THEMES: Record<string, BookTheme> = {
-  playful_pastel: {
-    id: "playful_pastel",
-    name: "Playful Pastel",
-    bgColor: "bg-orange-50",
-    textColor: "text-orange-900",
-    fontFamily: "font-sans",
-    accentColor: "bg-orange-400",
-  },
-  classic_minimal: {
-    id: "classic_minimal",
-    name: "Classic Minimal",
+  babbl_theme: {
+    id: "babbl_theme",
+    name: "Babbl Theme",
     bgColor: "bg-white",
-    textColor: "text-gray-900",
-    fontFamily: "font-serif",
-    accentColor: "bg-gray-800",
-  },
-  deep_night: {
-    id: "deep_night",
-    name: "Deep Night",
-    bgColor: "bg-slate-900",
-    textColor: "text-slate-100",
-    fontFamily: "font-serif",
-    accentColor: "bg-slate-500",
+    textColor: "text-[#9B51E0]",
+    fontFamily: "font-[Fredoka]",
+    accentColor: "bg-[#FF6B6B]",
   },
 };
 
