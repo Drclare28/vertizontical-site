@@ -43,6 +43,11 @@ interface CustomSelectProps {
 }
 
 const SVG_ICONS: Record<string, (props: any) => JSX.Element> = {
+  "babbl-bubble-icon": (props) => (
+    <svg {...props} fill="none" viewBox="0 0 40 32" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20 0C31.0457 1.5839e-05 40 6.96939 40 15.5664C40 21.7578 36.1305 25.2735 31.4756 27.4033L32.9131 30.0029C33.3859 30.8586 32.4767 31.8144 31.5986 31.3848L26.8613 29.0635C24.5828 29.7099 22.3493 30.1438 20.4814 30.4932C5.66259 33.2649 5.04334e-05 24.1633 0 15.5664C0 6.96938 4.69879 0 20 0Z" fill="currentColor"/>
+    </svg>
+  ),
   "color-wand-outline": (props) => (
     <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
@@ -333,7 +338,6 @@ export default function BookEditor(
   const touchStartX = useRef(0);
   const [animating, setAnimating] = useState(false);
   const [animationClass, setAnimationClass] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
 
   // Local state for optimistic UI updates
   const [localPages, setLocalPages] = useState<BookPageData[]>(pages);
@@ -422,7 +426,6 @@ export default function BookEditor(
 
   const handleThemeChange = async (newThemeId: string) => {
     setThemeId(newThemeId);
-    setIsSaving(true);
     try {
       const { error } = await supabase.from("books").update({
         theme_id: newThemeId,
@@ -431,8 +434,6 @@ export default function BookEditor(
     } catch (err) {
       console.error("Save Theme Error:", err);
       setThemeId(themeId);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -443,7 +444,6 @@ export default function BookEditor(
     const originalLayout = updatedPages[currentPageIndex].layout_style;
     updatedPages[currentPageIndex].layout_style = newLayout;
     setLocalPages(updatedPages);
-    setIsSaving(true);
     try {
       const { error } = await supabase.from("book_quotes").update({
         layout_style: newLayout,
@@ -454,8 +454,6 @@ export default function BookEditor(
       const reverted = [...localPages];
       reverted[currentPageIndex].layout_style = originalLayout;
       setLocalPages(reverted);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -466,7 +464,6 @@ export default function BookEditor(
     const originalContextState = updatedPages[currentPageIndex].show_context;
     updatedPages[currentPageIndex].show_context = showContext;
     setLocalPages(updatedPages);
-    setIsSaving(true);
     try {
       const { error } = await supabase.from("book_quotes").update({
         show_context: showContext,
@@ -477,8 +474,6 @@ export default function BookEditor(
       const reverted = [...localPages];
       reverted[currentPageIndex].show_context = originalContextState;
       setLocalPages(reverted);
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -498,7 +493,7 @@ export default function BookEditor(
     {
       label: "Babbl Theme",
       value: "babbl_theme",
-      icon: "color-wand-outline",
+      icon: "babbl-bubble-icon",
     },
   ];
 
@@ -518,7 +513,7 @@ export default function BookEditor(
     <div class="flex flex-col items-center w-full h-full bg-[#FDFDFD] overflow-hidden font-['Rosario']">
       {/* HEADER: Format Toggle */}
       <header class="w-full max-w-xl mx-auto px-6 pt-4 pb-2 flex justify-start items-center gap-2 md:gap-4 relative z-60 shrink-0">
-        <div class="flex-1 min-w-[8rem] bg-gray-100/50 backdrop-blur-sm rounded-2xl shadow-inner border border-gray-200/50">
+        <div class="flex-1 min-w-32 bg-gray-100/50 backdrop-blur-sm rounded-2xl shadow-inner border border-gray-200/50">
            <CustomSelect
             value={themeId}
             options={themeOptions}
@@ -597,7 +592,7 @@ export default function BookEditor(
       </div>
 
       {/* FOOTER: Controls (No Background) */}
-      <footer class="w-full max-w-xl px-6 pt-4 pb-6 flex flex-col gap-4 relative z-50 shrink-0">
+      <footer class="w-full max-w-xl px-6 pt-4 pb-12 flex flex-col gap-4 relative z-50 shrink-0">
         {/* Selectors Row */}
         {!isCoverOrBackCover && (
           <div class="flex items-center gap-2 md:gap-4 w-full">
@@ -658,13 +653,6 @@ export default function BookEditor(
         </div>
 
         {/* Status */}
-        <div
-          class={`text-center text-[9px] font-bold text-[#9B51E0] uppercase tracking-widest transition-opacity h-2 ${
-            isSaving ? "opacity-100" : "opacity-0"
-          }`}
-        >
-          Saving changes...
-        </div>
       </footer>
     </div>
   );
