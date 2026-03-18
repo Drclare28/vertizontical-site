@@ -170,7 +170,7 @@ export default function PageRenderer(
             <img
               src="/images/babbl-book.svg"
               alt="Babbl Book"
-              class="w-32 h-32 opacity-40 object-contain"
+              class="w-32 h-32 object-contain"
             />
           </div>
         )}

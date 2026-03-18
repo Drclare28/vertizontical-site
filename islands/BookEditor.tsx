@@ -249,10 +249,10 @@ function CustomSelect(
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        class={`w-full flex items-center bg-white/10 backdrop-blur-sm border border-gray-200/50 text-gray-700 py-3 pl-10 pr-10 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#9B51E0] transition-all ${
+        class={`w-full flex items-center bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 py-3 pl-10 pr-10 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#9B51E0] transition-all ${
           disabled
             ? "opacity-30 cursor-not-allowed"
-            : "cursor-pointer hover:bg-white/20"
+            : "cursor-pointer hover:bg-white/90"
         }`}
       >
         <Icon
@@ -585,7 +585,7 @@ export default function BookEditor(
             />
           )}
           {isCover && (
-            <div class="flex-1 flex items-center justify-center text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-white/40 backdrop-blur-[2px] rounded-xl border border-gray-100/30">
+            <div class="flex-1 flex items-center justify-center text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-white/80 backdrop-blur-md rounded-xl border border-gray-100/30">
               Cover Content
             </div>
           )}
