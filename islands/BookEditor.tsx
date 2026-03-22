@@ -1,5 +1,5 @@
 import { JSX } from "preact";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { createClient } from "@supabase/supabase-js";
 import {
   BOOK_DIMENSIONS,
@@ -344,6 +344,29 @@ export default function BookEditor(
 
   const dimensions = BOOK_DIMENSIONS[format];
 
+  const yearRange = useMemo(() => {
+    const dates = pages
+      .map((p) => p.quote?.date)
+      .filter(Boolean)
+      .map((d) => new Date(d!).getFullYear())
+      .filter((y) => !isNaN(y));
+
+    if (dates.length === 0) return new Date().getFullYear().toString();
+    const min = Math.min(...dates);
+    const max = Math.max(...dates);
+    return min === max ? `${min}` : `${min}–${max}`;
+  }, [pages]);
+
+  const uniqueChildren = useMemo(() => {
+    const childrenMap = new Map<string, { id: string; name: string; avatar_url?: string }>();
+    pages.forEach((p) => {
+      if (p.quote?.child && !childrenMap.has(p.quote.child.id)) {
+        childrenMap.set(p.quote.child.id, p.quote.child);
+      }
+    });
+    return Array.from(childrenMap.values());
+  }, [pages]);
+
   // Sync with props if they change from parent, but don't overwrite if we just updated locally unless length changed
   useEffect(() => {
     // Only resync if the number of pages changes (e.g. initial load or refetch), to prevent resetting our local optimistic state
@@ -586,6 +609,8 @@ export default function BookEditor(
               }}
               format={format}
               themeId={themeId}
+              yearRange={yearRange}
+              childrenProfiles={uniqueChildren}
             />
           </div>
         </div>
