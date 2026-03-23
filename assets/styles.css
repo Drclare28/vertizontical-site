@@ -2,7 +2,6 @@
 
 @import "tailwindcss";
 
-@import "./css/book.css";
 .home-background-grad {
   background-image: linear-gradient(
     to bottom,

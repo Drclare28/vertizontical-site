@@ -39,7 +39,7 @@ export default function PageRenderer(
     >
       {/* Safe Area Guide */}
       <div
-        class="absolute border border-dashed border-red-300 pointer-events-none opacity-50 z-50"
+        class="absolute border border-dashed pointer-events-none z-500 opacity-50"
         style={{
           top: `${safeAreaMarginInches}in`,
           left: `${safeAreaMarginInches}in`,
@@ -73,8 +73,10 @@ export default function PageRenderer(
               </>
             )}
             <div class="title-container">
-              <h1>{page.title || "Book Title"}</h1>
-              <div class="date-range">{yearRange}</div>
+              <div class="text">
+                <h1>{page.title || "Book Title"}</h1>
+                <div class="date-range">{yearRange}</div>
+              </div>
             </div>
             {childrenProfiles.length > 0
               ? (

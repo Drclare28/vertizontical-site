@@ -338,6 +338,12 @@ export default function BookEditor(
   const touchStartX = useRef(0);
   const [animating, setAnimating] = useState(false);
   const [animationClass, setAnimationClass] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsMounted(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Local state for optimistic UI updates
   const [localPages, setLocalPages] = useState<BookPageData[]>(pages);
@@ -590,7 +596,7 @@ export default function BookEditor(
         onTouchEnd={handleTouchEnd}
       >
         <div
-          class={`relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] transition-all duration-300 bg-white ${animationClass}`}
+          class={`relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] bg-white ${animationClass} ${isMounted ? "transition-all duration-300" : ""}`}
           style={{
             width: `${dimensions.widthInches * 96 * scale}px`,
             height: `${dimensions.heightInches * 96 * scale}px`,
