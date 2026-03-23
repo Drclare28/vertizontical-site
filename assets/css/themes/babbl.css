@@ -54,9 +54,9 @@
     .title-container {
       z-index: 100;
       position: absolute;
-      top: -2.25em;
+      top: -1.5em;
       /* left: -4.25em; */
-      margin-left: -12.75em;
+      margin-left: -14.5em;
       background: url("/images/babbl-bubble-outlined.svg") bottom right;
       background-size: cover;
       background-position: center;
@@ -67,15 +67,16 @@
     .text {
       font-family: "Yomogi", sans-serif;
       padding-left: 6rem;
+      transform: rotate(-1.25deg);
     }
 
     h1 {
       color: var(--babbl-text-primary);
       font-weight: bold;
       line-height: 1;
-      letter-spacing: -0.025em;
+      letter-spacing: -0.035em;
       font-size: 4em;
-      /* -webkit-text-stroke: 0.01em var(--babbl-text-primary); */
+      -webkit-text-stroke: 0.0175em var(--babbl-text-primary);
     }
 
     .date-range {

@@ -53,12 +53,12 @@ export default function PageRenderer(
         style={{
           top: `${safeAreaMarginInches}in`,
           left: `${safeAreaMarginInches}in`,
-          width: `calc(${dimensions.widthInches}in - ${
-            safeAreaMarginInches * 2
-          }in)`,
-          height: `calc(${dimensions.heightInches}in - ${
-            safeAreaMarginInches * 2
-          }in)`,
+          // width: `calc(${dimensions.widthInches}in - ${
+          //   safeAreaMarginInches * 2
+          // }in)`,
+          // height: `calc(${dimensions.heightInches}in - ${
+          //   safeAreaMarginInches * 2
+          // }in)`,
           position: "absolute",
         }}
       >
