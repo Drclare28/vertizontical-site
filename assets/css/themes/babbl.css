@@ -41,14 +41,37 @@
 
     .bg-shape-1 {
       position: absolute;
+      width: 13em;
+      height: 13em;
+      background-color: white;
+      border-radius: 9999px;
+      top: 30%;
+      left: 20%;
+      opacity: 0.5;
     }
 
     .bg-shape-2 {
       position: absolute;
+      position: absolute;
+      width: 8em;
+      height: 8em;
+      background-color: var(--babbl-accent-coral);
+      opacity: 0.4;
+      border-radius: 9999px;
+      top: -2em;
+      right: -2em;
     }
 
     .bg-shape-3 {
       position: absolute;
+      position: absolute;
+      width: 7em;
+      height: 7em;
+      background-color: white;
+      border-radius: 9999px;
+      bottom: -2%;
+      left: 10%;
+      opacity: 0.2;
     }
 
     .title-container {
@@ -103,12 +126,42 @@
     img {
       border-radius: 9999px;
       object-fit: cover;
-      border: 8px solid white;
-      box-shadow:
-        0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      z-index: 20;
+      border: 1.5em solid var(--babbl-accent-coral);
       position: relative;
+    }
+
+    .child-avatar-container {
+      position: absolute;
+
+      &:last-child {
+        bottom: -15%;
+        right: -17.5%;
+        width: 82.5%;
+      }
+
+      &:nth-last-child(2) {
+        width: 40%;
+        left: 5%;
+        bottom: 15%;
+
+        img {
+          border-width: 1em;
+        }
+      }
+
+      &:nth-last-child(3) {
+        width: 30%;
+        top: 7.5%;
+        right: 0;
+
+        img {
+          border-width: 0.75em;
+        }
+      }
+
+      &:nth-last-child(n+4) {
+        display: none;
+      }
     }
   }
 

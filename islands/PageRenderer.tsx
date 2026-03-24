@@ -80,7 +80,7 @@ export default function PageRenderer(
             </div>
             {childrenProfiles.length > 0
               ? (
-                childrenProfiles.map((child) => (
+                childrenProfiles.reverse().map((child) => (
                   <div key={child.id} class="child-avatar-container">
                     <img
                       src={child.avatar_url ||
