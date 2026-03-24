@@ -2,10 +2,12 @@ export interface BabblQuote {
   id: string;
   text: string;
   context?: string;
+  location?: string;
   date: string;
   child?: {
     id: string;
     name: string;
+    nickname?: string;
     avatar_url?: string;
   };
   parent?: {

@@ -172,94 +172,8 @@
     justify-content: center;
     padding: 1rem;
 
-    .bg-bubbles {
-      position: absolute;
-      inset: 0;
-      opacity: 0.1;
-    }
-
-    .bubble-1 {
-      width: 6rem;
-      height: 6rem;
-      border-radius: 9999px;
-      background-color: white;
-      position: absolute;
-      top: 2.5rem;
-      left: 2.5rem;
-    }
-
-    .bubble-2 {
-      width: 4rem;
-      height: 4rem;
-      border-radius: 9999px;
-      background-color: white;
-      position: absolute;
-      bottom: 5rem;
-      right: 2.5rem;
-    }
-
-    .bubble-3 {
-      width: 8rem;
-      height: 8rem;
-      border-radius: 9999px;
-      background-color: white;
-      position: absolute;
-      top: 33.333333%;
-      right: 25%;
-    }
-
-    .brand-card {
-      z-index: 10;
-      background-color: var(--babbl-card-bg);
-      border-radius: 60px;
-      padding: 1.5rem 2rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow:
-        0 10px 15px -3px rgba(0, 0, 0, 0.1),
-        0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      position: relative;
-      transform: rotate(-2deg);
-      transition-property: transform;
-      transition-duration: 150ms;
-
-      &:hover {
-        transform: rotate(0deg);
-      }
-    }
-
-    .brand-card-bubble {
-      position: absolute;
-      right: -0.5rem;
-      bottom: -0.5rem;
-      width: 2rem;
-      height: 2rem;
-      border-radius: 9999px;
-      background-color: var(--babbl-card-bg);
-      border: 4px solid var(--babbl-primary);
-    }
-
-    .brand-name {
-      color: var(--babbl-text-primary);
-      font-family: "Fredoka", sans-serif;
-      font-weight: bold;
-    }
-
-    .brand-divider {
-      width: 100%;
-      height: 0.25rem;
-      background-color: rgba(255, 255, 255, 0.5);
-      border-radius: 9999px;
-      margin-top: 0.25rem;
-      margin-bottom: 0.25rem;
-    }
-
-    .brand-subtitle {
-      color: white;
-      font-family: "Fredoka", sans-serif;
-      font-weight: 500;
+    img {
+      width: 20%;
     }
   }
 
@@ -774,14 +688,14 @@
   .layout-quote_only_centered {
     background-color: white;
     align-items: center;
-    padding: 3rem 2rem;
+    padding: 2em 4em 5em 3em;
+    gap: 1.5em;
+    justify-content: center;
 
     .avatar-container {
-      width: 8rem;
-      height: 8rem;
+      width: 7em;
+      height: 7em;
       border-radius: 9999px;
-      border: 4px solid white;
-      box-shadow: 0 10px 30px rgba(var(--babbl-primary-rgb), 0.2);
       overflow: hidden;
       flex-shrink: 0;
       z-index: 20;
@@ -794,51 +708,62 @@
     }
 
     .quote-section {
-      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin-top: -1.5rem;
+      gap: 1.5em;
     }
 
     h3 {
-      font-family: "Fredoka", sans-serif;
       color: var(--babbl-text-primary);
       line-height: 1.375;
       text-align: center;
-      margin-bottom: 1.5rem;
+      font-size: 1.5em;
     }
 
     .author-name {
       color: var(--babbl-accent-coral);
       font-weight: bold;
       text-align: center;
-      text-transform: uppercase;
       letter-spacing: 0.1em;
     }
 
     .context-bar {
       width: 100%;
-      background-color: var(--babbl-primary);
-      height: 4rem;
+      background-color: var(--babbl-accent-dark);
+      height: 4em;
       position: absolute;
       bottom: 0;
       left: 0;
       right: 0;
       display: flex;
-      align-items: center;
-      padding: 0 1.5rem;
-      border-top: 6px solid var(--babbl-accent-coral);
+      justify-content: flex-end;
+      flex-direction: column;
+      padding: 2.85em 3em 0.5in;
+
+      .context-row {
+        display: flex;
+        align-items: center;
+        gap: 0.25em;
+        align-items: flex-start;
+      }
+
+      .text-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.25em;
+      }
 
       .parent-avatar {
-        width: 2rem;
-        height: 2rem;
+        width: 2em;
+        height: 2em;
         border-radius: 9999px;
         overflow: hidden;
-        margin-right: 0.75rem;
-        border: 2px solid white;
+        margin-right: 0.75em;
         flex-shrink: 0;
+        margin-top: -0.15em;
 
         img {
           width: 100%;
@@ -849,21 +774,24 @@
 
       .context-text {
         color: white;
-        font-size: 10px;
+        font-size: 0.575em;
         line-height: 1.25;
         flex: 1;
-        opacity: 0.9;
       }
 
       .context-date {
-        color: white;
+        color: var(--babbl-accent-dark);
         font-weight: bold;
-        font-size: 9px;
-        margin-left: 1rem;
+        font-size: 0.575em;
+        margin-left: 1em;
         flex-shrink: 0;
-        background-color: rgba(255, 255, 255, 0.2);
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.25rem;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 0.25em 1em;
+        border-radius: 100em;
+        text-align: center;
+        display: inline-block;
+        width: max-content;
+        align-self: flex-end;
       }
     }
   }

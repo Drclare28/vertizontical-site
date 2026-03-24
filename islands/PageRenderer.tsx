@@ -9,7 +9,9 @@ interface PageRendererProps {
   page: BookPageData;
   themeId?: string;
   yearRange?: string;
-  childrenProfiles?: Array<{ id: string; name: string; avatar_url?: string }>;
+  childrenProfiles?: Array<
+    { id: string; name: string; nickname?: string; avatar_url?: string }
+  >;
 }
 
 export default function PageRenderer(
@@ -80,24 +82,20 @@ export default function PageRenderer(
             </div>
             {childrenProfiles.length > 0
               ? (
-                childrenProfiles.reverse().map((child) => (
-                  <div key={child.id} class="child-avatar-container">
-                    <img
-                      src={child.avatar_url ||
-                        "https://placehold.co/400x400/FFB6C1/FFF"}
-                      alt={child.name}
-                    />
-                  </div>
+                [...childrenProfiles].reverse().map((child) => (
+                  child.avatar_url && (
+                    <div key={child.id} class="child-avatar-container">
+                      <img src={child.avatar_url} alt={child.name} />
+                    </div>
+                  )
                 ))
               )
               : (
-                <div class="child-avatar-container">
-                  <img
-                    src={page.quote?.photo_url ||
-                      "https://placehold.co/400x400/FFB6C1/FFF"}
-                    alt="Cover Default"
-                  />
-                </div>
+                page.quote?.photo_url && (
+                  <div class="child-avatar-container">
+                    <img src={page.quote.photo_url} alt="Cover Default" />
+                  </div>
+                )
               )}
           </>
         )}
@@ -105,17 +103,11 @@ export default function PageRenderer(
         {/* --- 2. Back Cover --- */}
         {page.layout_style === "back_cover" && (
           <>
-            <div class="bg-bubbles">
-              <div class="bubble-1" />
-              <div class="bubble-2" />
-              <div class="bubble-3" />
-            </div>
-            <div class="brand-card">
-              <div class="brand-card-bubble" />
-              <h2 class="brand-name">Babbl</h2>
-              <div class="brand-divider" />
-              <span class="brand-subtitle">Book</span>
-            </div>
+            <img
+              src="/images/babbl-book.svg"
+              alt="Back Cover"
+              class="back-cover"
+            />
           </>
         )}
 
@@ -130,13 +122,14 @@ export default function PageRenderer(
             />
             <div class="gradient-overlay" />
             <div class="content-card">
-              <div class="avatar-container">
-                <img
-                  src={page.quote?.child?.avatar_url ||
-                    "https://placehold.co/100x100/A020F0/FFF"}
-                  alt="Child Avatar"
-                />
-              </div>
+              {page.quote?.child?.avatar_url && (
+                <div class="avatar-container">
+                  <img
+                    src={page.quote?.child?.avatar_url}
+                    alt="Child Avatar"
+                  />
+                </div>
+              )}
               <h3>"{page.quote.text}"</h3>
               <div class="meta-container">
                 <span class="meta-date">
@@ -144,11 +137,12 @@ export default function PageRenderer(
                     month: "short",
                     day: "numeric",
                     year: "numeric",
-                  })} at Home
+                  })}
+                  {page.quote.location ? ` at ${page.quote.location}` : ""}
                 </span>
                 <span class="meta-separator">-</span>
                 <span class="meta-author">
-                  {page.quote.child?.name} (5 yrs)
+                  {page.quote.child?.nickname || page.quote.child?.name} (5 yrs)
                 </span>
               </div>
             </div>
@@ -158,28 +152,28 @@ export default function PageRenderer(
         {/* --- 2. Quote top, image bottom --- */}
         {page.layout_style === "quote_top_image_bottom" && page.quote && (
           <>
-            <div class="image-section">
-              <img
-                src={page.quote?.photo_url ||
-                  "https://placehold.co/600x400/ddd/999"}
-                alt="Top Photo"
-              />
-            </div>
-            <div class="quote-section">
-              <div class="avatar-container">
+            {page.quote?.photo_url && (
+              <div class="image-section">
                 <img
-                  src={page.quote?.child?.avatar_url ||
-                    "https://placehold.co/100x100/A020F0/FFF"}
-                  alt="Child Avatar"
+                  src={page.quote.photo_url}
+                  alt="Top Photo"
                 />
               </div>
+            )}
+            <div class="quote-section">
+              {page.quote?.child?.avatar_url && (
+                <div class="avatar-container">
+                  <img src={page.quote.child.avatar_url} alt="Child Avatar" />
+                </div>
+              )}
               <h3>"{page.quote.text}"</h3>
               <div class="meta-date">
                 {new Date(page.quote.date).toLocaleDateString(undefined, {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
-                })} at Home
+                })}
+                {page.quote.location ? ` at ${page.quote.location}` : ""}
               </div>
               {page.quote.context && page.show_context !== false && (
                 <div class="context-box">
@@ -201,15 +195,13 @@ export default function PageRenderer(
                 )}
               </div>
               <div class="author-pill">
-                <div class="author-avatar">
-                  <img
-                    src={page.quote?.child?.avatar_url ||
-                      "https://placehold.co/100x100/A020F0/FFF"}
-                    alt="Child Avatar"
-                  />
-                </div>
+                {page.quote?.child?.avatar_url && (
+                  <div class="author-avatar">
+                    <img src={page.quote.child.avatar_url} alt="Child Avatar" />
+                  </div>
+                )}
                 <span class="author-name">
-                  {page.quote.child?.name} (5 yrs)
+                  {page.quote.child?.nickname || page.quote.child?.name} (5 yrs)
                 </span>
               </div>
               <div class="image-section">
@@ -242,22 +234,23 @@ export default function PageRenderer(
               )}
               <div class="author-row">
                 <div class="author-details">
-                  {page.quote.child?.name} (5 yrs) <br />
+                  {page.quote.child?.nickname || page.quote.child?.name} (5 yrs)
+                  {" "}
+                  <br />
                   <span class="author-meta">
                     {new Date(page.quote.date).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
-                    })} at Home
+                    })}
+                    {page.quote.location ? ` at ${page.quote.location}` : ""}
                   </span>
                 </div>
-                <div class="author-avatar">
-                  <img
-                    src={page.quote?.child?.avatar_url ||
-                      "https://placehold.co/100x100/A020F0/FFF"}
-                    alt="Child Avatar"
-                  />
-                </div>
+                {page.quote?.child?.avatar_url && (
+                  <div class="author-avatar">
+                    <img src={page.quote.child.avatar_url} alt="Child Avatar" />
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -268,21 +261,22 @@ export default function PageRenderer(
           (
             <>
               <div class="quote-section">
-                <div class="avatar-container">
-                  <img
-                    src={page.quote?.child?.avatar_url ||
-                      "https://placehold.co/100x100/A020F0/FFF"}
-                    alt="Child Avatar"
-                  />
-                </div>
+                {page.quote?.child?.avatar_url && (
+                  <div class="avatar-container">
+                    <img src={page.quote.child.avatar_url} alt="Child Avatar" />
+                  </div>
+                )}
                 <h3>"{page.quote.text}"</h3>
                 <div class="author-details">
-                  {page.quote.child?.name} (5 yrs) <br />
+                  {page.quote.child?.nickname || page.quote.child?.name} (5 yrs)
+                  {" "}
+                  <br />
                   {new Date(page.quote.date).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
                     year: "numeric",
-                  })} at Home
+                  })}
+                  {page.quote.location ? ` at ${page.quote.location}` : ""}
                 </div>
               </div>
               <div class="image-section">
@@ -309,26 +303,28 @@ export default function PageRenderer(
                 <h3>"{page.quote.text}"</h3>
                 <div class="meta-row">
                   <span class="author-name">
-                    {page.quote.child?.name} (5 yrs)
+                    {page.quote.child?.nickname || page.quote.child?.name}{" "}
+                    (5 yrs)
                   </span>
                   <span class="author-date">
                     {new Date(page.quote.date).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
                       year: "numeric",
-                    })} at Home
+                    })}
+                    {page.quote.location ? ` at ${page.quote.location}` : ""}
                   </span>
                 </div>
               </div>
               <div class="top-pill">
-                <div class="pill-avatar">
-                  <img
-                    src={page.quote?.child?.avatar_url ||
-                      "https://placehold.co/100x100/A020F0/FFF"}
-                    alt="Child Avatar"
-                  />
-                </div>
-                <span class="pill-name">{page.quote.child?.name}</span>
+                {page.quote?.child?.avatar_url && (
+                  <div class="pill-avatar">
+                    <img src={page.quote.child.avatar_url} alt="Child Avatar" />
+                  </div>
+                )}
+                <span class="pill-name">
+                  {page.quote.child?.nickname || page.quote.child?.name}
+                </span>
               </div>
             </>
           )}
@@ -336,39 +332,42 @@ export default function PageRenderer(
         {/* --- 7. Quote only, centered --- */}
         {page.layout_style === "quote_only_centered" && page.quote && (
           <>
-            <div class="avatar-container">
-              <img
-                src={page.quote?.child?.avatar_url ||
-                  "https://placehold.co/200x200/ddd/999"}
-                alt="Child Avatar"
-              />
-            </div>
+            {page.quote?.child?.avatar_url && (
+              <div class="avatar-container">
+                <img src={page.quote.child.avatar_url} alt="Child Avatar" />
+              </div>
+            )}
             <div class="quote-section">
-              <h3>"{page.quote.text}"</h3>
+              <h3>"{page.quote.text.trim()}"</h3>
               <div class="author-name">
-                {page.quote.child?.name} (5 yrs)
+                {page.quote.child?.nickname || page.quote.child?.name} (5 yrs)
               </div>
             </div>
             {page.quote.context && page.show_context !== false && (
               <div class="context-bar">
-                <div class="parent-avatar">
-                  <img
-                    src={page.quote?.parent?.avatar_url ||
-                      "https://placehold.co/100x100/ccc/fff"}
-                    alt="Parent Avatar"
-                  />
+                <div class="context-row">
+                  {page.quote?.parent?.avatar_url && (
+                    <div class="parent-avatar">
+                      <img
+                        src={page.quote.parent.avatar_url}
+                        alt="Parent Avatar"
+                      />
+                    </div>
+                  )}
+                  <div class="text-container">
+                    <p class="context-text">
+                      {page.quote.context.trim()}
+                    </p>
+                    <span class="context-date">
+                      {new Date(page.quote.date).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                      {page.quote.location ? ` at ${page.quote.location}` : ""}
+                    </span>
+                  </div>
                 </div>
-                <p class="context-text">
-                  {page.quote.context ||
-                    `Where to even begin with this one. I was just sitting there, looking at Facebook on my phone, when all of a sudden she says this. I was disturbed, but it also made me think.`}
-                </p>
-                <span class="context-date">
-                  {new Date(page.quote.date).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
               </div>
             )}
           </>

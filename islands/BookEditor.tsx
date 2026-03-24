@@ -321,7 +321,19 @@ export default function BookEditor(
 ) {
   const [format, setFormat] = useState<BookFormat>(initialFormat);
   const [themeId, setThemeId] = useState(initialTheme);
-  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [currentPageIndex, setCurrentPageIndex] = useState(() => {
+    if (typeof sessionStorage !== "undefined") {
+      const saved = sessionStorage.getItem(`bookEditorPageIndex_${bookId}`);
+      if (saved) return parseInt(saved, 10);
+    }
+    return 0;
+  });
+
+  useEffect(() => {
+    if (typeof sessionStorage !== "undefined") {
+      sessionStorage.setItem(`bookEditorPageIndex_${bookId}`, currentPageIndex.toString());
+    }
+  }, [currentPageIndex, bookId]);
 
   // Initialize Supabase client locally in the island to avoid server-only dependencies
   const [supabase] = useState(() =>

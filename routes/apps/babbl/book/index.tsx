@@ -140,12 +140,14 @@ export default define.page(async function Book(ctx) {
                 child: Array.isArray(quoteData.child)
                   ? quoteData.child[0]
                   : quoteData.child,
-                parent: quoteData.parent && quoteData.parent[0]
-                  ? {
-                    name: quoteData.parent[0].full_name,
-                    avatar_url: quoteData.parent[0].avatar_url,
-                  }
-                  : undefined,
+                parent: (() => {
+                  const p = Array.isArray(quoteData.parent) 
+                    ? quoteData.parent[0] 
+                    : (quoteData.parent as any);
+                  return p && p.full_name
+                    ? { name: p.full_name, avatar_url: p.avatar_url }
+                    : undefined;
+                })(),
                 photo_url: quoteData.media_url || undefined,
               },
             };
