@@ -179,50 +179,56 @@
 
   /* --- 3. Circle Image --- */
   .layout-circle_image {
+    background: white;
+
     .bg-image {
       position: absolute;
       inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+      width: 130%;
+      height: 130%;
+      border-radius: 100em;
+      max-width: none;
+      left: -30%;
+      top: -60%;
+      border: 0.35em solid var(--babbl-accent-coral);
+      object-position: top;
+      overflow: hidden;
 
-    .gradient-overlay {
-      position: absolute;
-      inset: 0;
-      background-image: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.5),
-        transparent
-      );
+      img {
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+        position: relative;
+        top: 30%;
+      }
+
+      span {
+        color: black;
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding: 10em;
+        position: relative;
+        top: 35%;
+        left: 10%;
+      }
     }
 
     .content-card {
       position: absolute;
-      bottom: 1.5rem;
-      left: 1.5rem;
-      right: 1.5rem;
-      top: auto;
-      z-index: 10;
-      background-color: white;
-      border-radius: 1.5rem;
-      padding: 1.5rem;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      bottom: 0.45in;
+      left: 0.5in;
+      right: 0.5in;
     }
 
     .avatar-container {
       position: absolute;
-      top: -1.5rem;
-      right: -0.5rem;
-      width: 4rem;
-      height: 4rem;
+      top: -12em;
+      right: 0.5em;
+      width: 7em;
+      height: 7em;
       border-radius: 9999px;
-      border: 4px solid white;
       overflow: hidden;
-      box-shadow:
-        0 10px 15px -3px rgba(0, 0, 0, 0.1),
-        0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      background-color: white;
 
       img {
         width: 100%;
@@ -232,36 +238,40 @@
     }
 
     h3 {
-      font-family: "Fredoka", sans-serif;
+      font-family: "Charter", sans-serif;
       color: var(--babbl-text-primary);
-      line-height: 1.375;
-      margin-bottom: 1rem;
-      padding-right: 2.5rem;
+      line-height: 1.25;
+      margin-bottom: 1em;
+      font-weight: bold;
+      text-align: right;
+      font-size: 2.5em;
+      position: absolute;
+      top: -1.5em;
     }
 
     .meta-container {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.5em;
     }
 
     .meta-date {
       color: var(--babbl-accent-coral);
       font-weight: bold;
-      font-size: 0.875rem;
+      font-size: 0.875em;
     }
 
     .meta-separator {
       color: var(--babbl-accent-coral);
       opacity: 0.5;
-      margin-left: 0.25rem;
-      margin-right: 0.25rem;
+      margin-left: 0.25em;
+      margin-right: 0.25em;
     }
 
     .meta-author {
       color: var(--babbl-text-primary);
       font-weight: bold;
-      font-size: 0.875rem;
+      font-size: 0.875em;
     }
   }
 
@@ -688,8 +698,8 @@
   .layout-quote_only_centered {
     background-color: white;
     align-items: center;
-    padding: 2em 4em 5em 3em;
-    gap: 1.5em;
+    padding: 0 4em 5em 3em;
+    gap: 0.75em;
     justify-content: center;
 
     .avatar-container {
@@ -712,12 +722,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 1.5em;
+      gap: 1em;
+      font-size: 1.25em;
     }
 
     h3 {
       color: var(--babbl-text-primary);
-      line-height: 1.375;
+      line-height: 1.25;
       text-align: center;
       font-size: 1.5em;
     }
@@ -726,7 +737,6 @@
       color: var(--babbl-accent-coral);
       font-weight: bold;
       text-align: center;
-      letter-spacing: 0.1em;
     }
 
     .context-bar {
@@ -740,7 +750,7 @@
       display: flex;
       justify-content: flex-end;
       flex-direction: column;
-      padding: 2.85em 3em 0.45in;
+      padding: 3.15em 3em 0.45in;
 
       .context-row {
         display: flex;
@@ -757,8 +767,8 @@
       }
 
       .parent-avatar {
-        width: 2em;
-        height: 2em;
+        width: 2.5em;
+        height: 2.5em;
         border-radius: 9999px;
         overflow: hidden;
         margin-right: 0.75em;
@@ -774,7 +784,7 @@
 
       .context-text {
         color: white;
-        font-size: 0.575em;
+        font-size: 0.6em;
         line-height: 1.25;
         flex: 1;
       }
@@ -782,7 +792,7 @@
       .context-date {
         color: var(--babbl-accent-dark);
         font-weight: bold;
-        font-size: 0.575em;
+        font-size: 0.6em;
         margin-left: 1em;
         flex-shrink: 0;
         background-color: rgba(255, 255, 255, 0.9);

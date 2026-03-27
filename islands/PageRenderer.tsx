@@ -114,13 +114,16 @@ export default function PageRenderer(
         {/* --- 1. Circle Image --- */}
         {page.layout_style === "circle_image" && page.quote && (
           <>
-            <img
-              src={page.quote?.photo_url ||
-                "https://placehold.co/600x600/ddd/999"}
-              alt="Background"
-              class="bg-image"
-            />
-            <div class="gradient-overlay" />
+            <div class="bg-image">
+              {page.quote?.photo_url
+                ? <img src={page.quote.photo_url} alt="Background" />
+                : (
+                  <span>
+                    This Babbl doesn't have an image. Please select a different
+                    page layout, or add an image to the Babbl.
+                  </span>
+                )}
+            </div>
             <div class="content-card">
               {page.quote?.child?.avatar_url && (
                 <div class="avatar-container">
@@ -131,6 +134,11 @@ export default function PageRenderer(
                 </div>
               )}
               <h3>"{page.quote.text}"</h3>
+              {page.quote.context && (
+                <div class="context-box">
+                  <p class="context-text">{page.quote.context}</p>
+                </div>
+              )}
               <div class="meta-container">
                 <span class="meta-date">
                   {new Date(page.quote.date).toLocaleDateString(undefined, {

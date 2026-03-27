@@ -76,6 +76,7 @@ export default define.page(async function Book(ctx) {
             child:children (
               id,
               name,
+              nickname,
               avatar_url
             ),
             parent:profiles!recorded_by (
@@ -97,7 +98,7 @@ export default define.page(async function Book(ctx) {
         quote_text: string;
         context: string | null;
         quote_date: string;
-        child: Array<{ id: string; name: string; avatar_url: string | null }>;
+        child: Array<{ id: string; name: string; nickname: string | null; avatar_url: string | null }>;
         parent: Array<{ full_name: string; avatar_url: string | null }>;
         media_url: string | null;
       }
