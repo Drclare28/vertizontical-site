@@ -133,7 +133,30 @@ export default function PageRenderer(
                   />
                 </div>
               )}
-              <h3>"{page.quote.text}"</h3>
+              <h3
+                style={{
+                  fontSize: `${
+                    Math.max(
+                      1.0,
+                      Math.min(2.5, 60 / (page.quote.text.length + 2)),
+                    )
+                  }em`,
+                  top: `-${
+                    3.5 /
+                    Math.max(
+                      1.0,
+                      Math.min(2.5, 60 / (page.quote.text.length + 2)),
+                    )
+                  }em`,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  whiteSpace: "normal",
+                }}
+              >
+                "{page.quote.text}"
+              </h3>
               {page.quote.context && (
                 <div class="context-box">
                   <p class="context-text">{page.quote.context}</p>

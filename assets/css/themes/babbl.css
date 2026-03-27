@@ -247,6 +247,7 @@
       font-size: 2.5em;
       position: absolute;
       top: -1.5em;
+      right: 0.2in;
     }
 
     .meta-container {
@@ -257,21 +258,18 @@
 
     .meta-date {
       color: var(--babbl-accent-coral);
-      font-weight: bold;
-      font-size: 0.875em;
+      font-size: 0.75em;
     }
 
     .meta-separator {
       color: var(--babbl-accent-coral);
       opacity: 0.5;
-      margin-left: 0.25em;
-      margin-right: 0.25em;
+      margin-top: -0.25em;
     }
 
     .meta-author {
-      color: var(--babbl-text-primary);
-      font-weight: bold;
-      font-size: 0.875em;
+      color: var(--babbl-accent-coral);
+      font-size: 0.75em;
     }
   }
 
