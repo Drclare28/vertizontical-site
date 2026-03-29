@@ -478,6 +478,19 @@ export default function BookEditor(
     }
   };
 
+  const handleFormatChange = async (newFormat: BookFormat) => {
+    setFormat(newFormat);
+    try {
+      const { error } = await supabase.from("books").update({
+        book_size: newFormat,
+      }).eq("id", bookId);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Save Format Error:", err);
+      setFormat(format);
+    }
+  };
+
   const handleLayoutChange = async (newLayout: string) => {
     const currentPage = localPages[currentPageIndex];
     if (!currentPage.quote) return;
@@ -568,7 +581,7 @@ export default function BookEditor(
         <div class="flex bg-gray-100/50 backdrop-blur-sm p-1 rounded-2xl shadow-inner border border-gray-200/50 h-14 items-center shrink-0">
           <button
             type="button"
-            onClick={() => setFormat("mini")}
+            onClick={() => handleFormatChange("mini")}
             class={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 h-full rounded-xl text-xs font-bold transition-all ${
               format === "mini"
                 ? "bg-white text-[#9B51E0] shadow-sm"
@@ -583,7 +596,7 @@ export default function BookEditor(
           </button>
           <button
             type="button"
-            onClick={() => setFormat("classic")}
+            onClick={() => handleFormatChange("classic")}
             class={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 h-full rounded-xl text-xs font-bold transition-all ${
               format === "classic"
                 ? "bg-white text-[#9B51E0] shadow-sm"

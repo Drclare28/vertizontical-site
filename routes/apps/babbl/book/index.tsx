@@ -111,6 +111,7 @@ export default define.page(async function Book(ctx) {
           theme: book.theme_id,
           status: book.status,
           created_at: book.created_at,
+          format: book.book_size || "mini",
         },
         pages: [
           {
@@ -272,7 +273,7 @@ export default define.page(async function Book(ctx) {
       </Head>
       <main class="flex-1 overflow-hidden relative">
         <BookEditor
-          initialFormat="mini"
+          initialFormat={payload.book.format as any}
           initialTheme={payload.book.theme}
           pages={payload.pages}
           bookId={bookId!}

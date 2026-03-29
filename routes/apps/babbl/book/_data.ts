@@ -36,6 +36,7 @@ export interface BookMetadata {
   theme: string;
   status: string;
   created_at: string;
+  format: BookFormat;
 }
 
 export interface BookPayload {
