@@ -42,7 +42,7 @@ interface CustomSelectProps {
   openDirection?: "up" | "down";
 }
 
-const SVG_ICONS: Record<string, (props: any) => JSX.Element> = {
+const SVG_ICONS: Record<string, (props: JSX.SVGAttributes<SVGSVGElement>) => JSX.Element> = {
   "babbl-bubble-icon": (props) => (
     <svg {...props} fill="none" viewBox="0 0 40 32" xmlns="http://www.w3.org/2000/svg">
       <path d="M20 0C31.0457 1.5839e-05 40 6.96939 40 15.5664C40 21.7578 36.1305 25.2735 31.4756 27.4033L32.9131 30.0029C33.3859 30.8586 32.4767 31.8144 31.5986 31.3848L26.8613 29.0635C24.5828 29.7099 22.3493 30.1438 20.4814 30.4932C5.66259 33.2649 5.04334e-05 24.1633 0 15.5664C0 6.96938 4.69879 0 20 0Z" fill="currentColor"/>
@@ -561,7 +561,7 @@ export default function BookEditor(
     { label: "Quote only, centered", value: "quote_only_centered", icon: "text-outline" },
   ];
 
-  const allowsContextToggle = ["quote_top_image_bottom", "full_page_photo_quote_centered", "full_width_photo_top_quote_bottom", "quote_only_centered"].includes(effectiveLayoutStyle) && !!currentPage.quote?.context;
+  const allowsContextToggle = ["quote_top_image_bottom", "full_page_photo_quote_centered", "quote_only_centered"].includes(effectiveLayoutStyle) && !!currentPage.quote?.context;
 
   return (
     <div class="flex flex-col items-center w-full h-full bg-[#FDFDFD] overflow-hidden font-['Rosario']">

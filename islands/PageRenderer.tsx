@@ -4,6 +4,23 @@ import {
   BookPageData,
 } from "../routes/apps/babbl/book/_data.ts";
 
+function getAgeLabel(dobString?: string, quoteDateString?: string) {
+  if (!dobString || !quoteDateString) return "";
+  const dob = new Date(dobString);
+  const quoteDate = new Date(quoteDateString);
+  if (isNaN(dob.getTime()) || isNaN(quoteDate.getTime())) return "";
+
+  let age = quoteDate.getFullYear() - dob.getFullYear();
+  const m = quoteDate.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && quoteDate.getDate() < dob.getDate())) {
+    age--;
+  }
+
+  if (age < 0) return "";
+  if (age === 0) return " (< 1 yr)";
+  return ` (${age} yr${age > 1 ? "s" : ""})`;
+}
+
 interface PageRendererProps {
   format: BookFormat;
   page: BookPageData;
@@ -173,7 +190,11 @@ export default function PageRenderer(
                 </span>
                 <span class="meta-separator">-</span>
                 <span class="meta-author">
-                  {page.quote.child?.nickname || page.quote.child?.name} (5 yrs)
+                  {page.quote.child?.nickname || page.quote.child?.name}
+                  {getAgeLabel(
+                    page.quote.child?.date_of_birth,
+                    page.quote.date,
+                  )}
                 </span>
               </div>
             </div>
@@ -183,14 +204,16 @@ export default function PageRenderer(
         {/* --- 2. Quote top, image bottom --- */}
         {page.layout_style === "quote_top_image_bottom" && page.quote && (
           <>
-            {page.quote?.photo_url && (
-              <div class="image-section">
-                <img
-                  src={page.quote.photo_url}
-                  alt="Top Photo"
-                />
-              </div>
-            )}
+            <div class="image-section">
+              {page.quote?.photo_url
+                ? <img src={page.quote.photo_url} alt="Top Photo" />
+                : (
+                  <span>
+                    This Babbl doesn't have an image. Please select a different
+                    page layout, or add an image to the Babbl.
+                  </span>
+                )}
+            </div>
             <div class="quote-section">
               {page.quote?.child?.avatar_url && (
                 <div class="avatar-container">
@@ -232,17 +255,29 @@ export default function PageRenderer(
                   </div>
                 )}
                 <span class="author-name">
-                  {page.quote.child?.nickname || page.quote.child?.name} (5 yrs)
+                  {page.quote.child?.nickname || page.quote.child?.name}
+                  {getAgeLabel(
+                    page.quote.child?.date_of_birth,
+                    page.quote.date,
+                  )}
                 </span>
               </div>
               <div class="image-section">
                 <div class="ellipse-clip" />
-                <img
-                  src={page.quote?.photo_url ||
-                    "https://placehold.co/600x400/ddd/999"}
-                  alt="Bottom Photo"
-                  class="main-photo"
-                />
+                {page.quote?.photo_url
+                  ? (
+                    <img
+                      src={page.quote.photo_url}
+                      alt="Bottom Photo"
+                      class="main-photo"
+                    />
+                  )
+                  : (
+                    <span>
+                      This Babbl doesn't have an image. Please select a
+                      different page layout, or add an image to the Babbl.
+                    </span>
+                  )}
               </div>
             </>
           )}
@@ -252,30 +287,32 @@ export default function PageRenderer(
           page.quote && (
           <>
             <div class="image-section">
-              <img
-                src={page.quote?.photo_url ||
-                  "https://placehold.co/600x500/ddd/999"}
-                alt="Main Photo"
-              />
+              {page.quote?.photo_url
+                ? <img src={page.quote.photo_url} alt="Main Photo" />
+                : (
+                  <span>
+                    This Babbl doesn't have an image. Please select a different
+                    page layout, or add an image to the Babbl.
+                  </span>
+                )}
             </div>
             <div class="quote-section">
               <h3>"{page.quote.text}"</h3>
-              {page.quote.context && page.show_context !== false && (
-                <p class="context-text">{page.quote.context}</p>
-              )}
+              <span class="meta-date">
+                {new Date(page.quote.date).toLocaleDateString(undefined, {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+                {page.quote.location ? ` at ${page.quote.location}` : ""}
+              </span>
               <div class="author-row">
                 <div class="author-details">
-                  {page.quote.child?.nickname || page.quote.child?.name} (5 yrs)
-                  {" "}
-                  <br />
-                  <span class="author-meta">
-                    {new Date(page.quote.date).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                    {page.quote.location ? ` at ${page.quote.location}` : ""}
-                  </span>
+                  {page.quote.child?.nickname || page.quote.child?.name}
+                  {getAgeLabel(
+                    page.quote.child?.date_of_birth,
+                    page.quote.date,
+                  )}
                 </div>
                 {page.quote?.child?.avatar_url && (
                   <div class="author-avatar">
@@ -299,9 +336,11 @@ export default function PageRenderer(
                 )}
                 <h3>"{page.quote.text}"</h3>
                 <div class="author-details">
-                  {page.quote.child?.nickname || page.quote.child?.name} (5 yrs)
-                  {" "}
-                  <br />
+                  {page.quote.child?.nickname || page.quote.child?.name}
+                  {getAgeLabel(
+                    page.quote.child?.date_of_birth,
+                    page.quote.date,
+                  )} <br />
                   {new Date(page.quote.date).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
@@ -311,11 +350,14 @@ export default function PageRenderer(
                 </div>
               </div>
               <div class="image-section">
-                <img
-                  src={page.quote?.photo_url ||
-                    "https://placehold.co/600x600/ddd/999"}
-                  alt="Action Photo"
-                />
+                {page.quote?.photo_url
+                  ? <img src={page.quote.photo_url} alt="Action Photo" />
+                  : (
+                    <span>
+                      This Babbl doesn't have an image. Please select a
+                      different page layout, or add an image to the Babbl.
+                    </span>
+                  )}
               </div>
             </>
           )}
@@ -324,18 +366,25 @@ export default function PageRenderer(
         {page.layout_style === "photo_window_top_quote_bottom" && page.quote &&
           (
             <>
-              <img
-                src={page.quote?.photo_url ||
-                  "https://placehold.co/600x800/ddd/999"}
-                alt="Background"
-                class="bg-photo"
-              />
+              <div class="bg-photo">
+                {page.quote?.photo_url
+                  ? <img src={page.quote.photo_url} alt="Background" />
+                  : (
+                    <span>
+                      This Babbl doesn't have an image. Please select a
+                      different page layout, or add an image to the Babbl.
+                    </span>
+                  )}
+              </div>
               <div class="quote-card">
                 <h3>"{page.quote.text}"</h3>
                 <div class="meta-row">
                   <span class="author-name">
-                    {page.quote.child?.nickname || page.quote.child?.name}{" "}
-                    (5 yrs)
+                    {page.quote.child?.nickname || page.quote.child?.name}
+                    {getAgeLabel(
+                      page.quote.child?.date_of_birth,
+                      page.quote.date,
+                    )}
                   </span>
                   <span class="author-date">
                     {new Date(page.quote.date).toLocaleDateString(undefined, {
@@ -370,8 +419,9 @@ export default function PageRenderer(
             )}
             <div class="quote-section">
               <h3>"{page.quote.text.trim()}"</h3>
-              <div class="author-name">
-                {page.quote.child?.nickname || page.quote.child?.name} (5 yrs)
+              <div class="author-details">
+                {page.quote.child?.nickname || page.quote.child?.name}
+                {getAgeLabel(page.quote.child?.date_of_birth, page.quote.date)}
               </div>
             </div>
             {page.quote.context && page.show_context !== false && (

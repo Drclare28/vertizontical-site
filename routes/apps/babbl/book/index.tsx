@@ -2,7 +2,7 @@ import { Head } from "fresh/runtime";
 import { RouteConfig } from "fresh";
 import { define } from "../../../../utils.ts";
 import BookEditor from "../../../../islands/BookEditor.tsx";
-import { BookPageData, BookPayload } from "./_data.ts";
+import { BookFormat, BookPageData, BookPayload } from "./_data.ts";
 import { getSupabaseClient } from "../../../../lib/supabase.ts";
 
 export const config: RouteConfig = {
@@ -73,10 +73,12 @@ export default define.page(async function Book(ctx) {
             quote_text,
             context,
             quote_date,
+            location_name,
             child:children (
               id,
               name,
               nickname,
+              date_of_birth,
               avatar_url
             ),
             parent:profiles!recorded_by (
@@ -98,7 +100,8 @@ export default define.page(async function Book(ctx) {
         quote_text: string;
         context: string | null;
         quote_date: string;
-        child: Array<{ id: string; name: string; nickname: string | null; avatar_url: string | null }>;
+        location_name: string | null;
+        child: Array<{ id: string; name: string; nickname: string | null; date_of_birth: string | null; avatar_url: string | null }>;
         parent: Array<{ full_name: string; avatar_url: string | null }>;
         media_url: string | null;
       }
@@ -138,6 +141,7 @@ export default define.page(async function Book(ctx) {
                 id: quoteData.id,
                 text: quoteData.quote_text,
                 context: quoteData.context || undefined,
+                location: quoteData.location_name || undefined,
                 date: quoteData.quote_date,
                 child: Array.isArray(quoteData.child)
                   ? quoteData.child[0]
@@ -145,7 +149,7 @@ export default define.page(async function Book(ctx) {
                 parent: (() => {
                   const p = Array.isArray(quoteData.parent) 
                     ? quoteData.parent[0] 
-                    : (quoteData.parent as any);
+                    : (quoteData.parent as unknown as { full_name: string; avatar_url: string | null } | undefined);
                   return p && p.full_name
                     ? { name: p.full_name, avatar_url: p.avatar_url }
                     : undefined;
@@ -273,7 +277,7 @@ export default define.page(async function Book(ctx) {
       </Head>
       <main class="flex-1 overflow-hidden relative">
         <BookEditor
-          initialFormat={payload.book.format as any}
+          initialFormat={payload.book.format as BookFormat}
           initialTheme={payload.book.theme}
           pages={payload.pages}
           bookId={bookId!}

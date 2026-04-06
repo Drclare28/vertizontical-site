@@ -8,6 +8,7 @@ export interface BabblQuote {
     id: string;
     name: string;
     nickname?: string;
+    date_of_birth?: string;
     avatar_url?: string;
   };
   parent?: {
