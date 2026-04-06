@@ -42,10 +42,21 @@ interface CustomSelectProps {
   openDirection?: "up" | "down";
 }
 
-const SVG_ICONS: Record<string, (props: JSX.SVGAttributes<SVGSVGElement>) => JSX.Element> = {
+const SVG_ICONS: Record<
+  string,
+  (props: JSX.SVGAttributes<SVGSVGElement>) => JSX.Element
+> = {
   "babbl-bubble-icon": (props) => (
-    <svg {...props} fill="none" viewBox="0 0 40 32" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20 0C31.0457 1.5839e-05 40 6.96939 40 15.5664C40 21.7578 36.1305 25.2735 31.4756 27.4033L32.9131 30.0029C33.3859 30.8586 32.4767 31.8144 31.5986 31.3848L26.8613 29.0635C24.5828 29.7099 22.3493 30.1438 20.4814 30.4932C5.66259 33.2649 5.04334e-05 24.1633 0 15.5664C0 6.96938 4.69879 0 20 0Z" fill="currentColor"/>
+    <svg
+      {...props}
+      fill="none"
+      viewBox="0 0 40 32"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M20 0C31.0457 1.5839e-05 40 6.96939 40 15.5664C40 21.7578 36.1305 25.2735 31.4756 27.4033L32.9131 30.0029C33.3859 30.8586 32.4767 31.8144 31.5986 31.3848L26.8613 29.0635C24.5828 29.7099 22.3493 30.1438 20.4814 30.4932C5.66259 33.2649 5.04334e-05 24.1633 0 15.5664C0 6.96938 4.69879 0 20 0Z"
+        fill="currentColor"
+      />
     </svg>
   ),
   "color-wand-outline": (props) => (
@@ -228,7 +239,15 @@ function Icon({ name, class: className, style }: {
 }
 
 function CustomSelect(
-  { value, options, onChange, icon, placeholder, disabled, openDirection = "up" }: CustomSelectProps,
+  {
+    value,
+    options,
+    onChange,
+    icon,
+    placeholder,
+    disabled,
+    openDirection = "up",
+  }: CustomSelectProps,
 ) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -275,7 +294,11 @@ function CustomSelect(
       </button>
 
       {isOpen && !disabled && (
-        <div class={`absolute ${openDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"} left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden`}>
+        <div
+          class={`absolute ${
+            openDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
+          } left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden`}
+        >
           <div class="max-h-96 overflow-y-auto py-2 custom-scrollbar">
             {options.map((opt) => (
               <button
@@ -331,7 +354,10 @@ export default function BookEditor(
 
   useEffect(() => {
     if (typeof sessionStorage !== "undefined") {
-      sessionStorage.setItem(`bookEditorPageIndex_${bookId}`, currentPageIndex.toString());
+      sessionStorage.setItem(
+        `bookEditorPageIndex_${bookId}`,
+        currentPageIndex.toString(),
+      );
     }
   }, [currentPageIndex, bookId]);
 
@@ -376,7 +402,10 @@ export default function BookEditor(
   }, [pages]);
 
   const uniqueChildren = useMemo(() => {
-    const childrenMap = new Map<string, { id: string; name: string; avatar_url?: string }>();
+    const childrenMap = new Map<
+      string,
+      { id: string; name: string; avatar_url?: string }
+    >();
     pages.forEach((p) => {
       if (p.quote?.child && !childrenMap.has(p.quote.child.id)) {
         childrenMap.set(p.quote.child.id, p.quote.child);
@@ -553,22 +582,51 @@ export default function BookEditor(
 
   const layoutOptions = [
     { label: "Circle Image", value: "circle_image", icon: "image-outline" },
-    { label: "Quote top, image bottom", value: "quote_top_image_bottom", icon: "reorder-two-outline" },
-    { label: "Full page photo, quote centered", value: "full_page_photo_quote_centered", icon: "image-outline" },
-    { label: "Full width photo top, quote bottom", value: "full_width_photo_top_quote_bottom", icon: "reorder-two-outline" },
-    { label: "Full screen photo, short quote", value: "full_screen_photo_short_quote", icon: "image-outline" },
-    { label: "Photo window top, quote bottom", value: "photo_window_top_quote_bottom", icon: "image-outline" },
-    { label: "Quote only, centered", value: "quote_only_centered", icon: "text-outline" },
+    {
+      label: "Quote top, image bottom",
+      value: "quote_top_image_bottom",
+      icon: "reorder-two-outline",
+    },
+    {
+      label: "Full page photo, quote centered",
+      value: "full_page_photo_quote_centered",
+      icon: "image-outline",
+    },
+    {
+      label: "Full width photo top, quote bottom",
+      value: "full_width_photo_top_quote_bottom",
+      icon: "reorder-two-outline",
+    },
+    {
+      label: "Full screen photo, short quote",
+      value: "full_screen_photo_short_quote",
+      icon: "image-outline",
+    },
+    {
+      label: "Photo window top, quote bottom",
+      value: "photo_window_top_quote_bottom",
+      icon: "image-outline",
+    },
+    {
+      label: "Quote only, centered",
+      value: "quote_only_centered",
+      icon: "text-outline",
+    },
   ];
 
-  const allowsContextToggle = ["quote_top_image_bottom", "full_page_photo_quote_centered", "quote_only_centered"].includes(effectiveLayoutStyle) && !!currentPage.quote?.context;
+  const allowsContextToggle =
+    [
+      "quote_top_image_bottom",
+      "full_page_photo_quote_centered",
+      "quote_only_centered",
+    ].includes(effectiveLayoutStyle) && !!currentPage.quote?.context;
 
   return (
     <div class="flex flex-col items-center w-full h-full bg-[#FDFDFD] overflow-hidden font-['Rosario']">
       {/* HEADER: Format Toggle */}
       <header class="w-full max-w-xl mx-auto px-6 pt-4 pb-2 flex justify-start items-center gap-2 md:gap-4 relative z-60 shrink-0">
         <div class="flex-1 min-w-32 bg-gray-100/50 backdrop-blur-sm rounded-2xl shadow-inner border border-gray-200/50">
-           <CustomSelect
+          <CustomSelect
             value={themeId}
             options={themeOptions}
             onChange={handleThemeChange}
@@ -621,7 +679,9 @@ export default function BookEditor(
         onTouchEnd={handleTouchEnd}
       >
         <div
-          class={`relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] bg-white ${animationClass} ${isMounted ? "transition-all duration-300" : ""}`}
+          class={`relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] bg-white ${animationClass} ${
+            isMounted ? "transition-all duration-300" : ""
+          }`}
           style={{
             width: `${dimensions.widthInches * 96 * scale}px`,
             height: `${dimensions.heightInches * 96 * scale}px`,
@@ -661,18 +721,24 @@ export default function BookEditor(
                 placeholder="Select Layout"
               />
             </div>
-          
+
             {allowsContextToggle && (
               <label class="shrink-0 flex items-center justify-center gap-2 md:gap-3 bg-white/80 backdrop-blur-md border border-gray-200/50 h-14 px-3 md:px-4 rounded-xl cursor-pointer hover:bg-white/90 transition-colors shadow-sm">
-                <span class="text-sm font-bold text-gray-700 capitalize">Context</span>
+                <span class="text-sm font-bold text-gray-700 capitalize">
+                  Context
+                </span>
                 <div class="relative inline-flex items-center">
-                  <input 
-                    type="checkbox" 
-                    class="sr-only peer" 
+                  <input
+                    type="checkbox"
+                    class="sr-only peer"
                     checked={currentPage.show_context !== false}
-                    onChange={(e) => handleContextChange((e.target as HTMLInputElement).checked)}
+                    onChange={(e) =>
+                      handleContextChange(
+                        (e.target as HTMLInputElement).checked,
+                      )}
                   />
-                  <div class="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[16px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#9B51E0]"></div>
+                  <div class="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-[16px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#9B51E0]">
+                  </div>
                 </div>
               </label>
             )}
@@ -692,9 +758,9 @@ export default function BookEditor(
               <Icon name="chevron-back-outline" />
             </button>
             <div class="flex-1 flex items-center justify-center h-full min-w-16 px-2 truncate">
-               <span class="text-xs font-bold text-gray-700 whitespace-nowrap">
-                  {currentPageIndex + 1} / {localPages.length}
-               </span>
+              <span class="text-xs font-bold text-gray-700 whitespace-nowrap">
+                {currentPageIndex + 1} / {localPages.length}
+              </span>
             </div>
             <button
               type="button"

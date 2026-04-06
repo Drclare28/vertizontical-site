@@ -242,12 +242,6 @@ export default function PageRenderer(
         {page.layout_style === "full_page_photo_quote_centered" && page.quote &&
           (
             <>
-              <div class="quote-section">
-                <h3>"{page.quote.text}"</h3>
-                {page.quote.context && page.show_context !== false && (
-                  <p class="context-text">{page.quote.context}</p>
-                )}
-              </div>
               <div class="author-pill">
                 {page.quote?.child?.avatar_url && (
                   <div class="author-avatar">
@@ -262,8 +256,40 @@ export default function PageRenderer(
                   )}
                 </span>
               </div>
+              <div class="quote-section">
+                <h3>"{page.quote.text}"</h3>
+              </div>
+              {page.quote.context && page.show_context !== false && (
+                <div class="context-container">
+                  <p class="context-text">{page.quote.context}</p>
+                  <div class="meta-row">
+                    {page.quote.parent?.avatar_url && (
+                      <div class="parent-avatar">
+                        <img
+                          src={page.quote.parent.avatar_url}
+                          alt="Parent"
+                        />
+                      </div>
+                    )}
+                    <div class="meta-details">
+                      <span class="meta-date">
+                        {new Date(page.quote.date).toLocaleDateString(
+                          undefined,
+                          {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          },
+                        )}
+                        {page.quote.location
+                          ? ` at ${page.quote.location}`
+                          : ""}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div class="image-section">
-                <div class="ellipse-clip" />
                 {page.quote?.photo_url
                   ? (
                     <img
