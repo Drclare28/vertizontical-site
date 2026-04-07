@@ -355,24 +355,33 @@ export default function PageRenderer(
           (
             <>
               <div class="quote-section">
-                {page.quote?.child?.avatar_url && (
-                  <div class="avatar-container">
-                    <img src={page.quote.child.avatar_url} alt="Child Avatar" />
+                <div class="main-text">
+                  <h3>"{page.quote.text}"</h3>
+                  <div class="meta-row">
+                    {new Date(page.quote.date).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                    {page.quote.location ? ` at ${page.quote.location}` : ""}
                   </div>
-                )}
-                <h3>"{page.quote.text}"</h3>
-                <div class="author-details">
-                  {page.quote.child?.nickname || page.quote.child?.name}
-                  {getAgeLabel(
-                    page.quote.child?.date_of_birth,
-                    page.quote.date,
-                  )} <br />
-                  {new Date(page.quote.date).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                  {page.quote.location ? ` at ${page.quote.location}` : ""}
+                </div>
+                <div class="author-pill">
+                  <span class="author-name">
+                    {page.quote.child?.nickname || page.quote.child?.name}
+                    {getAgeLabel(
+                      page.quote.child?.date_of_birth,
+                      page.quote.date,
+                    )}
+                  </span>
+                  {page.quote?.child?.avatar_url && (
+                    <div class="author-avatar">
+                      <img
+                        src={page.quote.child.avatar_url}
+                        alt="Child Avatar"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
               <div class="image-section">
