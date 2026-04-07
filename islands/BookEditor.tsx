@@ -619,6 +619,7 @@ export default function BookEditor(
       "quote_top_image_bottom",
       "full_page_photo_quote_centered",
       "quote_only_centered",
+      "photo_window_top_quote_bottom",
     ].includes(effectiveLayoutStyle) && !!currentPage.quote?.context;
 
   return (

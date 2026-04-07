@@ -687,12 +687,12 @@
   /* --- 8. Photo window top, quote bottom --- */
   .layout-photo_window_top_quote_bottom {
     background-color: white;
+    display: flex;
+    flex-direction: column;
 
     .bg-photo {
-      position: absolute;
-      inset: 0;
       width: 100%;
-      height: 100%;
+      height: 65%;
 
       img {
         width: 100%;
@@ -702,16 +702,8 @@
     }
 
     .quote-card {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 45%;
       background-color: white;
-      border-top-left-radius: 100px;
-      border-top-right-radius: 100px;
-      box-shadow: 0 -10px 20px rgba(0, 0, 0, 0.1);
-      padding: 2.5rem 2rem;
+      padding: 2.5em 2em;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -722,13 +714,44 @@
       font-family: "Fredoka", sans-serif;
       color: var(--babbl-text-primary);
       line-height: 1.375;
-      margin-bottom: 1rem;
+      margin-bottom: 1em;
+    }
+
+    .context-container {
+      margin-top: 1em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75em;
+
+      .parent-avatar {
+        width: 1.5em;
+        height: 1.5em;
+        border-radius: 9999px;
+        overflow: hidden;
+        flex-shrink: 0;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+    }
+
+    .context-text {
+      color: var(--babbl-gray-600);
+      font-size: 0.75em;
+      font-style: italic;
+      margin: 0;
+      text-align: left;
     }
 
     .meta-row {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      justify-content: center;
+      gap: 0.75em;
 
       .author-name {
         color: var(--babbl-text-primary);
@@ -736,35 +759,27 @@
       }
 
       .author-date {
-        font-size: 0.75rem;
+        font-size: 0.75em;
         color: var(--babbl-gray-400);
       }
     }
 
-    .top-pill {
+    .author-pill {
       position: absolute;
-      top: 2rem;
-      left: 2rem;
-      background-color: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      padding: 0.5rem 1rem;
-      border-radius: 9999px;
-      box-shadow:
-        0 10px 15px -3px rgba(0, 0, 0, 0.1),
-        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      z-index: 20;
       display: flex;
       align-items: center;
+      padding: 0.5em 1em;
+      top: 0.35in;
+      right: 0.3in;
 
-      .pill-avatar {
-        width: 1.5rem;
-        height: 1.5rem;
+      .author-avatar {
+        width: 3.25em;
+        height: 3.25em;
         border-radius: 9999px;
         overflow: hidden;
-        margin-right: 0.5rem;
-        flex-shrink: 0;
-        border: 1px solid white;
+        border: 0.325em solid white;
+        position: relative;
 
         img {
           width: 100%;
@@ -773,12 +788,14 @@
         }
       }
 
-      .pill-name {
-        color: white;
-        font-weight: bold;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        font-size: 10px;
+      .author-name {
+        color: var(--babbl-accent-dark);
+        /* font-weight: bold; */
+        font-size: 0.75em;
+        background: white;
+        padding: 0.25em 2.3em 0.25em 1em;
+        border-radius: 9999px;
+        margin-right: -1.85em;
       }
     }
   }

@@ -414,13 +414,6 @@ export default function PageRenderer(
               <div class="quote-card">
                 <h3>"{page.quote.text}"</h3>
                 <div class="meta-row">
-                  <span class="author-name">
-                    {page.quote.child?.nickname || page.quote.child?.name}
-                    {getAgeLabel(
-                      page.quote.child?.date_of_birth,
-                      page.quote.date,
-                    )}
-                  </span>
                   <span class="author-date">
                     {new Date(page.quote.date).toLocaleDateString(undefined, {
                       month: "short",
@@ -430,16 +423,33 @@ export default function PageRenderer(
                     {page.quote.location ? ` at ${page.quote.location}` : ""}
                   </span>
                 </div>
-              </div>
-              <div class="top-pill">
-                {page.quote?.child?.avatar_url && (
-                  <div class="pill-avatar">
-                    <img src={page.quote.child.avatar_url} alt="Child Avatar" />
+                {page.quote.context && page.show_context !== false && (
+                  <div class="context-container">
+                    {page.quote.parent?.avatar_url && (
+                      <div class="parent-avatar">
+                        <img src={page.quote.parent.avatar_url} alt="Parent Avatar" />
+                      </div>
+                    )}
+                    <p class="context-text">{page.quote.context}</p>
                   </div>
                 )}
-                <span class="pill-name">
+              </div>
+              <div class="author-pill">
+                <span class="author-name">
                   {page.quote.child?.nickname || page.quote.child?.name}
+                  {getAgeLabel(
+                    page.quote.child?.date_of_birth,
+                    page.quote.date,
+                  )}
                 </span>
+                {page.quote?.child?.avatar_url && (
+                  <div class="author-avatar">
+                    <img
+                      src={page.quote.child.avatar_url}
+                      alt="Child Avatar"
+                    />
+                  </div>
+                )}
               </div>
             </>
           )}
