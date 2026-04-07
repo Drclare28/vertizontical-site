@@ -828,10 +828,13 @@
       text-align: center;
     }
 
+    .author-details {
+      color: var(--babbl-accent-coral);
+    }
+
     .context-bar {
       width: 100%;
       background-color: var(--babbl-accent-dark);
-      height: 4em;
       position: absolute;
       bottom: 0;
       left: 0;
@@ -839,7 +842,7 @@
       display: flex;
       justify-content: flex-end;
       flex-direction: column;
-      padding: 3.15em 3em 0.45in;
+      padding: 1em 3em 0.45in;
 
       .context-row {
         display: flex;
@@ -852,7 +855,7 @@
         display: flex;
         flex-direction: column;
         width: 100%;
-        gap: 0.25em;
+        gap: 0.5em;
       }
 
       .parent-avatar {
