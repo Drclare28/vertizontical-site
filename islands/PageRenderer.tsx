@@ -128,7 +128,7 @@ export default function PageRenderer(
           </>
         )}
 
-        {/* --- 1. Circle Image --- */}
+        {/* --- 3. Circle Image --- */}
         {page.layout_style === "circle_image" && page.quote && (
           <>
             <div class="bg-image">
@@ -201,7 +201,7 @@ export default function PageRenderer(
           </>
         )}
 
-        {/* --- 2. Quote top, image bottom --- */}
+        {/* --- 4. Quote top, image bottom --- */}
         {page.layout_style === "quote_top_image_bottom" && page.quote && (
           <>
             <div class="image-section">
@@ -238,7 +238,7 @@ export default function PageRenderer(
           </>
         )}
 
-        {/* --- 3. Full page photo, quote centered --- */}
+        {/* --- 5. Full page photo, quote centered --- */}
         {page.layout_style === "full_page_photo_quote_centered" && page.quote &&
           (
             <>
@@ -308,7 +308,7 @@ export default function PageRenderer(
             </>
           )}
 
-        {/* --- 4. Full width photo top, quote bottom --- */}
+        {/* --- 6. Full width photo top, quote bottom --- */}
         {page.layout_style === "full_width_photo_top_quote_bottom" &&
           page.quote && (
           <>
@@ -350,7 +350,7 @@ export default function PageRenderer(
           </>
         )}
 
-        {/* --- 5. Full screen photo, short quote --- */}
+        {/* --- 7. Full screen photo, short quote --- */}
         {page.layout_style === "full_screen_photo_short_quote" && page.quote &&
           (
             <>
@@ -388,7 +388,7 @@ export default function PageRenderer(
             </>
           )}
 
-        {/* --- 6. Photo window top, quote bottom --- */}
+        {/* --- 8. Photo window top, quote bottom --- */}
         {page.layout_style === "photo_window_top_quote_bottom" && page.quote &&
           (
             <>
@@ -435,7 +435,7 @@ export default function PageRenderer(
             </>
           )}
 
-        {/* --- 7. Quote only, centered --- */}
+        {/* --- 9. Quote only, centered --- */}
         {page.layout_style === "quote_only_centered" && page.quote && (
           <>
             {page.quote?.child?.avatar_url && (

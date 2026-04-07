@@ -9,6 +9,7 @@
   --babbl-primary-light: #e8c4e7;
   --babbl-card-bg: #ead5f0;
   --babbl-text-primary: #9663d7;
+  --babbl-text-primary-rgb: 150,99,215;
   --babbl-accent-dark: #c11079;
   --babbl-accent-coral: #ff6b6b;
   --babbl-accent-light: #ffb6c1;
@@ -374,46 +375,71 @@
     background-color: white;
 
     .quote-section {
-      height: 55%;
+      height: 100%;
       width: 100%;
       position: relative;
-      padding: 2em 2em 0;
+      padding: 0 15%;
       display: flex;
       flex-direction: column;
       justify-content: center;
     }
 
     h3 {
-      font-family: "Fredoka", sans-serif;
-      color: var(--babbl-text-primary);
-      line-height: 1.375;
+      font-family: "Charter", sans-serif;
+      color: var(--babbl-accent-dark);
+      line-height: 1.25;
       margin-bottom: 0.5em;
       z-index: 10;
+      font-size: 1.35em;
+      font-weight: bold;
+      filter: drop-shadow(0 0 0.25em white) drop-shadow(0 0 0.35em white)
+        drop-shadow(0 0 0.5em white) drop-shadow(0 0 1em white) drop-shadow(
+        0
+        0
+        2em
+        white
+      ) drop-shadow(0 0 3em white) drop-shadow(0 0 4em white) drop-shadow(
+        0
+        0
+        5em
+        white
+      );
+      margin-top: -1em;
     }
 
     .context-container {
       display: flex;
       flex-direction: column;
-      gap: 0.5em;
+      gap: 0.25em;
       z-index: 10;
       margin-bottom: 0.5em;
+      position: absolute;
+      background: rgba(var(--babbl-text-primary-rgb), 0.8);
+      color: white;
+      bottom: 0.45in;
+      right: 0;
+      padding: 0.35em 0.75em;
+      padding-right: 0.4in;
+      border-radius: 0.5em 0 0 0.5em;
+      backdrop-filter: blur(0.25em);
+      max-width: 75%;
+      line-height: 1.25;
     }
 
     .context-text {
-      color: var(--babbl-gray-600);
-      font-size: 0.75em;
-      font-style: italic;
+      font-size: 0.6em;
     }
 
     .meta-row {
       display: flex;
       align-items: center;
       gap: 0.5em;
+      justify-content: space-between;
     }
 
     .parent-avatar {
-      width: 1.5em;
-      height: 1.5em;
+      width: 1.25em;
+      height: 1.25em;
       border-radius: 9999px;
       overflow: hidden;
       flex-shrink: 0;
@@ -429,7 +455,8 @@
       display: flex;
       align-items: center;
       gap: 0.25em;
-      font-size: 0.65em;
+      font-size: 0.6em;
+      font-weight: bold;
     }
 
     .meta-parent {
