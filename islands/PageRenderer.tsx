@@ -135,7 +135,7 @@ export default function PageRenderer(
               {page.quote?.photo_url
                 ? <img src={page.quote.photo_url} alt="Background" />
                 : (
-                  <span>
+                  <span class="no-image-text">
                     This Babbl doesn't have an image. Please select a different
                     page layout, or add an image to the Babbl.
                   </span>
@@ -204,36 +204,53 @@ export default function PageRenderer(
         {/* --- 4. Quote top, image bottom --- */}
         {page.layout_style === "quote_top_image_bottom" && page.quote && (
           <>
-            <div class="image-section">
-              {page.quote?.photo_url
-                ? <img src={page.quote.photo_url} alt="Top Photo" />
-                : (
-                  <span>
-                    This Babbl doesn't have an image. Please select a different
-                    page layout, or add an image to the Babbl.
-                  </span>
-                )}
-            </div>
             <div class="quote-section">
               {page.quote?.child?.avatar_url && (
                 <div class="avatar-container">
                   <img src={page.quote.child.avatar_url} alt="Child Avatar" />
                 </div>
               )}
-              <h3>"{page.quote.text}"</h3>
-              <div class="meta-date">
-                {new Date(page.quote.date).toLocaleDateString(undefined, {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-                {page.quote.location ? ` at ${page.quote.location}` : ""}
+              <div class="quote-text">
+                <h3>"{page.quote.text}"</h3>
+                <div class="author-details">
+                  {page.quote.child?.nickname || page.quote.child?.name}
+                  {getAgeLabel(
+                    page.quote.child?.date_of_birth,
+                    page.quote.date,
+                  )}
+                </div>
+                <div class="meta-date">
+                  {new Date(page.quote.date).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                  {page.quote.location ? ` at ${page.quote.location}` : ""}
+                </div>
               </div>
               {page.quote.context && page.show_context !== false && (
                 <div class="context-box">
+                  {page.quote.parent?.avatar_url && (
+                    <div class="parent-avatar">
+                      <img
+                        src={page.quote.parent.avatar_url}
+                        alt="Parent Avatar"
+                      />
+                    </div>
+                  )}
                   <p class="context-text">{page.quote.context}</p>
                 </div>
               )}
+            </div>
+            <div class="image-section">
+              {page.quote?.photo_url
+                ? <img src={page.quote.photo_url} alt="Top Photo" />
+                : (
+                  <span class="no-image-text">
+                    This Babbl doesn't have an image. Please select a different
+                    page layout, or add an image to the Babbl.
+                  </span>
+                )}
             </div>
           </>
         )}
@@ -299,7 +316,7 @@ export default function PageRenderer(
                     />
                   )
                   : (
-                    <span>
+                    <span class="no-image-text">
                       This Babbl doesn't have an image. Please select a
                       different page layout, or add an image to the Babbl.
                     </span>
@@ -316,7 +333,7 @@ export default function PageRenderer(
               {page.quote?.photo_url
                 ? <img src={page.quote.photo_url} alt="Main Photo" />
                 : (
-                  <span>
+                  <span class="no-image-text">
                     This Babbl doesn't have an image. Please select a different
                     page layout, or add an image to the Babbl.
                   </span>
@@ -388,7 +405,7 @@ export default function PageRenderer(
                 {page.quote?.photo_url
                   ? <img src={page.quote.photo_url} alt="Action Photo" />
                   : (
-                    <span>
+                    <span class="no-image-text">
                       This Babbl doesn't have an image. Please select a
                       different page layout, or add an image to the Babbl.
                     </span>
@@ -405,7 +422,7 @@ export default function PageRenderer(
                 {page.quote?.photo_url
                   ? <img src={page.quote.photo_url} alt="Background" />
                   : (
-                    <span>
+                    <span class="no-image-text">
                       This Babbl doesn't have an image. Please select a
                       different page layout, or add an image to the Babbl.
                     </span>

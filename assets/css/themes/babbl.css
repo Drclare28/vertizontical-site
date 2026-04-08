@@ -702,6 +702,10 @@
         height: 100%;
         object-fit: cover;
       }
+
+      &:has(.no-image-text) {
+        min-height: 50%;
+      }
     }
 
     .quote-card {
@@ -737,6 +741,7 @@
       color: white;
       width: 100%;
       padding: 0.5em 9% 0.45in;
+      justify-content: space-between;
 
       .parent-avatar {
         width: 1.5em;
