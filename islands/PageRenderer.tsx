@@ -412,22 +412,27 @@ export default function PageRenderer(
                   )}
               </div>
               <div class="quote-card">
-                <h3>"{page.quote.text}"</h3>
-                <div class="meta-row">
-                  <span class="author-date">
-                    {new Date(page.quote.date).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                    {page.quote.location ? ` at ${page.quote.location}` : ""}
-                  </span>
+                <div class="quote-text">
+                  <h3>"{page.quote.text}"</h3>
+                  <div class="meta-row">
+                    <span class="author-date">
+                      {new Date(page.quote.date).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                      {page.quote.location ? ` at ${page.quote.location}` : ""}
+                    </span>
+                  </div>
                 </div>
                 {page.quote.context && page.show_context !== false && (
                   <div class="context-container">
                     {page.quote.parent?.avatar_url && (
                       <div class="parent-avatar">
-                        <img src={page.quote.parent.avatar_url} alt="Parent Avatar" />
+                        <img
+                          src={page.quote.parent.avatar_url}
+                          alt="Parent Avatar"
+                        />
                       </div>
                     )}
                     <p class="context-text">{page.quote.context}</p>
