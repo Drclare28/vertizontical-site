@@ -219,15 +219,19 @@ export default function PageRenderer(
                     page.quote.date,
                   )}
                 </div>
-                <div class="meta-date">
-                  {new Date(page.quote.date).toLocaleDateString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                  {page.quote.location ? ` at ${page.quote.location}` : ""}
-                </div>
+                {!(page.quote.context && page.show_context !== false) && (
+                  <div class="meta-date">
+                    {new Date(page.quote.date).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                    {page.quote.location ? ` at ${page.quote.location}` : ""}
+                  </div>
+                )}
               </div>
+            </div>
+            <div class="image-context-wrapper">
               {page.quote.context && page.show_context !== false && (
                 <div class="context-box">
                   {page.quote.parent?.avatar_url && (
@@ -239,18 +243,26 @@ export default function PageRenderer(
                     </div>
                   )}
                   <p class="context-text">{page.quote.context}</p>
+                  <div class="meta-date">
+                    {new Date(page.quote.date).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                    {page.quote.location ? ` at ${page.quote.location}` : ""}
+                  </div>
                 </div>
               )}
-            </div>
-            <div class="image-section">
-              {page.quote?.photo_url
-                ? <img src={page.quote.photo_url} alt="Top Photo" />
-                : (
-                  <span class="no-image-text">
-                    This Babbl doesn't have an image. Please select a different
-                    page layout, or add an image to the Babbl.
-                  </span>
-                )}
+              <div class="image-section">
+                {page.quote?.photo_url
+                  ? <img src={page.quote.photo_url} alt="Top Photo" />
+                  : (
+                    <span class="no-image-text">
+                      This Babbl doesn't have an image. Please select a different
+                      page layout, or add an image to the Babbl.
+                    </span>
+                  )}
+              </div>
             </div>
           </>
         )}
