@@ -195,8 +195,8 @@
     }
   }
 
-  /* --- 3. Circle Image --- */
-  .layout-circle_image {
+  /* --- 3. Circle Photo --- */
+  .layout-circle_photo {
     background: white;
 
     .bg-image {
@@ -291,8 +291,8 @@
     }
   }
 
-  /* --- 4. Quote Top, Image Bottom --- */
-  .layout-quote_top_image_bottom {
+  /* --- 4. Quote Top, Photo Bottom --- */
+  .layout-quote_top_photo_bottom {
     background-color: white;
     display: flex;
     flex-direction: column;
@@ -473,7 +473,7 @@
       bottom: 0.45in;
       right: 0;
       padding: 0.35em 0.75em;
-      padding-right: 0.4in;
+      padding-right: 0.5in;
       border-radius: 0.5em 0 0 0.5em;
       backdrop-filter: blur(0.25em);
       max-width: 75%;

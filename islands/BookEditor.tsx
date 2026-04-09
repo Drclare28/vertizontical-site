@@ -581,10 +581,10 @@ export default function BookEditor(
   ];
 
   const layoutOptions = [
-    { label: "Circle Image", value: "circle_image", icon: "image-outline" },
+    { label: "Circle Photo", value: "circle_photo", icon: "image-outline" },
     {
-      label: "Quote top, image bottom",
-      value: "quote_top_image_bottom",
+      label: "Quote top, photo bottom",
+      value: "quote_top_photo_bottom",
       icon: "reorder-two-outline",
     },
     {
@@ -616,7 +616,7 @@ export default function BookEditor(
 
   const allowsContextToggle =
     [
-      "quote_top_image_bottom",
+      "quote_top_photo_bottom",
       "full_page_photo_quote_centered",
       "quote_only_centered",
       "photo_window_top_quote_bottom",

@@ -128,8 +128,8 @@ export default function PageRenderer(
           </>
         )}
 
-        {/* --- 3. Circle Image --- */}
-        {page.layout_style === "circle_image" && page.quote && (
+        {/* --- 3. Circle Photo --- */}
+        {page.layout_style === "circle_photo" && page.quote && (
           <>
             <div class="bg-image">
               {page.quote?.photo_url
@@ -201,8 +201,8 @@ export default function PageRenderer(
           </>
         )}
 
-        {/* --- 4. Quote top, image bottom --- */}
-        {page.layout_style === "quote_top_image_bottom" && page.quote && (
+        {/* --- 4. Quote top, photo bottom --- */}
+        {page.layout_style === "quote_top_photo_bottom" && page.quote && (
           <>
             <div class="quote-section">
               {page.quote?.child?.avatar_url && (
@@ -537,8 +537,8 @@ export default function PageRenderer(
         {![
           "cover",
           "back_cover",
-          "circle_image",
-          "quote_top_image_bottom",
+          "circle_photo",
+          "quote_top_photo_bottom",
           "full_page_photo_quote_centered",
           "full_width_photo_top_quote_bottom",
           "full_screen_photo_short_quote",
