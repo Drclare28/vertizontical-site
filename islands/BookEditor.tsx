@@ -1,6 +1,7 @@
 import { JSX } from "preact";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import { createClient } from "@supabase/supabase-js";
+import Sortable, { SortableEvent } from "sortablejs";
 import {
   BOOK_DIMENSIONS,
   BookFormat,
@@ -423,6 +424,10 @@ export default function BookEditor(
   const [animating, setAnimating] = useState(false);
   const [animationClass, setAnimationClass] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const [isGridView, setIsGridView] = useState(false);
+  const [gridItemWidth, setGridItemWidth] = useState(160);
+  const gridContainerRef = useRef<HTMLDivElement>(null);
+  const sortableRef = useRef<Sortable | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsMounted(true), 50);
@@ -471,6 +476,56 @@ export default function BookEditor(
     });
   }, [pages]);
 
+  const handleReorder = async (oldGridIndex?: number, newGridIndex?: number) => {
+    if (oldGridIndex === undefined || newGridIndex === undefined || oldGridIndex === newGridIndex) return;
+
+    // Shift by 1 because the Grid View skips the 0th item (Cover)
+    const oldIndex = oldGridIndex + 1;
+    const newIndex = newGridIndex + 1;
+
+    const newPages = [...localPages];
+    const [moved] = newPages.splice(oldIndex, 1);
+    newPages.splice(newIndex, 0, moved);
+
+    setLocalPages(newPages);
+
+    try {
+      const updates = newPages.map(async (p, idx) => {
+        if (p.quote) {
+          const { error } = await supabase.from("book_quotes").update({
+            order_index: idx - 1,
+          }).eq("book_id", bookId).eq("quote_id", p.quote.id);
+          
+          if (error) throw error;
+        }
+      });
+      await Promise.all(updates);
+    } catch (err) {
+      console.error("Save Reorder Error:", err);
+      // Optional: Handle error by reverting or showing toast
+    }
+  };
+
+  useEffect(() => {
+    if (isGridView && gridContainerRef.current) {
+      sortableRef.current = Sortable.create(gridContainerRef.current, {
+        animation: 250,
+        delay: 150, // Slight delay on touch allows scroll interaction to not be hijacked
+        delayOnTouchOnly: true,
+        onEnd: (evt: SortableEvent) => {
+          handleReorder(evt.oldIndex, evt.newIndex);
+        },
+      });
+    }
+
+    return () => {
+      if (sortableRef.current) {
+        sortableRef.current.destroy();
+        sortableRef.current = null;
+      }
+    };
+  }, [isGridView, localPages]);
+
   useEffect(() => {
     if (!containerRef.current) return;
 
@@ -496,8 +551,27 @@ export default function BookEditor(
     const resizeObserver = new ResizeObserver(updateScale);
     resizeObserver.observe(containerRef.current);
 
-    return () => resizeObserver.disconnect();
-  }, [format, dimensions.widthInches, dimensions.heightInches]);
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [isGridView, format, dimensions.widthInches, dimensions.heightInches]);
+
+  useEffect(() => {
+    if (!isGridView || !gridContainerRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const container = entries[0].target;
+      const firstChild = container.firstElementChild;
+      if (firstChild) {
+         const w = firstChild.getBoundingClientRect().width;
+         if (w > 0) setGridItemWidth(w);
+      }
+    });
+
+    observer.observe(gridContainerRef.current);
+
+    return () => observer.disconnect();
+  }, [isGridView, localPages.length]);
 
   const goToNextPage = () => {
     if (currentPageIndex < localPages.length - 1 && !animating) {
@@ -668,6 +742,9 @@ export default function BookEditor(
       "photo_window_top_quote_bottom",
     ].includes(effectiveLayoutStyle) && !!currentPage.quote?.context;
 
+  // Hide Cover and Back Cover from the inner pages in Grid View
+  const gridPages = localPages.slice(1, -1);
+
   return (
     <div class="flex flex-col items-center w-full h-full bg-[#FDFDFD] overflow-hidden font-['Rosario']">
       {/* HEADER: Format Toggle */}
@@ -718,41 +795,91 @@ export default function BookEditor(
       </header>
 
       {/* MID: Book Canvas */}
-      <div
-        ref={containerRef}
-        class="flex-1 w-full flex items-center justify-center relative overflow-visible px-4"
-        style={{ touchAction: "pan-y" }}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div
-          class={`relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] bg-white ${animationClass} ${
-            isMounted ? "transition-all duration-300" : ""
-          }`}
-          style={{
-            width: `${dimensions.widthInches * 96 * scale}px`,
-            height: `${dimensions.heightInches * 96 * scale}px`,
-          }}
-        >
+      {isGridView ? (
+        <div class="flex-1 w-full overflow-y-auto px-4 py-6 custom-scrollbar">
           <div
-            style={{
-              transform: `scale(${scale})`,
-              transformOrigin: "top left",
-            }}
+            ref={gridContainerRef}
+            class="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-2xl mx-auto"
           >
-            <PageRenderer
-              page={{
-                ...localPages[currentPageIndex],
-                layout_style: effectiveLayoutStyle,
-              }}
-              format={format}
-              themeId={themeId}
-              yearRange={yearRange}
-              childrenProfiles={uniqueChildren}
-            />
+            {gridPages.map((pageData, index) => {
+              const gridScale = gridItemWidth / (dimensions.widthInches * 96);
+              // Calculate actual index since we sliced off the Cover
+              const actualIndex = index + 1;
+
+              return (
+                <div
+                  key={pageData.quote?.id || `draft-${actualIndex}`}
+                  class="relative aspect-square rounded-2xl overflow-hidden shadow-md bg-white transition-all border-2 border-transparent cursor-pointer hover:border-[#9B51E0] hover:shadow-xl hover:-translate-y-1"
+                  style={{ transform: "translate3d(0, 0, 0)" }}
+                  onClick={() => {
+                    setCurrentPageIndex(actualIndex);
+                    setIsGridView(false);
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${dimensions.widthInches * 96}px`,
+                      height: `${dimensions.heightInches * 96}px`,
+                      transform: `scale(${gridScale})`,
+                      transformOrigin: "top left",
+                    }}
+                    class="pointer-events-none"
+                  >
+                    <PageRenderer
+                      page={{
+                        ...pageData,
+                      }}
+                      format={format}
+                      themeId={themeId}
+                      yearRange={yearRange}
+                      childrenProfiles={uniqueChildren}
+                    />
+                  </div>
+                  <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[11px] font-bold w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-md shadow-sm border border-white/20 pointer-events-none">
+                    {actualIndex + 1}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
+      ) : (
+        <div
+          ref={containerRef}
+          class="flex-1 w-full flex items-center justify-center relative overflow-visible px-4"
+          style={{ touchAction: "pan-y" }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div
+            class={`relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] bg-white ${animationClass} ${
+              isMounted ? "transition-all duration-300" : ""
+            }`}
+            style={{
+              width: `${dimensions.widthInches * 96 * scale}px`,
+              height: `${dimensions.heightInches * 96 * scale}px`,
+            }}
+          >
+            <div
+              style={{
+                transform: `scale(${scale})`,
+                transformOrigin: "top left",
+              }}
+            >
+              <PageRenderer
+                page={{
+                  ...localPages[currentPageIndex],
+                  layout_style: effectiveLayoutStyle,
+                }}
+                format={format}
+                themeId={themeId}
+                yearRange={yearRange}
+                childrenProfiles={uniqueChildren}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* FOOTER: Controls (No Background) */}
       <footer class="w-full max-w-xl px-6 pt-4 pb-12 flex flex-col gap-4 relative z-50 shrink-0">
@@ -793,33 +920,58 @@ export default function BookEditor(
         )}
 
         {/* Pagination Row */}
-        <div class="flex items-center justify-between gap-2 w-full">
-          <div class="flex-1 flex items-center bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-sm h-14 overflow-hidden min-w-0">
-            <button
-              type="button"
-              onClick={goToPrevPage}
-              disabled={currentPageIndex === 0}
-              class="w-12 md:flex-1 shrink-0 h-full flex items-center justify-center text-gray-700 hover:bg-[#9B51E0]/5 hover:text-[#9B51E0] disabled:opacity-20 transition-all active:bg-[#9B51E0]/10 border-r border-gray-100/50"
-              aria-label="Previous Page"
-            >
-              <Icon name="chevron-back-outline" />
-            </button>
-            <div class="flex-1 flex items-center justify-center h-full min-w-16 px-2 truncate">
-              <span class="text-xs font-bold text-gray-700 whitespace-nowrap">
-                {currentPageIndex + 1} / {localPages.length}
-              </span>
+        {!isGridView && (
+          <div class="flex items-center justify-between gap-2 w-full">
+            <div class="flex-1 flex items-center bg-white/90 backdrop-blur-md border border-gray-200/50 rounded-2xl shadow-sm h-14 overflow-hidden min-w-0">
+              <button
+                type="button"
+                onClick={goToPrevPage}
+                disabled={currentPageIndex === 0}
+                class="w-12 md:flex-1 shrink-0 h-full flex items-center justify-center text-gray-700 hover:bg-[#9B51E0]/5 hover:text-[#9B51E0] disabled:opacity-20 transition-all active:bg-[#9B51E0]/10 border-r border-gray-100/50"
+                aria-label="Previous Page"
+              >
+                <Icon name="chevron-back-outline" />
+              </button>
+              <div class="flex-1 flex items-center justify-center h-full min-w-16 px-2 truncate">
+                <span class="text-xs font-bold text-gray-700 whitespace-nowrap">
+                  {currentPageIndex + 1} / {localPages.length}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={goToNextPage}
+                disabled={currentPageIndex === localPages.length - 1}
+                class="w-12 md:flex-1 shrink-0 h-full flex items-center justify-center text-gray-700 hover:bg-[#9B51E0]/5 hover:text-[#9B51E0] disabled:opacity-20 transition-all active:bg-[#9B51E0]/10 border-l border-gray-100/50"
+                aria-label="Next Page"
+              >
+                <Icon name="chevron-forward-outline" />
+              </button>
             </div>
+            
+            {/* Grid Toggle Button */}
             <button
               type="button"
-              onClick={goToNextPage}
-              disabled={currentPageIndex === localPages.length - 1}
-              class="w-12 md:flex-1 shrink-0 h-full flex items-center justify-center text-gray-700 hover:bg-[#9B51E0]/5 hover:text-[#9B51E0] disabled:opacity-20 transition-all active:bg-[#9B51E0]/10 border-l border-gray-100/50"
-              aria-label="Next Page"
+              onClick={() => setIsGridView(true)}
+              class="w-14 h-14 shrink-0 flex items-center justify-center rounded-2xl shadow-sm border transition-all bg-white/90 backdrop-blur-md border-gray-200/50 text-gray-700 hover:bg-gray-50 active:bg-gray-100"
+              aria-label="Enter Grid View"
             >
-              <Icon name="chevron-forward-outline" />
+              <Icon name="apps-outline" class="text-xl text-[#9B51E0]" />
             </button>
           </div>
-        </div>
+        )}
+        
+        {isGridView && (
+          <div class="flex items-center justify-center w-full">
+            <button
+               type="button"
+               onClick={() => setIsGridView(false)}
+               class="flex items-center justify-center gap-2 bg-[#9B51E0] text-white px-6 h-14 rounded-2xl shadow-md font-bold hover:bg-[#8A44C8] transition-all"
+            >
+              <Icon name="book-outline" class="text-lg" />
+              Return to Book
+            </button>
+          </div>
+        )}
 
         {/* Status */}
       </footer>
