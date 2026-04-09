@@ -209,6 +209,52 @@ const SVG_ICONS: Record<
       <rect x="4" y="4" width="16" height="16" rx="2" stroke-width="2" />
     </svg>
   ),
+  "layout-circle": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="2" stroke-width="1.5" />
+      <circle cx="12" cy="10" r="4" stroke-width="1.5" />
+      <path stroke-linecap="round" stroke-width="1.5" d="M8 17h8M10 19h4" />
+    </svg>
+  ),
+  "layout-quote-top": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="2" stroke-width="1.5" />
+      <path stroke-linecap="round" stroke-width="1.5" d="M8 7h8M8 10h6M5 13h14v7H5z" />
+    </svg>
+  ),
+  "layout-full-photo": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="2" stroke-width="1.5" />
+      <rect x="6" y="10" width="12" height="4" rx="1" stroke-width="1.5" />
+      <path stroke-linecap="round" stroke-width="1.5" d="M8 12h8" />
+    </svg>
+  ),
+  "layout-full-width-top": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="2" stroke-width="1.5" />
+      <path stroke-width="1.5" d="M2 13h20" />
+      <path stroke-linecap="round" stroke-width="1.5" d="M8 17h8M8 19h6" />
+    </svg>
+  ),
+  "layout-full-screen-short": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="2" stroke-width="1.5" />
+      <path stroke-linecap="round" stroke-width="1.5" d="M6 19h12" />
+    </svg>
+  ),
+  "layout-window-top": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="2" stroke-width="1.5" />
+      <rect x="4" y="4" width="16" height="10" rx="1" stroke-width="1.5" />
+      <path stroke-linecap="round" stroke-width="1.5" d="M8 17h8M8 19h6" />
+    </svg>
+  ),
+  "layout-quote-only": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="2" stroke-width="1.5" />
+      <path stroke-linecap="round" stroke-width="1.5" d="M8 9h8M8 12h10M8 15h6" />
+    </svg>
+  ),
 };
 
 function Icon({ name, class: className, style }: {
@@ -581,36 +627,36 @@ export default function BookEditor(
   ];
 
   const layoutOptions = [
-    { label: "Circle Photo", value: "circle_photo", icon: "image-outline" },
+    { label: "Circle Photo", value: "circle_photo", icon: "layout-circle" },
     {
       label: "Quote top, photo bottom",
       value: "quote_top_photo_bottom",
-      icon: "reorder-two-outline",
+      icon: "layout-quote-top",
     },
     {
       label: "Full page photo, quote centered",
       value: "full_page_photo_quote_centered",
-      icon: "image-outline",
+      icon: "layout-full-photo",
     },
     {
       label: "Full width photo top, quote bottom",
       value: "full_width_photo_top_quote_bottom",
-      icon: "reorder-two-outline",
+      icon: "layout-full-width-top",
     },
     {
       label: "Full screen photo, short quote",
       value: "full_screen_photo_short_quote",
-      icon: "image-outline",
+      icon: "layout-full-screen-short",
     },
     {
       label: "Photo window top, quote bottom",
       value: "photo_window_top_quote_bottom",
-      icon: "image-outline",
+      icon: "layout-window-top",
     },
     {
       label: "Quote only, centered",
       value: "quote_only_centered",
-      icon: "text-outline",
+      icon: "layout-quote-only",
     },
   ];
 
