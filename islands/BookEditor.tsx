@@ -321,7 +321,7 @@ function CustomSelect(
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        class={`w-full h-14 flex items-center bg-white/80 backdrop-blur-md border border-gray-200/50 text-gray-700 px-10 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#9B51E0] transition-all ${
+        class={`w-full h-14 flex items-center bg-white/80 backdrop-blur-md border border-transparent shadow-sm text-gray-700 px-10 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#9B51E0] transition-all ${
           disabled
             ? "opacity-30 cursor-not-allowed"
             : "cursor-pointer hover:bg-white/90"
@@ -430,9 +430,12 @@ export default function BookEditor(
   const sortableRef = useRef<Sortable | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsMounted(true), 50);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!isGridView) {
+      setIsMounted(false);
+      const timer = setTimeout(() => setIsMounted(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isGridView]);
 
   // Local state for optimistic UI updates
   const [localPages, setLocalPages] = useState<BookPageData[]>(pages);
@@ -799,7 +802,7 @@ export default function BookEditor(
         <div class="flex-1 w-full overflow-y-auto px-4 py-6 custom-scrollbar">
           <div
             ref={gridContainerRef}
-            class="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-2xl mx-auto"
+            class="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-3xl mx-auto"
           >
             {gridPages.map((pageData, index) => {
               const gridScale = gridItemWidth / (dimensions.widthInches * 96);
@@ -884,7 +887,7 @@ export default function BookEditor(
       {/* FOOTER: Controls (No Background) */}
       <footer class="w-full max-w-xl px-6 pt-4 pb-12 flex flex-col gap-4 relative z-50 shrink-0">
         {/* Selectors Row */}
-        {!isCoverOrBackCover && (
+        {!isCoverOrBackCover && !isGridView && (
           <div class="flex items-center gap-2 md:gap-4 w-full">
             <div class="flex-1 min-w-0">
               <CustomSelect
@@ -948,15 +951,30 @@ export default function BookEditor(
               </button>
             </div>
             
-            {/* Grid Toggle Button */}
-            <button
-              type="button"
-              onClick={() => setIsGridView(true)}
-              class="w-14 h-14 shrink-0 flex items-center justify-center rounded-2xl shadow-sm border transition-all bg-white/90 backdrop-blur-md border-gray-200/50 text-gray-700 hover:bg-gray-50 active:bg-gray-100"
-              aria-label="Enter Grid View"
-            >
-              <Icon name="apps-outline" class="text-xl text-[#9B51E0]" />
-            </button>
+            {/* Right Actions */}
+            <div class="flex items-center gap-2 md:gap-3 shrink-0">
+              {/* Grid Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setIsGridView(true)}
+                class="w-14 h-14 shrink-0 flex items-center justify-center rounded-2xl shadow-sm border transition-all bg-white/90 backdrop-blur-md border-gray-200/50 text-gray-700 hover:bg-gray-50 active:bg-gray-100"
+                aria-label="Enter Grid View"
+              >
+                <Icon name="apps-outline" class="text-xl text-[#9B51E0]" />
+              </button>
+
+              {/* Vertical Divider */}
+              <div class="w-px h-8 bg-gray-300 mx-1" />
+
+              {/* Order Book Button */}
+              <button
+                type="button"
+                class="h-14 px-5 flex items-center justify-center gap-2 rounded-2xl font-bold shadow-md text-white bg-[#9B51E0] hover:bg-[#8A44C8] transition-colors"
+              >
+                <Icon name="cart-outline" class="text-lg" />
+                Order
+              </button>
+            </div>
           </div>
         )}
         
