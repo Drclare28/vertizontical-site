@@ -425,9 +425,58 @@ export default function BookEditor(
   const [animationClass, setAnimationClass] = useState("");
   const [isMounted, setIsMounted] = useState(false);
   const [isGridView, setIsGridView] = useState(false);
+  const [localPages, setLocalPages] = useState<BookPageData[]>(pages);
   const [gridItemWidth, setGridItemWidth] = useState(160);
   const gridContainerRef = useRef<HTMLDivElement>(null);
   const sortableRef = useRef<Sortable | null>(null);
+
+  const coverSnapshotRef = useRef<HTMLDivElement>(null);
+  
+  const generateAndUploadCover = async () => {
+    if (!coverSnapshotRef.current) return;
+    try {
+      const { toBlob } = await import("html-to-image");
+      const blob = await toBlob(coverSnapshotRef.current, {
+        cacheBust: true,
+        canvasWidth: dimensions.widthInches * 96,
+        canvasHeight: dimensions.heightInches * 96,
+        pixelRatio: 1,
+      });
+
+      if (!blob) return;
+
+      const fileName = `cover_${bookId}_${format}_${themeId}.png`;
+
+      // Upload newly generated image blob to our Supabase Storage
+      const { error: uploadErr } = await supabase.storage
+        .from("book-covers")
+        .upload(fileName, blob, { upsert: true, contentType: "image/png" });
+
+      if (uploadErr) {
+        console.error("Cover upload error:", uploadErr);
+        return;
+      }
+
+      // Retrieve public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("book-covers")
+        .getPublicUrl(fileName);
+
+      // Save URL path to DB
+      const finalUrl = `${publicUrl}?t=${Date.now()}`;
+      await supabase.from("books").update({ cover_url: finalUrl }).eq("id", bookId);
+      console.log("Cover thumbnail successfully synced to DB!");
+    } catch (e) {
+      console.error("Failed snapping cover DOM:", e);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      generateAndUploadCover();
+    }, 2500); 
+    return () => clearTimeout(timer);
+  }, [themeId, format, (localPages.length > 0 ? localPages[0].title : "")]);
 
   useEffect(() => {
     if (!isGridView) {
@@ -436,9 +485,6 @@ export default function BookEditor(
       return () => clearTimeout(timer);
     }
   }, [isGridView]);
-
-  // Local state for optimistic UI updates
-  const [localPages, setLocalPages] = useState<BookPageData[]>(pages);
 
   const dimensions = BOOK_DIMENSIONS[format];
 
@@ -993,6 +1039,31 @@ export default function BookEditor(
 
         {/* Status */}
       </footer>
+
+      {/* Hidden Cover Renderer for Snapshots */}
+      <div
+        style={{
+          position: "absolute",
+          top: "-9999px",
+          left: "-9999px",
+          width: `${dimensions.widthInches * 96}px`,
+          height: `${dimensions.heightInches * 96}px`,
+          pointerEvents: "none",
+        }}
+      >
+        <div ref={coverSnapshotRef} class="w-full h-full bg-white">
+          <PageRenderer
+            page={{
+              ...localPages[0],
+              layout_style: "cover",
+            }}
+            format={format}
+            themeId={themeId}
+            yearRange={yearRange}
+            childrenProfiles={uniqueChildren}
+          />
+        </div>
+      </div>
     </div>
   );
 }
