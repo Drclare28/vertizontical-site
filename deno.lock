@@ -1183,6 +1183,7 @@
       "npm:html-to-image@^1.11.11",
       "npm:preact@^10.27.2",
       "npm:sortablejs@^1.15.2",
+      "npm:stripe@^14.16.0",
       "npm:tailwindcss@^4.1.10",
       "npm:vite@^7.1.3"
     ]

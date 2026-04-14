@@ -427,10 +427,16 @@ export default function BookEditor(
   const [isGridView, setIsGridView] = useState(false);
   const [localPages, setLocalPages] = useState<BookPageData[]>(pages);
   const [gridItemWidth, setGridItemWidth] = useState(160);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [checkoutWarning, setCheckoutWarning] = useState<string | null>(null);
+  
+  const quoteCount = localPages.length > 2 ? localPages.length - 2 : 0;
+
   const gridContainerRef = useRef<HTMLDivElement>(null);
   const sortableRef = useRef<Sortable | null>(null);
 
   const coverSnapshotRef = useRef<HTMLDivElement>(null);
+  const isInitialSnapshotMount = useRef(true);
   
   const generateAndUploadCover = async () => {
     if (!coverSnapshotRef.current) return;
@@ -472,6 +478,10 @@ export default function BookEditor(
   };
 
   useEffect(() => {
+    if (isInitialSnapshotMount.current) {
+      isInitialSnapshotMount.current = false;
+      return;
+    }
     const timer = setTimeout(() => {
       generateAndUploadCover();
     }, 2500); 
@@ -487,6 +497,39 @@ export default function BookEditor(
   }, [isGridView]);
 
   const dimensions = BOOK_DIMENSIONS[format];
+
+  const handleOrderClick = () => {
+    if (quoteCount < 4) {
+       setCheckoutWarning(`You currently have ${quoteCount} quote${quoteCount !== 1 ? 's' : ''}. You need at least 4 quotes to print a Mini Booklet!`);
+       setIsCheckoutModalOpen(true);
+       return;
+    }
+    setCheckoutWarning(null);
+    setIsCheckoutModalOpen(true);
+  };
+
+  const confirmOrderAndTriggerCheckout = () => {
+    // Post message to React Native App
+    // @ts-ignore
+    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+      const bindingType = quoteCount < 26 ? "saddle_stitch" : "hardcover";
+      const totalCost = (39.99 + Math.max(0, quoteCount - 26) * 0.50).toFixed(2);
+      
+      // @ts-ignore
+      window.ReactNativeWebView.postMessage(JSON.stringify({
+        type: "START_CHECKOUT",
+        payload: {
+          bookId: bookId,
+          amount: totalCost,
+          format: format,
+          binding: bindingType,
+          pages: quoteCount,
+        }
+      }));
+    } else {
+      alert("Native Checkout Initialized! (This acts as a transparent bridge directly to the React Native SDK)");
+    }
+  };
 
   const yearRange = useMemo(() => {
     const dates = pages
@@ -1015,6 +1058,7 @@ export default function BookEditor(
               {/* Order Book Button */}
               <button
                 type="button"
+                onClick={handleOrderClick}
                 class="h-14 px-5 flex items-center justify-center gap-2 rounded-2xl font-bold shadow-md text-white bg-[#9B51E0] hover:bg-[#8A44C8] transition-colors"
               >
                 <Icon name="cart-outline" class="text-lg" />
@@ -1044,8 +1088,10 @@ export default function BookEditor(
       <div
         style={{
           position: "absolute",
-          top: "-9999px",
-          left: "-9999px",
+          top: 0,
+          left: 0,
+          opacity: 0.001,
+          zIndex: -50,
           width: `${dimensions.widthInches * 96}px`,
           height: `${dimensions.heightInches * 96}px`,
           pointerEvents: "none",
@@ -1064,6 +1110,89 @@ export default function BookEditor(
           />
         </div>
       </div>
+
+      {/* Checkout Review Overlay Modal */}
+      {isCheckoutModalOpen && (
+        checkoutWarning ? (
+          <div class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-6">
+            <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div class="p-8 text-center">
+                <div class="w-16 h-16 bg-[#9B51E0]/10 rounded-full flex items-center justify-center mx-auto mb-5 border border-[#9B51E0]/20">
+                   <Icon name="lock-closed-outline" class="text-3xl text-[#9B51E0]" />
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Not Quite Ready!</h2>
+                <p class="text-gray-600 mb-8 text-base">{checkoutWarning}</p>
+                <div class="flex gap-3">
+                  <button 
+                    type="button"
+                    onClick={() => setIsCheckoutModalOpen(false)}
+                    class="flex-1 py-4 bg-[#9B51E0] text-white font-bold rounded-2xl shadow-md hover:bg-[#8A44C8] transition-colors"
+                  >
+                    Keep Building
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-6 transition-opacity">
+            <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300">
+              <div class="p-6 sm:p-8">
+                <div class="flex justify-between items-start mb-6">
+                  <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Review Order</h2>
+                  <button 
+                    type="button"
+                    onClick={() => setIsCheckoutModalOpen(false)}
+                    class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors"
+                  >
+                    <Icon name="close" class="text-xl" />
+                  </button>
+                </div>
+                
+                <div class="flex items-center gap-5 mb-8">
+                  <div class="w-24 h-24 sm:w-32 sm:h-32 shrink-0 bg-gray-50 overflow-hidden shadow-sm border border-gray-200 relative flex items-center justify-center" style={{ borderRadius: format === "mini" ? "12px" : "8px" }}>
+                     <div style={{ transform: `scale(${128 / (dimensions.widthInches * 96)})`, transformOrigin: "top left", width: dimensions.widthInches * 96, height: dimensions.heightInches * 96 }}>
+                        <PageRenderer page={{...localPages[0], layout_style: "cover"}} format={format} themeId={themeId} yearRange={yearRange} childrenProfiles={uniqueChildren} />
+                     </div>
+                  </div>
+                  <div>
+                     <h3 class="font-bold text-lg text-gray-900 mb-1 leading-snug">{localPages[0].title || "My Babbl Book"}</h3>
+                     <p class="text-gray-500 text-sm mb-1.5">{format === "mini" ? "Mini Format" : "Classic Format"} • {quoteCount} Quotes</p>
+                     <p class="text-gray-500 text-sm font-medium">
+                        Binding: <span class="text-gray-800">{quoteCount < 26 ? "Premium Softcover (Stapled)" : "Premium Hardcover"}</span>
+                     </p>
+                  </div>
+                </div>
+
+                <div class="bg-gray-50/80 rounded-2xl p-5 mb-8 border border-gray-200/60 shadow-sm">
+                   <div class="flex justify-between items-center mb-3">
+                      <span class="text-gray-600 font-medium">Base Book Cost</span>
+                      <span class="font-bold text-gray-900">$39.99</span>
+                   </div>
+                   <div class="flex justify-between items-center mb-4">
+                      <span class="text-gray-600 font-medium">Additional Pages ({Math.max(0, quoteCount - 26)})</span>
+                      <span class="font-bold text-gray-900">{quoteCount > 26 ? `+$${((quoteCount - 26) * 0.50).toFixed(2)}` : "$0.00"}</span>
+                   </div>
+                   <div class="h-px w-full bg-gray-300 mb-4" />
+                   <div class="flex justify-between items-center">
+                      <span class="font-black text-gray-900 text-lg">Total</span>
+                      <span class="font-black text-2xl text-[#9B51E0]">${(39.99 + Math.max(0, quoteCount - 26) * 0.50).toFixed(2)}</span>
+                   </div>
+                </div>
+
+                <button 
+                  type="button"
+                  onClick={confirmOrderAndTriggerCheckout}
+                  class="w-full h-14 bg-[#9B51E0] text-white font-bold rounded-2xl hover:bg-[#8A44C8] shadow-md hover:shadow-lg transition-transform active:scale-[0.98] flex items-center justify-center gap-2"
+                >
+                  <Icon name="logo-apple" class="text-xl -mt-0.5" />
+                  Pay with Apple Pay
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      )}
     </div>
   );
 }
