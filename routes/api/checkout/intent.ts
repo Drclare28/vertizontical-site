@@ -35,12 +35,15 @@ export const handler: Handlers = {
       }
 
       // We calculate pricing dynamically on the backend to avoid trusting client inputs.
-      // E.g. base = $39.99, plus $0.50 per page after 26.
-      // Eventually, we replace this statically calculated math with a live query to the Gelato Quote API
+      // E.g. proxying the Gelato wholesale math and applying a 1.6x multiplier margin
       const pageCount = parseInt(pages, 10) || 0;
-      const baseCost = 39.99;
-      const extraPagesCost = Math.max(0, pageCount - 26) * 0.50;
-      const calculatedTotal = baseCost + extraPagesCost;
+      const isHardcover = pageCount >= 26;
+      let gelatoCost = isHardcover ? 14.50 : 5.50;
+      gelatoCost += pageCount * (isHardcover ? 0.20 : 0.15);
+      
+      const shippingCost = 4.99;
+      const fulfillmentCost = gelatoCost + shippingCost;
+      const calculatedTotal = fulfillmentCost * 1.6;
       const amountCents = Math.round(calculatedTotal * 100);
 
       // Create a PaymentIntent with Stripe

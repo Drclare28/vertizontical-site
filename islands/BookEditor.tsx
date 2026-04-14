@@ -429,6 +429,8 @@ export default function BookEditor(
   const [gridItemWidth, setGridItemWidth] = useState(160);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutWarning, setCheckoutWarning] = useState<string | null>(null);
+  const [checkoutQuote, setCheckoutQuote] = useState<{ cost: string; price: string; binding: string; isHardcoverAvailable: boolean; pagesRequiredForHardcover: number } | null>(null);
+  const [isQuoting, setIsQuoting] = useState(false);
   
   const quoteCount = localPages.length > 2 ? localPages.length - 2 : 0;
 
@@ -498,22 +500,37 @@ export default function BookEditor(
 
   const dimensions = BOOK_DIMENSIONS[format];
 
-  const handleOrderClick = () => {
+  const handleOrderClick = async () => {
     if (quoteCount < 4) {
-       setCheckoutWarning(`You currently have ${quoteCount} quote${quoteCount !== 1 ? 's' : ''}. You need at least 4 quotes to print a Mini Booklet!`);
+       setCheckoutWarning(`You currently have ${quoteCount} Babbl${quoteCount !== 1 ? 's' : ''}. You need at least 4 Babbls to print a Softcover Booklet, or 26 Babbls for a Hardcover Book!`);
        setIsCheckoutModalOpen(true);
        return;
     }
     setCheckoutWarning(null);
     setIsCheckoutModalOpen(true);
+
+    if (!checkoutQuote || checkoutQuote.pagesRequiredForHardcover !== Math.max(0, 26 - quoteCount)) {
+       setIsQuoting(true);
+       try {
+          const res = await fetch(`/api/checkout/quote?pages=${quoteCount}&format=${format}`);
+          if (res.ok) {
+             const data = await res.json();
+             setCheckoutQuote(data);
+          }
+       } catch (err) {
+          console.error("Pricing quote failed", err);
+       } finally {
+          setIsQuoting(false);
+       }
+    }
   };
 
   const confirmOrderAndTriggerCheckout = () => {
     // Post message to React Native App
     // @ts-ignore
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-      const bindingType = quoteCount < 26 ? "saddle_stitch" : "hardcover";
-      const totalCost = (39.99 + Math.max(0, quoteCount - 26) * 0.50).toFixed(2);
+      const bindingType = checkoutQuote?.binding || (quoteCount < 26 ? "saddle_stitch" : "hardcover");
+      const totalCost = checkoutQuote?.price || "39.99";
       
       // @ts-ignore
       window.ReactNativeWebView.postMessage(JSON.stringify({
@@ -1113,10 +1130,25 @@ export default function BookEditor(
 
       {/* Checkout Review Overlay Modal */}
       {isCheckoutModalOpen && (
-        checkoutWarning ? (
-          <div class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center p-6">
-            <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              <div class="p-8 text-center">
+        <>
+          <style>
+            {`
+            @keyframes sheetSlideUp {
+              from { transform: translateY(100%); }
+              to { transform: translateY(0); }
+            }
+            @keyframes overlayFadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            .animate-sheet { animation: sheetSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+            .animate-overlay { animation: overlayFadeIn 0.25s ease-out forwards; }
+            `}
+          </style>
+        {checkoutWarning ? (
+          <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6 animate-overlay font-rosario" style={{ zIndex: 9999 }}>
+            <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-sheet">
+              <div class="p-8 text-center pb-16 sm:pb-8">
                 <div class="w-16 h-16 bg-[#9B51E0]/10 rounded-full flex items-center justify-center mx-auto mb-5 border border-[#9B51E0]/20">
                    <Icon name="lock-closed-outline" class="text-3xl text-[#9B51E0]" />
                 </div>
@@ -1135,9 +1167,9 @@ export default function BookEditor(
             </div>
           </div>
         ) : (
-          <div class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-6 transition-opacity">
-            <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-8 sm:zoom-in-95 duration-300">
-              <div class="p-6 sm:p-8">
+          <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-6 transition-opacity animate-overlay font-rosario" style={{ zIndex: 9999 }}>
+            <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-sheet">
+              <div class="px-6 pt-6 pb-16 sm:p-8">
                 <div class="flex justify-between items-start mb-6">
                   <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Review Order</h2>
                   <button 
@@ -1149,49 +1181,74 @@ export default function BookEditor(
                   </button>
                 </div>
                 
-                <div class="flex items-center gap-5 mb-8">
-                  <div class="w-24 h-24 sm:w-32 sm:h-32 shrink-0 bg-gray-50 overflow-hidden shadow-sm border border-gray-200 relative flex items-center justify-center" style={{ borderRadius: format === "mini" ? "12px" : "8px" }}>
-                     <div style={{ transform: `scale(${128 / (dimensions.widthInches * 96)})`, transformOrigin: "top left", width: dimensions.widthInches * 96, height: dimensions.heightInches * 96 }}>
+                <div class="flex items-start gap-4 mb-8">
+                  <div class="w-24 h-24 sm:w-32 sm:h-32 shrink-0 bg-gray-50 overflow-hidden shadow-sm border border-gray-200 relative" style={{ borderRadius: format === "mini" ? "12px" : "8px" }}>
+                     <div class="absolute top-0 left-0" style={{ transform: `scale(${128 / (dimensions.widthInches * 96)})`, transformOrigin: "top left", width: dimensions.widthInches * 96, height: dimensions.heightInches * 96 }}>
                         <PageRenderer page={{...localPages[0], layout_style: "cover"}} format={format} themeId={themeId} yearRange={yearRange} childrenProfiles={uniqueChildren} />
                      </div>
                   </div>
-                  <div>
+                  <div class="flex-1">
                      <h3 class="font-bold text-lg text-gray-900 mb-1 leading-snug">{localPages[0].title || "My Babbl Book"}</h3>
-                     <p class="text-gray-500 text-sm mb-1.5">{format === "mini" ? "Mini Format" : "Classic Format"} • {quoteCount} Quotes</p>
-                     <p class="text-gray-500 text-sm font-medium">
-                        Binding: <span class="text-gray-800">{quoteCount < 26 ? "Premium Softcover (Stapled)" : "Premium Hardcover"}</span>
-                     </p>
+                     <p class="text-gray-500 text-sm mb-1.5">{format === "mini" ? "Mini Format" : "Classic Format"} • {quoteCount} Babbl{quoteCount !== 1 ? "s" : ""}</p>
+                     
+                     {isQuoting ? (
+                       <div class="h-4 w-32 bg-gray-200 animate-pulse rounded mt-1"></div>
+                     ) : (
+                       <p class="text-gray-500 text-sm font-medium">
+                          Binding: <span class="text-gray-800">{checkoutQuote?.binding === 'hardcover' ? "Premium Hardcover" : "Premium Softcover (Stapled)"}</span>
+                       </p>
+                     )}
+
+                     {checkoutQuote && !checkoutQuote.isHardcoverAvailable && (
+                       <div class="mt-2 inline-flex items-start gap-1.5 bg-[#9B51E0]/10 text-[#9B51E0] border border-[#9B51E0]/20 px-2 py-1.5 rounded-lg text-xs leading-snug">
+                          <Icon name="information-circle" class="text-sm mt-0.5 shrink-0" />
+                          <span>Add {checkoutQuote.pagesRequiredForHardcover} more Babbls to unlock Hardcover printing!</span>
+                       </div>
+                     )}
                   </div>
                 </div>
 
                 <div class="bg-gray-50/80 rounded-2xl p-5 mb-8 border border-gray-200/60 shadow-sm">
-                   <div class="flex justify-between items-center mb-3">
-                      <span class="text-gray-600 font-medium">Base Book Cost</span>
-                      <span class="font-bold text-gray-900">$39.99</span>
-                   </div>
-                   <div class="flex justify-between items-center mb-4">
-                      <span class="text-gray-600 font-medium">Additional Pages ({Math.max(0, quoteCount - 26)})</span>
-                      <span class="font-bold text-gray-900">{quoteCount > 26 ? `+$${((quoteCount - 26) * 0.50).toFixed(2)}` : "$0.00"}</span>
-                   </div>
-                   <div class="h-px w-full bg-gray-300 mb-4" />
-                   <div class="flex justify-between items-center">
-                      <span class="font-black text-gray-900 text-lg">Total</span>
-                      <span class="font-black text-2xl text-[#9B51E0]">${(39.99 + Math.max(0, quoteCount - 26) * 0.50).toFixed(2)}</span>
-                   </div>
+                   {isQuoting ? (
+                     <div class="space-y-4">
+                        <div class="flex justify-between items-center"><div class="h-4 w-20 bg-gray-200 animate-pulse rounded"></div><div class="h-4 w-12 bg-gray-200 animate-pulse rounded"></div></div>
+                        <div class="flex justify-between items-center"><div class="h-4 w-28 bg-gray-200 animate-pulse rounded"></div><div class="h-4 w-10 bg-gray-200 animate-pulse rounded"></div></div>
+                        <div class="h-px w-full bg-gray-300" />
+                        <div class="flex justify-between items-center"><div class="h-6 w-16 bg-gray-200 animate-pulse rounded"></div><div class="h-6 w-20 bg-[#9B51E0]/20 animate-pulse rounded"></div></div>
+                     </div>
+                   ) : (
+                     <>
+                       <div class="flex justify-between items-center mb-3">
+                          <span class="text-gray-600 font-medium">Printing & Production</span>
+                          <span class="font-bold text-gray-900">${((parseFloat(checkoutQuote?.cost || "0") - 4.99) * 1.6).toFixed(2)}</span>
+                       </div>
+                       <div class="flex justify-between items-center mb-4">
+                          <span class="text-gray-600 font-medium">Standard Shipping</span>
+                          <span class="font-bold text-gray-900">${(4.99 * 1.6).toFixed(2)}</span>
+                       </div>
+                       <div class="h-px w-full bg-gray-300 mb-4" />
+                       <div class="flex justify-between items-center">
+                          <span class="font-black text-gray-900 text-lg">Total</span>
+                          <span class="font-black text-2xl text-[#9B51E0]">${checkoutQuote?.price || "0.00"}</span>
+                       </div>
+                     </>
+                   )}
                 </div>
 
                 <button 
                   type="button"
+                  disabled={isQuoting}
                   onClick={confirmOrderAndTriggerCheckout}
-                  class="w-full h-14 bg-[#9B51E0] text-white font-bold rounded-2xl hover:bg-[#8A44C8] shadow-md hover:shadow-lg transition-transform active:scale-[0.98] flex items-center justify-center gap-2"
+                  class={`w-full h-14 text-white font-bold rounded-2xl shadow-md transition-transform active:scale-[0.98] flex items-center justify-center gap-2 ${isQuoting ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#9B51E0] hover:bg-[#8A44C8] hover:shadow-lg'}`}
                 >
                   <Icon name="logo-apple" class="text-xl -mt-0.5" />
-                  Pay with Apple Pay
+                  {isQuoting ? "Calculating Pricing..." : "Pay with Apple Pay"}
                 </button>
               </div>
             </div>
           </div>
-        )
+        )}
+        </>
       )}
     </div>
   );
