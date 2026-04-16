@@ -220,7 +220,11 @@ const SVG_ICONS: Record<
   "layout-quote-top": (props) => (
     <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <rect x="2" y="2" width="20" height="20" rx="2" stroke-width="1.5" />
-      <path stroke-linecap="round" stroke-width="1.5" d="M8 7h8M8 10h6M5 13h14v7H5z" />
+      <path
+        stroke-linecap="round"
+        stroke-width="1.5"
+        d="M8 7h8M8 10h6M5 13h14v7H5z"
+      />
     </svg>
   ),
   "layout-full-photo": (props) => (
@@ -253,7 +257,11 @@ const SVG_ICONS: Record<
   "layout-quote-only": (props) => (
     <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <rect x="2" y="2" width="20" height="20" rx="2" stroke-width="1.5" />
-      <path stroke-linecap="round" stroke-width="1.5" d="M8 9h8M8 12h10M8 15h6" />
+      <path
+        stroke-linecap="round"
+        stroke-width="1.5"
+        d="M8 9h8M8 12h10M8 15h6"
+      />
     </svg>
   ),
 };
@@ -429,9 +437,17 @@ export default function BookEditor(
   const [gridItemWidth, setGridItemWidth] = useState(160);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutWarning, setCheckoutWarning] = useState<string | null>(null);
-  const [checkoutQuote, setCheckoutQuote] = useState<{ cost: string; price: string; binding: string; isHardcoverAvailable: boolean; pagesRequiredForHardcover: number } | null>(null);
+  const [checkoutQuote, setCheckoutQuote] = useState<
+    {
+      cost: string;
+      price: string;
+      binding: string;
+      isHardcoverAvailable: boolean;
+      pagesRequiredForHardcover: number;
+    } | null
+  >(null);
   const [isQuoting, setIsQuoting] = useState(false);
-  
+
   const quoteCount = localPages.length > 2 ? localPages.length - 2 : 0;
 
   const gridContainerRef = useRef<HTMLDivElement>(null);
@@ -439,7 +455,7 @@ export default function BookEditor(
 
   const coverSnapshotRef = useRef<HTMLDivElement>(null);
   const isInitialSnapshotMount = useRef(true);
-  
+
   const generateAndUploadCover = async () => {
     if (!coverSnapshotRef.current) return;
     try {
@@ -472,7 +488,10 @@ export default function BookEditor(
 
       // Save URL path to DB
       const finalUrl = `${publicUrl}?t=${Date.now()}`;
-      await supabase.from("books").update({ cover_url: finalUrl }).eq("id", bookId);
+      await supabase.from("books").update({ cover_url: finalUrl }).eq(
+        "id",
+        bookId,
+      );
       console.log("Cover thumbnail successfully synced to DB!");
     } catch (e) {
       console.error("Failed snapping cover DOM:", e);
@@ -486,9 +505,9 @@ export default function BookEditor(
     }
     const timer = setTimeout(() => {
       generateAndUploadCover();
-    }, 2500); 
+    }, 2500);
     return () => clearTimeout(timer);
-  }, [themeId, format, (localPages.length > 0 ? localPages[0].title : "")]);
+  }, [themeId, format, localPages.length > 0 ? localPages[0].title : ""]);
 
   useEffect(() => {
     if (!isGridView) {
@@ -502,26 +521,35 @@ export default function BookEditor(
 
   const handleOrderClick = async () => {
     if (quoteCount < 4) {
-       setCheckoutWarning(`You currently have ${quoteCount} Babbl${quoteCount !== 1 ? 's' : ''}. You need at least 4 Babbls to print a Softcover Booklet, or 26 Babbls for a Hardcover Book!`);
-       setIsCheckoutModalOpen(true);
-       return;
+      setCheckoutWarning(
+        `You currently have ${quoteCount} Babbl${
+          quoteCount !== 1 ? "s" : ""
+        }. You need at least 4 Babbls to print a Softcover Booklet, or 26 Babbls for a Hardcover Book!`,
+      );
+      setIsCheckoutModalOpen(true);
+      return;
     }
     setCheckoutWarning(null);
     setIsCheckoutModalOpen(true);
 
-    if (!checkoutQuote || checkoutQuote.pagesRequiredForHardcover !== Math.max(0, 26 - quoteCount)) {
-       setIsQuoting(true);
-       try {
-          const res = await fetch(`/api/checkout/quote?pages=${quoteCount}&format=${format}`);
-          if (res.ok) {
-             const data = await res.json();
-             setCheckoutQuote(data);
-          }
-       } catch (err) {
-          console.error("Pricing quote failed", err);
-       } finally {
-          setIsQuoting(false);
-       }
+    if (
+      !checkoutQuote ||
+      checkoutQuote.pagesRequiredForHardcover !== Math.max(0, 26 - quoteCount)
+    ) {
+      setIsQuoting(true);
+      try {
+        const res = await fetch(
+          `/api/checkout/quote?pages=${quoteCount}&format=${format}`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setCheckoutQuote(data);
+        }
+      } catch (err) {
+        console.error("Pricing quote failed", err);
+      } finally {
+        setIsQuoting(false);
+      }
     }
   };
 
@@ -529,9 +557,10 @@ export default function BookEditor(
     // Post message to React Native App
     // @ts-ignore
     if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-      const bindingType = checkoutQuote?.binding || (quoteCount < 26 ? "saddle_stitch" : "hardcover");
+      const bindingType = checkoutQuote?.binding ||
+        (quoteCount < 26 ? "saddle_stitch" : "hardcover");
       const totalCost = checkoutQuote?.price || "39.99";
-      
+
       // @ts-ignore
       window.ReactNativeWebView.postMessage(JSON.stringify({
         type: "START_CHECKOUT",
@@ -541,10 +570,12 @@ export default function BookEditor(
           format: format,
           binding: bindingType,
           pages: quoteCount,
-        }
+        },
       }));
     } else {
-      alert("Native Checkout Initialized! (This acts as a transparent bridge directly to the React Native SDK)");
+      alert(
+        "Native Checkout Initialized! (This acts as a transparent bridge directly to the React Native SDK)",
+      );
     }
   };
 
@@ -585,8 +616,14 @@ export default function BookEditor(
     });
   }, [pages]);
 
-  const handleReorder = async (oldGridIndex?: number, newGridIndex?: number) => {
-    if (oldGridIndex === undefined || newGridIndex === undefined || oldGridIndex === newGridIndex) return;
+  const handleReorder = async (
+    oldGridIndex?: number,
+    newGridIndex?: number,
+  ) => {
+    if (
+      oldGridIndex === undefined || newGridIndex === undefined ||
+      oldGridIndex === newGridIndex
+    ) return;
 
     // Shift by 1 because the Grid View skips the 0th item (Cover)
     const oldIndex = oldGridIndex + 1;
@@ -604,7 +641,7 @@ export default function BookEditor(
           const { error } = await supabase.from("book_quotes").update({
             order_index: idx - 1,
           }).eq("book_id", bookId).eq("quote_id", p.quote.id);
-          
+
           if (error) throw error;
         }
       });
@@ -612,6 +649,38 @@ export default function BookEditor(
     } catch (err) {
       console.error("Save Reorder Error:", err);
       // Optional: Handle error by reverting or showing toast
+    }
+  };
+
+  const handleDeletePage = async (quoteId: string, indexToRemove: number) => {
+    const newPages = localPages.filter((_, idx) => idx !== indexToRemove);
+    setLocalPages(newPages);
+
+    if (currentPageIndex >= newPages.length) {
+      setCurrentPageIndex(Math.max(0, newPages.length - 1));
+    }
+
+    try {
+      const { error } = await supabase
+        .from("book_quotes")
+        .delete()
+        .eq("book_id", bookId)
+        .eq("quote_id", quoteId);
+
+      if (error) throw error;
+
+      const updates = newPages.map(async (p, idx) => {
+        if (p.quote) {
+          const { error: updateError } = await supabase.from("book_quotes")
+            .update({
+              order_index: idx - 1,
+            }).eq("book_id", bookId).eq("quote_id", p.quote.id);
+          if (updateError) throw updateError;
+        }
+      });
+      await Promise.all(updates);
+    } catch (err) {
+      console.error("Delete Page Error:", err);
     }
   };
 
@@ -672,8 +741,8 @@ export default function BookEditor(
       const container = entries[0].target;
       const firstChild = container.firstElementChild;
       if (firstChild) {
-         const w = firstChild.getBoundingClientRect().width;
-         if (w > 0) setGridItemWidth(w);
+        const w = firstChild.getBoundingClientRect().width;
+        if (w > 0) setGridItemWidth(w);
       }
     });
 
@@ -843,13 +912,12 @@ export default function BookEditor(
     },
   ];
 
-  const allowsContextToggle =
-    [
-      "quote_top_photo_bottom",
-      "full_page_photo_quote_centered",
-      "quote_only_centered",
-      "photo_window_top_quote_bottom",
-    ].includes(effectiveLayoutStyle) && !!currentPage.quote?.context;
+  const allowsContextToggle = [
+    "quote_top_photo_bottom",
+    "full_page_photo_quote_centered",
+    "quote_only_centered",
+    "photo_window_top_quote_bottom",
+  ].includes(effectiveLayoutStyle) && !!currentPage.quote?.context;
 
   // Hide Cover and Back Cover from the inner pages in Grid View
   const gridPages = localPages.slice(1, -1);
@@ -857,138 +925,161 @@ export default function BookEditor(
   return (
     <div class="flex flex-col items-center w-full h-full bg-[#FDFDFD] overflow-hidden font-['Rosario']">
       {/* HEADER: Format Toggle */}
-      <header class="w-full max-w-xl mx-auto px-6 pt-4 pb-2 flex justify-start items-center gap-2 md:gap-4 relative z-60 shrink-0">
-        <div class="flex-1 min-w-32 bg-gray-100/50 backdrop-blur-sm rounded-2xl shadow-inner border border-gray-200/50">
-          <CustomSelect
-            value={themeId}
-            options={themeOptions}
-            onChange={handleThemeChange}
-            icon="color-palette-outline"
-            placeholder="Select Theme"
-            openDirection="down"
-          />
-        </div>
+      {!isGridView && (
+        <header class="w-full max-w-xl mx-auto px-6 pt-4 pb-2 flex justify-start items-center gap-2 md:gap-4 relative z-60 shrink-0">
+          <div class="flex-1 min-w-32 bg-gray-100/50 backdrop-blur-sm rounded-2xl shadow-inner border border-gray-200/50">
+            <CustomSelect
+              value={themeId}
+              options={themeOptions}
+              onChange={handleThemeChange}
+              icon="color-palette-outline"
+              placeholder="Select Theme"
+              openDirection="down"
+            />
+          </div>
 
-        <div class="flex bg-gray-100/50 backdrop-blur-sm p-1 rounded-2xl shadow-inner border border-gray-200/50 h-14 items-center shrink-0">
-          <button
-            type="button"
-            onClick={() => handleFormatChange("mini")}
-            class={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 h-full rounded-xl text-xs font-bold transition-all ${
-              format === "mini"
-                ? "bg-white text-[#9B51E0] shadow-sm"
-                : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            <Icon name="book-outline" style={{ fontSize: "14px" }} />
-            <div class="flex flex-col items-start leading-none justify-center">
-              <span>Mini</span>
-              <span class="text-[10px] opacity-70">5.5x5.5"</span>
-            </div>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleFormatChange("classic")}
-            class={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 h-full rounded-xl text-xs font-bold transition-all ${
-              format === "classic"
-                ? "bg-white text-[#9B51E0] shadow-sm"
-                : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            <Icon name="book-outline" style={{ fontSize: "22px" }} />
-            <div class="flex flex-col items-start leading-none justify-center">
-              <span>Classic</span>
-              <span class="text-[10px] opacity-70">8x8"</span>
-            </div>
-          </button>
-        </div>
-      </header>
+          <div class="flex bg-gray-100/50 backdrop-blur-sm p-1 rounded-2xl shadow-inner border border-gray-200/50 h-14 items-center shrink-0">
+            <button
+              type="button"
+              onClick={() => handleFormatChange("mini")}
+              class={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 h-full rounded-xl text-xs font-bold transition-all ${
+                format === "mini"
+                  ? "bg-white text-[#9B51E0] shadow-sm"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <Icon name="book-outline" style={{ fontSize: "14px" }} />
+              <div class="flex flex-col items-start leading-none justify-center">
+                <span>Mini</span>
+                <span class="text-[10px] opacity-70">5.5x5.5"</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleFormatChange("classic")}
+              class={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 h-full rounded-xl text-xs font-bold transition-all ${
+                format === "classic"
+                  ? "bg-white text-[#9B51E0] shadow-sm"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              <Icon name="book-outline" style={{ fontSize: "22px" }} />
+              <div class="flex flex-col items-start leading-none justify-center">
+                <span>Classic</span>
+                <span class="text-[10px] opacity-70">8x8"</span>
+              </div>
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* MID: Book Canvas */}
-      {isGridView ? (
-        <div class="flex-1 w-full overflow-y-auto px-4 py-6 custom-scrollbar">
-          <div
-            ref={gridContainerRef}
-            class="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-3xl mx-auto"
-          >
-            {gridPages.map((pageData, index) => {
-              const gridScale = gridItemWidth / (dimensions.widthInches * 96);
-              // Calculate actual index since we sliced off the Cover
-              const actualIndex = index + 1;
-
-              return (
-                <div
-                  key={pageData.quote?.id || `draft-${actualIndex}`}
-                  class="relative aspect-square rounded-2xl overflow-hidden shadow-md bg-white transition-all border-2 border-transparent cursor-pointer hover:border-[#9B51E0] hover:shadow-xl hover:-translate-y-1"
-                  style={{ transform: "translate3d(0, 0, 0)" }}
-                  onClick={() => {
-                    setCurrentPageIndex(actualIndex);
-                    setIsGridView(false);
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${dimensions.widthInches * 96}px`,
-                      height: `${dimensions.heightInches * 96}px`,
-                      transform: `scale(${gridScale})`,
-                      transformOrigin: "top left",
-                    }}
-                    class="pointer-events-none"
-                  >
-                    <PageRenderer
-                      page={{
-                        ...pageData,
-                      }}
-                      format={format}
-                      themeId={themeId}
-                      yearRange={yearRange}
-                      childrenProfiles={uniqueChildren}
-                    />
-                  </div>
-                  <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[11px] font-bold w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-md shadow-sm border border-white/20 pointer-events-none">
-                    {actualIndex + 1}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div
-          ref={containerRef}
-          class="flex-1 w-full flex items-center justify-center relative overflow-visible px-4"
-          style={{ touchAction: "pan-y" }}
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
-        >
-          <div
-            class={`relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] bg-white ${animationClass} ${
-              isMounted ? "transition-all duration-300" : ""
-            }`}
-            style={{
-              width: `${dimensions.widthInches * 96 * scale}px`,
-              height: `${dimensions.heightInches * 96 * scale}px`,
-            }}
-          >
+      {isGridView
+        ? (
+          <div class="flex-1 w-full overflow-y-auto px-4 py-6 custom-scrollbar">
             <div
-              style={{
-                transform: `scale(${scale})`,
-                transformOrigin: "top left",
-              }}
+              ref={gridContainerRef}
+              class="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-3xl mx-auto"
             >
-              <PageRenderer
-                page={{
-                  ...localPages[currentPageIndex],
-                  layout_style: effectiveLayoutStyle,
-                }}
-                format={format}
-                themeId={themeId}
-                yearRange={yearRange}
-                childrenProfiles={uniqueChildren}
-              />
+              {gridPages.map((pageData, index) => {
+                const gridScale = gridItemWidth / (dimensions.widthInches * 96);
+                // Calculate actual index since we sliced off the Cover
+                const actualIndex = index + 1;
+
+                return (
+                  <div
+                    key={pageData.quote?.id || `draft-${actualIndex}`}
+                    class="relative aspect-square rounded-2xl overflow-hidden shadow-md bg-white transition-all border-2 border-transparent cursor-pointer hover:border-[#9B51E0] hover:shadow-xl hover:-translate-y-1"
+                    style={{ transform: "translate3d(0, 0, 0)" }}
+                    onClick={() => {
+                      setCurrentPageIndex(actualIndex);
+                      setIsGridView(false);
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${dimensions.widthInches * 96}px`,
+                        height: `${dimensions.heightInches * 96}px`,
+                        transform: `scale(${gridScale})`,
+                        transformOrigin: "top left",
+                      }}
+                      class="pointer-events-none"
+                    >
+                      <PageRenderer
+                        page={{
+                          ...pageData,
+                        }}
+                        format={format}
+                        themeId={themeId}
+                        yearRange={yearRange}
+                        childrenProfiles={uniqueChildren}
+                      />
+                    </div>
+                    <div class="absolute bottom-2 left-2 bg-black/60 text-white text-[11px] font-bold w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-md shadow-sm border border-white/20 pointer-events-none">
+                      {actualIndex + 1}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (
+                          confirm(
+                            "Are you sure you want to remove this page from the book?",
+                          )
+                        ) {
+                          if (pageData.quote) {
+                            handleDeletePage(pageData.quote.id, actualIndex);
+                          }
+                        }
+                      }}
+                      class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-600 transition-colors backdrop-blur-md shadow-sm border border-white/20 z-10"
+                      aria-label="Delete Page"
+                    >
+                      <Icon name="trash-outline" class="text-[12px]" />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      )}
+        )
+        : (
+          <div
+            ref={containerRef}
+            class="flex-1 w-full flex items-center justify-center relative overflow-visible px-4"
+            style={{ touchAction: "pan-y" }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <div
+              class={`relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] bg-white ${animationClass} ${
+                isMounted ? "transition-all duration-300" : ""
+              }`}
+              style={{
+                width: `${dimensions.widthInches * 96 * scale}px`,
+                height: `${dimensions.heightInches * 96 * scale}px`,
+              }}
+            >
+              <div
+                style={{
+                  transform: `scale(${scale})`,
+                  transformOrigin: "top left",
+                }}
+              >
+                <PageRenderer
+                  page={{
+                    ...localPages[currentPageIndex],
+                    layout_style: effectiveLayoutStyle,
+                  }}
+                  format={format}
+                  themeId={themeId}
+                  yearRange={yearRange}
+                  childrenProfiles={uniqueChildren}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
       {/* FOOTER: Controls (No Background) */}
       <footer class="w-full max-w-xl px-6 pt-4 pb-12 flex flex-col gap-4 relative z-50 shrink-0">
@@ -1056,7 +1147,7 @@ export default function BookEditor(
                 <Icon name="chevron-forward-outline" />
               </button>
             </div>
-            
+
             {/* Right Actions */}
             <div class="flex items-center gap-2 md:gap-3 shrink-0">
               {/* Grid Toggle Button */}
@@ -1084,13 +1175,13 @@ export default function BookEditor(
             </div>
           </div>
         )}
-        
+
         {isGridView && (
           <div class="flex items-center justify-center w-full">
             <button
-               type="button"
-               onClick={() => setIsGridView(false)}
-               class="flex items-center justify-center gap-2 bg-[#9B51E0] text-white px-6 h-14 rounded-2xl shadow-md font-bold hover:bg-[#8A44C8] transition-all"
+              type="button"
+              onClick={() => setIsGridView(false)}
+              class="flex items-center justify-center gap-2 bg-[#9B51E0] text-white px-6 h-14 rounded-2xl shadow-md font-bold hover:bg-[#8A44C8] transition-all"
             >
               <Icon name="book-outline" class="text-lg" />
               Return to Book
@@ -1145,109 +1236,205 @@ export default function BookEditor(
             .animate-overlay { animation: overlayFadeIn 0.25s ease-out forwards; }
             `}
           </style>
-        {checkoutWarning ? (
-          <div class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6 animate-overlay font-rosario" style={{ zIndex: 9999 }}>
-            <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-sheet">
-              <div class="p-8 text-center pb-16 sm:pb-8">
-                <div class="w-16 h-16 bg-[#9B51E0]/10 rounded-full flex items-center justify-center mx-auto mb-5 border border-[#9B51E0]/20">
-                   <Icon name="lock-closed-outline" class="text-3xl text-[#9B51E0]" />
-                </div>
-                <h2 class="text-2xl font-bold text-gray-900 mb-2">Not Quite Ready!</h2>
-                <p class="text-gray-600 mb-8 text-base">{checkoutWarning}</p>
-                <div class="flex gap-3">
-                  <button 
-                    type="button"
-                    onClick={() => setIsCheckoutModalOpen(false)}
-                    class="flex-1 py-4 bg-[#9B51E0] text-white font-bold rounded-2xl shadow-md hover:bg-[#8A44C8] transition-colors"
-                  >
-                    Keep Building
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-6 transition-opacity animate-overlay font-rosario" style={{ zIndex: 9999 }}>
-            <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-sheet">
-              <div class="px-6 pt-6 pb-16 sm:p-8">
-                <div class="flex justify-between items-start mb-6">
-                  <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Review Order</h2>
-                  <button 
-                    type="button"
-                    onClick={() => setIsCheckoutModalOpen(false)}
-                    class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors"
-                  >
-                    <Icon name="close" class="text-xl" />
-                  </button>
-                </div>
-                
-                <div class="flex items-start gap-4 mb-8">
-                  <div class="w-24 h-24 sm:w-32 sm:h-32 shrink-0 bg-gray-50 overflow-hidden shadow-sm border border-gray-200 relative" style={{ borderRadius: format === "mini" ? "12px" : "8px" }}>
-                     <div class="absolute top-0 left-0" style={{ transform: `scale(${128 / (dimensions.widthInches * 96)})`, transformOrigin: "top left", width: dimensions.widthInches * 96, height: dimensions.heightInches * 96 }}>
-                        <PageRenderer page={{...localPages[0], layout_style: "cover"}} format={format} themeId={themeId} yearRange={yearRange} childrenProfiles={uniqueChildren} />
-                     </div>
-                  </div>
-                  <div class="flex-1">
-                     <h3 class="font-bold text-lg text-gray-900 mb-1 leading-snug">{localPages[0].title || "My Babbl Book"}</h3>
-                     <p class="text-gray-500 text-sm mb-1.5">{format === "mini" ? "Mini Format" : "Classic Format"} • {quoteCount} Babbl{quoteCount !== 1 ? "s" : ""}</p>
-                     
-                     {isQuoting ? (
-                       <div class="h-4 w-32 bg-gray-200 animate-pulse rounded mt-1"></div>
-                     ) : (
-                       <p class="text-gray-500 text-sm font-medium">
-                          Binding: <span class="text-gray-800">{checkoutQuote?.binding === 'hardcover' ? "Premium Hardcover" : "Premium Softcover (Stapled)"}</span>
-                       </p>
-                     )}
-
-                     {checkoutQuote && !checkoutQuote.isHardcoverAvailable && (
-                       <div class="mt-2 inline-flex items-start gap-1.5 bg-[#9B51E0]/10 text-[#9B51E0] border border-[#9B51E0]/20 px-2 py-1.5 rounded-lg text-xs leading-snug">
-                          <Icon name="information-circle" class="text-sm mt-0.5 shrink-0" />
-                          <span>Add {checkoutQuote.pagesRequiredForHardcover} more Babbls to unlock Hardcover printing!</span>
-                       </div>
-                     )}
+          {checkoutWarning
+            ? (
+              <div
+                class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-6 animate-overlay font-rosario"
+                style={{ zIndex: 9999 }}
+              >
+                <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-sheet">
+                  <div class="p-8 text-center pb-16 sm:pb-8">
+                    <div class="w-16 h-16 bg-[#9B51E0]/10 rounded-full flex items-center justify-center mx-auto mb-5 border border-[#9B51E0]/20">
+                      <Icon
+                        name="lock-closed-outline"
+                        class="text-3xl text-[#9B51E0]"
+                      />
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">
+                      Not Quite Ready!
+                    </h2>
+                    <p class="text-gray-600 mb-8 text-base">
+                      {checkoutWarning}
+                    </p>
+                    <div class="flex gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setIsCheckoutModalOpen(false)}
+                        class="flex-1 py-4 bg-[#9B51E0] text-white font-bold rounded-2xl shadow-md hover:bg-[#8A44C8] transition-colors"
+                      >
+                        Keep Building
+                      </button>
+                    </div>
                   </div>
                 </div>
-
-                <div class="bg-gray-50/80 rounded-2xl p-5 mb-8 border border-gray-200/60 shadow-sm">
-                   {isQuoting ? (
-                     <div class="space-y-4">
-                        <div class="flex justify-between items-center"><div class="h-4 w-20 bg-gray-200 animate-pulse rounded"></div><div class="h-4 w-12 bg-gray-200 animate-pulse rounded"></div></div>
-                        <div class="flex justify-between items-center"><div class="h-4 w-28 bg-gray-200 animate-pulse rounded"></div><div class="h-4 w-10 bg-gray-200 animate-pulse rounded"></div></div>
-                        <div class="h-px w-full bg-gray-300" />
-                        <div class="flex justify-between items-center"><div class="h-6 w-16 bg-gray-200 animate-pulse rounded"></div><div class="h-6 w-20 bg-[#9B51E0]/20 animate-pulse rounded"></div></div>
-                     </div>
-                   ) : (
-                     <>
-                       <div class="flex justify-between items-center mb-3">
-                          <span class="text-gray-600 font-medium">Printing & Production</span>
-                          <span class="font-bold text-gray-900">${((parseFloat(checkoutQuote?.cost || "0") - 4.99) * 1.6).toFixed(2)}</span>
-                       </div>
-                       <div class="flex justify-between items-center mb-4">
-                          <span class="text-gray-600 font-medium">Standard Shipping</span>
-                          <span class="font-bold text-gray-900">${(4.99 * 1.6).toFixed(2)}</span>
-                       </div>
-                       <div class="h-px w-full bg-gray-300 mb-4" />
-                       <div class="flex justify-between items-center">
-                          <span class="font-black text-gray-900 text-lg">Total</span>
-                          <span class="font-black text-2xl text-[#9B51E0]">${checkoutQuote?.price || "0.00"}</span>
-                       </div>
-                     </>
-                   )}
-                </div>
-
-                <button 
-                  type="button"
-                  disabled={isQuoting}
-                  onClick={confirmOrderAndTriggerCheckout}
-                  class={`w-full h-14 text-white font-bold rounded-2xl shadow-md transition-transform active:scale-[0.98] flex items-center justify-center gap-2 ${isQuoting ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#9B51E0] hover:bg-[#8A44C8] hover:shadow-lg'}`}
-                >
-                  <Icon name="logo-apple" class="text-xl -mt-0.5" />
-                  {isQuoting ? "Calculating Pricing..." : "Pay with Apple Pay"}
-                </button>
               </div>
-            </div>
-          </div>
-        )}
+            )
+            : (
+              <div
+                class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-6 transition-opacity animate-overlay font-rosario"
+                style={{ zIndex: 9999 }}
+              >
+                <div class="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden animate-sheet">
+                  <div class="px-6 pt-6 pb-16 sm:p-8">
+                    <div class="flex justify-between items-start mb-6">
+                      <h2 class="text-2xl font-bold text-gray-900 tracking-tight">
+                        Review Order
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={() => setIsCheckoutModalOpen(false)}
+                        class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors"
+                      >
+                        <Icon name="close" class="text-xl" />
+                      </button>
+                    </div>
+
+                    <div class="flex items-start gap-4 mb-8">
+                      <div
+                        class="w-24 h-24 sm:w-32 sm:h-32 shrink-0 bg-gray-50 overflow-hidden shadow-sm border border-gray-200 relative"
+                        style={{
+                          borderRadius: format === "mini" ? "12px" : "8px",
+                        }}
+                      >
+                        <div
+                          class="absolute top-0 left-0"
+                          style={{
+                            transform: `scale(${
+                              128 / (dimensions.widthInches * 96)
+                            })`,
+                            transformOrigin: "top left",
+                            width: dimensions.widthInches * 96,
+                            height: dimensions.heightInches * 96,
+                          }}
+                        >
+                          <PageRenderer
+                            page={{ ...localPages[0], layout_style: "cover" }}
+                            format={format}
+                            themeId={themeId}
+                            yearRange={yearRange}
+                            childrenProfiles={uniqueChildren}
+                          />
+                        </div>
+                      </div>
+                      <div class="flex-1">
+                        <h3 class="font-bold text-lg text-gray-900 mb-1 leading-snug">
+                          {localPages[0].title || "My Babbl Book"}
+                        </h3>
+                        <p class="text-gray-500 text-sm mb-1.5">
+                          {format === "mini" ? "Mini Format" : "Classic Format"}
+                          {" "}
+                          • {quoteCount} Babbl{quoteCount !== 1 ? "s" : ""}
+                        </p>
+
+                        {isQuoting
+                          ? (
+                            <div class="h-4 w-32 bg-gray-200 animate-pulse rounded mt-1">
+                            </div>
+                          )
+                          : (
+                            <p class="text-gray-500 text-sm font-medium">
+                              Binding:{" "}
+                              <span class="text-gray-800">
+                                {checkoutQuote?.binding === "hardcover"
+                                  ? "Premium Hardcover"
+                                  : "Premium Softcover (Stapled)"}
+                              </span>
+                            </p>
+                          )}
+
+                        {checkoutQuote && !checkoutQuote.isHardcoverAvailable &&
+                          (
+                            <div class="mt-2 inline-flex items-start gap-1.5 bg-[#9B51E0]/10 text-[#9B51E0] border border-[#9B51E0]/20 px-2 py-1.5 rounded-lg text-xs leading-snug">
+                              <Icon
+                                name="information-circle"
+                                class="text-sm mt-0.5 shrink-0"
+                              />
+                              <span>
+                                Add {checkoutQuote.pagesRequiredForHardcover}
+                                {" "}
+                                more Babbls to unlock Hardcover printing!
+                              </span>
+                            </div>
+                          )}
+                      </div>
+                    </div>
+
+                    <div class="bg-gray-50/80 rounded-2xl p-5 mb-8 border border-gray-200/60 shadow-sm">
+                      {isQuoting
+                        ? (
+                          <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                              <div class="h-4 w-20 bg-gray-200 animate-pulse rounded">
+                              </div>
+                              <div class="h-4 w-12 bg-gray-200 animate-pulse rounded">
+                              </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                              <div class="h-4 w-28 bg-gray-200 animate-pulse rounded">
+                              </div>
+                              <div class="h-4 w-10 bg-gray-200 animate-pulse rounded">
+                              </div>
+                            </div>
+                            <div class="h-px w-full bg-gray-300" />
+                            <div class="flex justify-between items-center">
+                              <div class="h-6 w-16 bg-gray-200 animate-pulse rounded">
+                              </div>
+                              <div class="h-6 w-20 bg-[#9B51E0]/20 animate-pulse rounded">
+                              </div>
+                            </div>
+                          </div>
+                        )
+                        : (
+                          <>
+                            <div class="flex justify-between items-center mb-3">
+                              <span class="text-gray-600 font-medium">
+                                Printing & Production
+                              </span>
+                              <span class="font-bold text-gray-900">
+                                ${((parseFloat(checkoutQuote?.cost || "0") -
+                                  4.99) * 1.6).toFixed(2)}
+                              </span>
+                            </div>
+                            <div class="flex justify-between items-center mb-4">
+                              <span class="text-gray-600 font-medium">
+                                Standard Shipping
+                              </span>
+                              <span class="font-bold text-gray-900">
+                                ${(4.99 * 1.6).toFixed(2)}
+                              </span>
+                            </div>
+                            <div class="h-px w-full bg-gray-300 mb-4" />
+                            <div class="flex justify-between items-center">
+                              <span class="font-black text-gray-900 text-lg">
+                                Total
+                              </span>
+                              <span class="font-black text-2xl text-[#9B51E0]">
+                                ${checkoutQuote?.price || "0.00"}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isQuoting}
+                      onClick={confirmOrderAndTriggerCheckout}
+                      class={`w-full h-14 text-white font-bold rounded-2xl shadow-md transition-transform active:scale-[0.98] flex items-center justify-center gap-2 ${
+                        isQuoting
+                          ? "bg-gray-300 cursor-not-allowed"
+                          : "bg-[#9B51E0] hover:bg-[#8A44C8] hover:shadow-lg"
+                      }`}
+                    >
+                      <Icon name="card-outline" class="text-xl -mt-0.5" />
+                      {isQuoting
+                        ? "Calculating Pricing..."
+                        : "Continue to Payment"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
         </>
       )}
     </div>
