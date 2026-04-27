@@ -31,6 +31,7 @@ interface BookEditorProps {
   token: string;
   supabaseUrl: string;
   supabaseAnonKey: string;
+  isPrintMode?: boolean;
 }
 
 interface CustomSelectProps {
@@ -266,6 +267,27 @@ const SVG_ICONS: Record<
   ),
 };
 
+interface BookEditorProps {
+  initialFormat?: BookFormat;
+  initialTheme?: string;
+  pages: BookPageData[];
+  bookId: string;
+  token: string;
+  supabaseUrl: string;
+  supabaseAnonKey: string;
+  isPrintMode?: boolean;
+}
+
+interface CustomSelectProps {
+  value: string;
+  options: { label: string; value: string; icon: string }[];
+  onChange: (value: string) => void;
+  icon: string;
+  placeholder?: string;
+  disabled?: boolean;
+  openDirection?: "up" | "down";
+}
+
 function Icon({ name, class: className, style }: {
   name: string;
   class?: string;
@@ -395,16 +417,18 @@ export default function BookEditor(
     token,
     supabaseUrl,
     supabaseAnonKey,
+    isPrintMode: isPrintProp = false,
   }: BookEditorProps,
 ) {
   const [format, setFormat] = useState<BookFormat>(initialFormat);
   const [themeId, setThemeId] = useState(initialTheme);
   
   const isPrintMode = useMemo(() => {
+    if (isPrintProp) return true;
     if (typeof globalThis.location === "undefined") return false;
     const params = new URLSearchParams(globalThis.location.search);
     return params.get("mode") === "print" || params.get("hideBleed") === "true";
-  }, []);
+  }, [isPrintProp]);
 
   const orderId = useMemo(() => {
     if (typeof globalThis.location === "undefined") return null;

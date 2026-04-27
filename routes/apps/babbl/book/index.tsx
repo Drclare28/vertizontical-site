@@ -14,6 +14,7 @@ export default define.page(async function Book(ctx) {
   const url = new URL(ctx.url);
   let bookId = url.searchParams.get("bookId");
   let token = url.searchParams.get("token");
+  const mode = url.searchParams.get("mode");
 
   const isLocal = url.hostname === "localhost" ||
     url.hostname === "127.0.0.1" ||
@@ -284,6 +285,7 @@ export default define.page(async function Book(ctx) {
           token={token!}
           supabaseUrl={Deno.env.get("SUPABASE_URL") || ""}
           supabaseAnonKey={Deno.env.get("SUPABASE_ANON_KEY") || ""}
+          isPrintMode={mode === "print"}
         />
       </main>
     </div>
