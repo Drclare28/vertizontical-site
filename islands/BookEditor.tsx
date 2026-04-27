@@ -632,9 +632,9 @@ export default function BookEditor(
   };
 
   useEffect(() => {
-    if (isPrintMode && orderId && localPages.length > 0 && !isCapturing) {
-      setTimeout(runPrintCapture, 2000);
-    }
+    // Disable the old html-to-image loop if we are using the new vector PDF flow (Api2Pdf)
+    // We only keep this if a legacy order processing flow is explicitly requested via orderId without Api2Pdf
+    // but for the new flow, we want to render the whole DOM and let the headless browser handle it.
   }, [isPrintMode, orderId, localPages.length > 0]);
 
   useEffect(() => {
@@ -1127,144 +1127,146 @@ export default function BookEditor(
 
       {/* MID: Book Canvas */}
       {isPrintMode ? (
-        <div class="flex flex-col w-full h-[fit-content]" style={{ backgroundColor: "white" }}>
-          <style>{`
-            @page {
-              size: ${dimensions.widthInches}in ${dimensions.heightInches}in;
-              margin: 0;
-            }
-            body, html { margin: 0; padding: 0; background: white; }
-            .print-page {
-              width: ${dimensions.widthInches}in;
-              height: ${dimensions.heightInches}in;
-              page-break-after: always;
-              position: relative;
-              overflow: hidden;
-              background-color: white;
-            }
-          `}</style>
-          {localPages.map((pageData, idx) => (
+        <div class="print-book-container w-full flex flex-col items-center bg-white">
+          <style>
+            {`
+              @media print {
+                @page {
+                  margin: 0;
+                  size: ${dimensions.widthInches}in ${dimensions.heightInches}in;
+                }
+                body { margin: 0; padding: 0; }
+                .print-page { page-break-after: always; break-after: page; }
+              }
+              /* Headless browser specific for Api2Pdf */
+              .print-page { 
+                 width: ${dimensions.widthInches * 96}px; 
+                 height: ${dimensions.heightInches * 96}px;
+                 position: relative;
+                 overflow: hidden;
+                 page-break-after: always;
+                 break-after: page;
+              }
+            `}
+          </style>
+          {localPages.map((page, idx) => (
             <div key={idx} class="print-page">
               <PageRenderer
                 format={format}
                 page={{
-                  ...pageData,
+                  ...page,
+                  layout_style: idx === 0 
+                    ? "cover" 
+                    : idx === localPages.length - 1 
+                    ? "back_cover" 
+                    : page.layout_style
+                }}
+                themeId={themeId}
+                yearRange={yearRange}
+                childrenProfiles={uniqueChildren}
+                hideBleed={true}
+              />
+            </div>
+          ))}
+        </div>
+      ) : isGridView ? (
+        <div class="flex-1 w-full overflow-y-auto px-4 py-6 custom-scrollbar">
+          <div
+            ref={gridContainerRef}
+            class="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-3xl mx-auto"
+          >
+            {gridPages.map((pageData, index) => {
+              const gridScale = gridItemWidth / (dimensions.widthInches * 96);
+              const actualIndex = index + 1;
+              return (
+                <div
+                  key={pageData.quote?.id || `draft-${actualIndex}`}
+                  class="relative aspect-square rounded-2xl overflow-hidden shadow-md bg-white transition-all border-2 border-transparent cursor-pointer hover:border-[#9B51E0] hover:shadow-xl hover:-translate-y-1"
+                  style={{ transform: "translate3d(0, 0, 0)" }}
+                  onClick={() => {
+                    setCurrentPageIndex(actualIndex);
+                    setIsGridView(false);
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${dimensions.widthInches * 96}px`,
+                      height: `${dimensions.heightInches * 96}px`,
+                      transform: `scale(${gridScale})`,
+                      transformOrigin: "top left",
+                    }}
+                    class="pointer-events-none"
+                  >
+                    <PageRenderer
+                      format={format}
+                      page={pageData}
+                      themeId={themeId}
+                      yearRange={yearRange}
+                      childrenProfiles={uniqueChildren}
+                      hideBleed={false}
+                    />
+                  </div>
+                  <div class="absolute bottom-2 left-2 bg-black/60 text-white text-[11px] font-bold w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-md shadow-sm border border-white/20 pointer-events-none">
+                    {actualIndex + 1}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm("Are you sure you want to remove this page from the book?")) {
+                        if (pageData.quote) {
+                          handleDeletePage(pageData.quote.id, actualIndex);
+                        }
+                      }
+                    }}
+                    class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-600 transition-colors backdrop-blur-md shadow-sm border border-white/20 z-10"
+                    aria-label="Delete Page"
+                  >
+                    <Icon name="trash-outline" class="text-[12px]" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div
+          ref={containerRef}
+          class="flex-1 w-full flex items-center justify-center relative overflow-visible px-4"
+          style={{ touchAction: "pan-y" }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div
+            class={`relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] bg-white ${animationClass} ${
+              isMounted ? "transition-all duration-300" : ""
+            }`}
+            style={{
+              width: `${dimensions.widthInches * 96 * scale}px`,
+              height: `${dimensions.heightInches * 96 * scale}px`,
+            }}
+          >
+            <div
+              style={{
+                transform: `scale(${scale})`,
+                transformOrigin: "top left",
+              }}
+            >
+              <PageRenderer
+                format={format}
+                page={{
+                  ...localPages[currentPageIndex],
                   layout_style: effectiveLayoutStyle,
                 }}
                 themeId={themeId}
                 yearRange={yearRange}
                 childrenProfiles={uniqueChildren}
-                hideBleed={isPrintMode}
+                hideBleed={false}
               />
             </div>
-          ))}
+          </div>
         </div>
-      ) : isGridView
-        ? (
-          <div class="flex-1 w-full overflow-y-auto px-4 py-6 custom-scrollbar">
-            <div
-              ref={gridContainerRef}
-              class="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-3xl mx-auto"
-            >
-              {gridPages.map((pageData, index) => {
-                const gridScale = gridItemWidth / (dimensions.widthInches * 96);
-                // Calculate actual index since we sliced off the Cover
-                const actualIndex = index + 1;
-
-                return (
-                  <div
-                    key={pageData.quote?.id || `draft-${actualIndex}`}
-                    class="relative aspect-square rounded-2xl overflow-hidden shadow-md bg-white transition-all border-2 border-transparent cursor-pointer hover:border-[#9B51E0] hover:shadow-xl hover:-translate-y-1"
-                    style={{ transform: "translate3d(0, 0, 0)" }}
-                    onClick={() => {
-                      setCurrentPageIndex(actualIndex);
-                      setIsGridView(false);
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: `${dimensions.widthInches * 96}px`,
-                        height: `${dimensions.heightInches * 96}px`,
-                        transform: `scale(${gridScale})`,
-                        transformOrigin: "top left",
-                      }}
-                      class="pointer-events-none"
-                    >
-                      <PageRenderer
-                        format={format}
-                        page={pageData}
-                        themeId={themeId}
-                        yearRange={yearRange}
-                        childrenProfiles={uniqueChildren}
-                        hideBleed={isPrintMode}
-                      />
-                    </div>
-                    <div class="absolute bottom-2 left-2 bg-black/60 text-white text-[11px] font-bold w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-md shadow-sm border border-white/20 pointer-events-none">
-                      {actualIndex + 1}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (
-                          confirm(
-                            "Are you sure you want to remove this page from the book?",
-                          )
-                        ) {
-                          if (pageData.quote) {
-                            handleDeletePage(pageData.quote.id, actualIndex);
-                          }
-                        }
-                      }}
-                      class="absolute bottom-2 right-2 w-6 h-6 rounded-full bg-red-500/80 text-white flex items-center justify-center hover:bg-red-600 transition-colors backdrop-blur-md shadow-sm border border-white/20 z-10"
-                      aria-label="Delete Page"
-                    >
-                      <Icon name="trash-outline" class="text-[12px]" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )
-        : (
-          <div
-            ref={containerRef}
-            class="flex-1 w-full flex items-center justify-center relative overflow-visible px-4"
-            style={{ touchAction: "pan-y" }}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            <div
-              class={`relative shadow-[0_35px_60px_-15px_rgba(0,0,0,0.3)] bg-white ${animationClass} ${
-                isMounted ? "transition-all duration-300" : ""
-              }`}
-              style={{
-                width: `${dimensions.widthInches * 96 * scale}px`,
-                height: `${dimensions.heightInches * 96 * scale}px`,
-              }}
-            >
-              <div
-                style={{
-                  transform: `scale(${scale})`,
-                  transformOrigin: "top left",
-                }}
-              >
-                <PageRenderer
-                  format={format}
-                  page={{
-                    ...localPages[currentPageIndex],
-                    layout_style: effectiveLayoutStyle,
-                  }}
-                  themeId={themeId}
-                  yearRange={yearRange}
-                  childrenProfiles={uniqueChildren}
-                  hideBleed={isPrintMode}
-                />
-              </div>
-            </div>
-          </div>
-        )}
+      )}
 
       {/* FOOTER: Controls (No Background) */}
       {!isPrintMode && (

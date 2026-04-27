@@ -21,14 +21,14 @@ export default define.page(async function Book(ctx) {
     url.hostname.startsWith("10.");
 
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const apiSecret = Deno.env.get("API_SECRET");
 
-  // On local network, use the service role key to avoid session issues
-  const isDevBypass = isLocal && !!serviceRoleKey;
+  // Bypass if token matches service role key or internal API secret
+  const isAdminBypass = (token && serviceRoleKey && token === serviceRoleKey) || 
+                       (token && apiSecret && token === apiSecret);
 
-  if (isDevBypass) {
-    token = serviceRoleKey;
-    bookId = bookId || Deno.env.get("DEV_BOOK_ID") || null;
-    console.log(`[DEV AUTH] Admin bypass active for BookID: ${bookId}`);
+  if (isAdminBypass) {
+    console.log(`[ADMIN AUTH] Bypass active for BookID: ${bookId}`);
   }
 
   // Authentication & Data Fetching
@@ -41,8 +41,8 @@ export default define.page(async function Book(ctx) {
     try {
       const supabase = getSupabaseClient(token);
 
-      // Verify user session (Skip for Service Role dev bypass)
-      if (!isDevBypass) {
+      // Verify user session (Skip for Admin bypass)
+      if (!isAdminBypass) {
         const { data: { user }, error: authError } = await supabase.auth
           .getUser();
         if (authError || !user) {
