@@ -297,17 +297,17 @@ function Icon({ name, class: className, style }: {
   if (SvgIcon) {
     return (
       <div
-        className={`inline-flex items-center justify-center ${className || ""}`}
+        class={`inline-flex items-center justify-center ${className || ""}`}
         style={style}
       >
-        <SvgIcon className="w-[1em] h-[1em]" />
+        <SvgIcon class="w-[1em] h-[1em]" />
       </div>
     );
   }
 
   return (
     <div
-      className={`inline-flex items-center justify-center ${className || ""}`}
+      class={`inline-flex items-center justify-center ${className || ""}`}
       style={style}
     >
       <ion-icon name={name} style="font-size: inherit;" />
@@ -346,12 +346,12 @@ function CustomSelect(
   const selectedOption = options.find((opt) => opt.value === value);
 
   return (
-    <div ref={containerRef} className="flex-1 relative">
+    <div ref={containerRef} class="flex-1 relative">
       <button
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full h-14 flex items-center bg-white/80 backdrop-blur-md border border-transparent shadow-sm text-gray-700 px-10 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#9B51E0] transition-all ${
+        class={`w-full h-14 flex items-center bg-white/80 backdrop-blur-md border border-transparent shadow-sm text-gray-700 px-10 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#9B51E0] transition-all ${
           disabled
             ? "opacity-30 cursor-not-allowed"
             : "cursor-pointer hover:bg-white/90"
@@ -361,7 +361,7 @@ function CustomSelect(
           name={selectedOption?.icon || icon}
           class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9B51E0] text-lg pointer-events-none"
         />
-        <span className="truncate">
+        <span class="truncate">
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <Icon
@@ -372,11 +372,11 @@ function CustomSelect(
 
       {isOpen && !disabled && (
         <div
-          className={`absolute ${
+          class={`absolute ${
             openDirection === "up" ? "bottom-full mb-2" : "top-full mt-2"
           } left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden`}
         >
-          <div className="max-h-96 overflow-y-auto py-2 custom-scrollbar">
+          <div class="max-h-96 overflow-y-auto py-2 custom-scrollbar">
             {options.map((opt) => (
               <button
                 type="button"
@@ -385,18 +385,18 @@ function CustomSelect(
                   onChange(opt.value);
                   setIsOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
+                class={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
                   value === opt.value
                     ? "text-[#9B51E0] bg-purple-50/50"
                     : "text-gray-700"
                 }`}
               >
                 <Icon name={opt.icon} class="text-[#9B51E0] text-lg" />
-                <span className="font-bold text-sm">{opt.label}</span>
+                <span class="font-bold text-sm">{opt.label}</span>
                 {value === opt.value && (
                   <Icon
                     name="checkmark-circle"
-                    className="ml-auto text-[#9B51E0]"
+                    class="ml-auto text-[#9B51E0]"
                   />
                 )}
               </button>
@@ -427,7 +427,7 @@ export default function BookEditor(
     if (isPrintProp) return true;
     if (typeof globalThis.location === "undefined") return false;
     const params = new URLSearchParams(globalThis.location.search);
-    return params.get("mode") === "print" || params.get("hideBleed") === "true";
+    return params.get("mode") === "print" || params.get("hideBleed") === "true" || params.get("orderId") !== null;
   }, [isPrintProp]);
 
   const orderId = useMemo(() => {
@@ -885,14 +885,15 @@ export default function BookEditor(
         const physicalWidthPx = dimensions.widthInches * 96;
         const physicalHeightPx = dimensions.heightInches * 96;
 
-        const availableHeight = height - 12;
-        const availableWidth = width - 4;
+        // Ensure we don't have 0 or negative space
+        const availableHeight = Math.max(100, height - 20);
+        const availableWidth = Math.max(100, width - 20);
 
         const scaleW = availableWidth / physicalWidthPx;
         const scaleH = availableHeight / physicalHeightPx;
 
-        // Fit to the smaller dimension
-        const newScale = Math.min(scaleW, scaleH);
+        // Fit to the smaller dimension, with a sensible floor and ceiling
+        const newScale = Math.min(1.2, Math.max(0.1, Math.min(scaleW, scaleH)));
 
         setScale(newScale);
       }
@@ -1452,7 +1453,7 @@ export default function BookEditor(
             pointerEvents: "none",
           }}
         >
-          <div ref={captureRef} className="w-full h-full bg-white">
+          <div ref={captureRef} class="w-full h-full bg-white">
             <PageRenderer
               format={format}
               page={{

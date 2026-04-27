@@ -49,7 +49,7 @@ export default function PageRenderer(
 
   return (
     <div
-      className={`relative shadow-2xl overflow-hidden flex flex-col theme-${themeId} format-${format}`}
+      class={`relative shadow-2xl overflow-hidden flex flex-col theme-${themeId} format-${format}`}
       style={{
         width: `${dimensions.widthInches}in`,
         height: `${dimensions.heightInches}in`,
@@ -60,7 +60,7 @@ export default function PageRenderer(
       {/* Safe Area Guide */}
       {!hideBleed && (
         <div
-          className="absolute border border-dashed pointer-events-none z-500 opacity-50"
+          class="absolute border border-dashed pointer-events-none z-500 opacity-50"
           style={{
             top: `${safeAreaMarginInches}in`,
             left: `${safeAreaMarginInches}in`,
@@ -71,7 +71,7 @@ export default function PageRenderer(
       )}
 
       <div
-        className={`page-layout layout-${page.layout_style}`}
+        class={`page-layout layout-${page.layout_style}`}
         style={{
           top: `${safeAreaMarginInches}in`,
           left: `${safeAreaMarginInches}in`,
@@ -89,22 +89,22 @@ export default function PageRenderer(
           <>
             {themeId === "babbl_theme" && (
               <>
-                <div className="bg-shape-1" />
-                <div className="bg-shape-2" />
-                <div className="bg-shape-3" />
+                <div class="bg-shape-1" />
+                <div class="bg-shape-2" />
+                <div class="bg-shape-3" />
               </>
             )}
-            <div className="title-container">
-              <div className="text">
+            <div class="title-container">
+              <div class="text">
                 <h1>{page.title || "Book Title"}</h1>
-                <div className="date-range">{yearRange}</div>
+                <div class="date-range">{yearRange}</div>
               </div>
             </div>
             {childrenProfiles.length > 0
               ? (
                 [...childrenProfiles].reverse().map((child) => (
                   child.avatar_url && (
-                    <div key={child.id} className="child-avatar-container">
+                    <div key={child.id} class="child-avatar-container">
                       <img crossOrigin="anonymous" src={child.avatar_url} alt={child.name} />
                     </div>
                   )
@@ -112,7 +112,7 @@ export default function PageRenderer(
               )
               : (
                 page.quote?.photo_url && (
-                  <div className="child-avatar-container">
+                  <div class="child-avatar-container">
                     <img crossOrigin="anonymous" src={page.quote.photo_url} alt="Cover Default" />
                   </div>
                 )
@@ -126,7 +126,7 @@ export default function PageRenderer(
             <img
               src="/images/babbl-book.svg"
               alt="Back Cover"
-              className="back-cover"
+              class="back-cover"
             />
           </>
         )}
@@ -134,19 +134,19 @@ export default function PageRenderer(
         {/* --- 3. Circle Photo --- */}
         {page.layout_style === "circle_photo" && page.quote && (
           <>
-            <div className="bg-image">
+            <div class="bg-image">
               {page.quote?.photo_url
                 ? <img crossOrigin="anonymous" src={page.quote.photo_url} alt="Background" />
                 : (
-                  <span className="no-image-text">
+                  <span class="no-image-text">
                     This Babbl doesn't have an image. Please select a different
                     page layout, or add an image to the Babbl.
                   </span>
                 )}
             </div>
-            <div className="content-card">
+            <div class="content-card">
               {page.quote?.child?.avatar_url && (
-                <div className="avatar-container">
+                <div class="avatar-container">
                   <img
                     crossOrigin="anonymous"
                     src={page.quote?.child?.avatar_url}
@@ -179,12 +179,12 @@ export default function PageRenderer(
                 "{page.quote.text}"
               </h3>
               {page.quote.context && (
-                <div className="context-box">
-                  <p className="context-text">{page.quote.context}</p>
+                <div class="context-box">
+                  <p class="context-text">{page.quote.context}</p>
                 </div>
               )}
-              <div className="meta-container">
-                <span className="meta-date">
+              <div class="meta-container">
+                <span class="meta-date">
                   {new Date(page.quote.date).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
@@ -192,8 +192,8 @@ export default function PageRenderer(
                   })}
                   {page.quote.location ? ` at ${page.quote.location}` : ""}
                 </span>
-                <span className="meta-separator">-</span>
-                <span className="meta-author">
+                <span class="meta-separator">-</span>
+                <span class="meta-author">
                   {page.quote.child?.nickname || page.quote.child?.name}
                   {getAgeLabel(
                     page.quote.child?.date_of_birth,
@@ -208,15 +208,15 @@ export default function PageRenderer(
         {/* --- 4. Quote top, photo bottom --- */}
         {page.layout_style === "quote_top_photo_bottom" && page.quote && (
           <>
-            <div className="quote-section">
+            <div class="quote-section">
               {page.quote?.child?.avatar_url && (
-                <div className="avatar-container">
+                <div class="avatar-container">
                   <img crossOrigin="anonymous" src={page.quote.child.avatar_url} alt="Child Avatar" />
                 </div>
               )}
-              <div className="quote-text">
+              <div class="quote-text">
                 <h3>"{page.quote.text}"</h3>
-                <div className="author-details">
+                <div class="author-details">
                   {page.quote.child?.nickname || page.quote.child?.name}
                   {getAgeLabel(
                     page.quote.child?.date_of_birth,
@@ -224,7 +224,7 @@ export default function PageRenderer(
                   )}
                 </div>
                 {!(page.quote.context && page.show_context !== false) && (
-                  <div className="meta-date">
+                  <div class="meta-date">
                     {new Date(page.quote.date).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
@@ -235,11 +235,11 @@ export default function PageRenderer(
                 )}
               </div>
             </div>
-            <div className="image-context-wrapper">
+            <div class="image-context-wrapper">
               {page.quote.context && page.show_context !== false && (
-                <div className="context-box">
+                <div class="context-box">
                   {page.quote.parent?.avatar_url && (
-                    <div className="parent-avatar">
+                    <div class="parent-avatar">
                       <img
                         crossOrigin="anonymous"
                         src={page.quote.parent.avatar_url}
@@ -247,8 +247,8 @@ export default function PageRenderer(
                       />
                     </div>
                   )}
-                  <p className="context-text">{page.quote.context}</p>
-                  <div className="meta-date">
+                  <p class="context-text">{page.quote.context}</p>
+                  <div class="meta-date">
                     {new Date(page.quote.date).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
@@ -258,11 +258,11 @@ export default function PageRenderer(
                   </div>
                 </div>
               )}
-              <div className="image-section">
+              <div class="image-section">
                 {page.quote?.photo_url
                   ? <img crossOrigin="anonymous" src={page.quote.photo_url} alt="Top Photo" />
                   : (
-                    <span className="no-image-text">
+                    <span class="no-image-text">
                       This Babbl doesn't have an image. Please select a different
                       page layout, or add an image to the Babbl.
                     </span>
@@ -276,13 +276,13 @@ export default function PageRenderer(
         {page.layout_style === "full_page_photo_quote_centered" && page.quote &&
           (
             <>
-              <div className="author-pill">
+              <div class="author-pill">
                 {page.quote?.child?.avatar_url && (
-                  <div className="author-avatar">
+                  <div class="author-avatar">
                     <img crossOrigin="anonymous" src={page.quote.child.avatar_url} alt="Child Avatar" />
                   </div>
                 )}
-                <span className="author-name">
+                <span class="author-name">
                   {page.quote.child?.nickname || page.quote.child?.name}
                   {getAgeLabel(
                     page.quote.child?.date_of_birth,
@@ -290,15 +290,15 @@ export default function PageRenderer(
                   )}
                 </span>
               </div>
-              <div className="quote-section">
+              <div class="quote-section">
                 <h3>"{page.quote.text}"</h3>
               </div>
               {page.quote.context && page.show_context !== false && (
-                <div className="context-container">
-                  <p className="context-text">{page.quote.context}</p>
-                  <div className="meta-row">
+                <div class="context-container">
+                  <p class="context-text">{page.quote.context}</p>
+                  <div class="meta-row">
                     {page.quote.parent?.avatar_url && (
-                      <div className="parent-avatar">
+                      <div class="parent-avatar">
                         <img
                           crossOrigin="anonymous"
                           src={page.quote.parent.avatar_url}
@@ -306,8 +306,8 @@ export default function PageRenderer(
                         />
                       </div>
                     )}
-                    <div className="meta-details">
-                      <span className="meta-date">
+                    <div class="meta-details">
+                      <span class="meta-date">
                         {new Date(page.quote.date).toLocaleDateString(
                           undefined,
                           {
@@ -324,18 +324,18 @@ export default function PageRenderer(
                   </div>
                 </div>
               )}
-              <div className="image-section">
+              <div class="image-section">
                 {page.quote?.photo_url
                   ? (
                     <img
                       crossOrigin="anonymous"
                       src={page.quote.photo_url}
                       alt="Bottom Photo"
-                      className="main-photo"
+                      class="main-photo"
                     />
                   )
                   : (
-                    <span className="no-image-text">
+                    <span class="no-image-text">
                       This Babbl doesn't have an image. Please select a
                       different page layout, or add an image to the Babbl.
                     </span>
@@ -348,19 +348,19 @@ export default function PageRenderer(
         {page.layout_style === "full_width_photo_top_quote_bottom" &&
           page.quote && (
           <>
-            <div className="image-section">
+            <div class="image-section">
               {page.quote?.photo_url
                 ? <img crossOrigin="anonymous" src={page.quote.photo_url} alt="Main Photo" />
                 : (
-                  <span className="no-image-text">
+                  <span class="no-image-text">
                     This Babbl doesn't have an image. Please select a different
                     page layout, or add an image to the Babbl.
                   </span>
                 )}
             </div>
-            <div className="quote-section">
+            <div class="quote-section">
               <h3>"{page.quote.text}"</h3>
-              <span className="meta-date">
+              <span class="meta-date">
                 {new Date(page.quote.date).toLocaleDateString(undefined, {
                   month: "short",
                   day: "numeric",
@@ -368,8 +368,8 @@ export default function PageRenderer(
                 })}
                 {page.quote.location ? ` at ${page.quote.location}` : ""}
               </span>
-              <div className="author-row">
-                <div className="author-details">
+              <div class="author-row">
+                <div class="author-details">
                   {page.quote.child?.nickname || page.quote.child?.name}
                   {getAgeLabel(
                     page.quote.child?.date_of_birth,
@@ -377,7 +377,7 @@ export default function PageRenderer(
                   )}
                 </div>
                 {page.quote?.child?.avatar_url && (
-                  <div className="author-avatar">
+                  <div class="author-avatar">
                     <img crossOrigin="anonymous" src={page.quote.child.avatar_url} alt="Child Avatar" />
                   </div>
                 )}
@@ -390,10 +390,10 @@ export default function PageRenderer(
         {page.layout_style === "full_screen_photo_short_quote" && page.quote &&
           (
             <>
-              <div className="quote-section">
-                <div className="main-text">
+              <div class="quote-section">
+                <div class="main-text">
                   <h3>"{page.quote.text}"</h3>
-                  <div className="meta-row">
+                  <div class="meta-row">
                     {new Date(page.quote.date).toLocaleDateString(undefined, {
                       month: "short",
                       day: "numeric",
@@ -402,8 +402,8 @@ export default function PageRenderer(
                     {page.quote.location ? ` at ${page.quote.location}` : ""}
                   </div>
                 </div>
-                <div className="author-pill">
-                  <span className="author-name">
+                <div class="author-pill">
+                  <span class="author-name">
                     {page.quote.child?.nickname || page.quote.child?.name}
                     {getAgeLabel(
                       page.quote.child?.date_of_birth,
@@ -411,7 +411,7 @@ export default function PageRenderer(
                     )}
                   </span>
                   {page.quote?.child?.avatar_url && (
-                    <div className="author-avatar">
+                    <div class="author-avatar">
                       <img
                         crossOrigin="anonymous"
                         src={page.quote.child.avatar_url}
@@ -421,11 +421,11 @@ export default function PageRenderer(
                   )}
                 </div>
               </div>
-              <div className="image-section">
+              <div class="image-section">
                 {page.quote?.photo_url
                   ? <img crossOrigin="anonymous" src={page.quote.photo_url} alt="Action Photo" />
                   : (
-                    <span className="no-image-text">
+                    <span class="no-image-text">
                       This Babbl doesn't have an image. Please select a
                       different page layout, or add an image to the Babbl.
                     </span>
@@ -438,21 +438,21 @@ export default function PageRenderer(
         {page.layout_style === "photo_window_top_quote_bottom" && page.quote &&
           (
             <>
-              <div className="bg-photo">
+              <div class="bg-photo">
                 {page.quote?.photo_url
                   ? <img crossOrigin="anonymous" src={page.quote.photo_url} alt="Background" />
                   : (
-                    <span className="no-image-text">
+                    <span class="no-image-text">
                       This Babbl doesn't have an image. Please select a
                       different page layout, or add an image to the Babbl.
                     </span>
                   )}
               </div>
-              <div className="quote-card">
-                <div className="quote-text">
+              <div class="quote-card">
+                <div class="quote-text">
                   <h3>"{page.quote.text}"</h3>
-                  <div className="meta-row">
-                    <span className="author-date">
+                  <div class="meta-row">
+                    <span class="author-date">
                       {new Date(page.quote.date).toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
@@ -463,9 +463,9 @@ export default function PageRenderer(
                   </div>
                 </div>
                 {page.quote.context && page.show_context !== false && (
-                  <div className="context-container">
+                  <div class="context-container">
                     {page.quote.parent?.avatar_url && (
-                      <div className="parent-avatar">
+                      <div class="parent-avatar">
                         <img
                           crossOrigin="anonymous"
                           src={page.quote.parent.avatar_url}
@@ -473,12 +473,12 @@ export default function PageRenderer(
                         />
                       </div>
                     )}
-                    <p className="context-text">{page.quote.context}</p>
+                    <p class="context-text">{page.quote.context}</p>
                   </div>
                 )}
               </div>
-              <div className="author-pill">
-                <span className="author-name">
+              <div class="author-pill">
+                <span class="author-name">
                   {page.quote.child?.nickname || page.quote.child?.name}
                   {getAgeLabel(
                     page.quote.child?.date_of_birth,
@@ -486,7 +486,7 @@ export default function PageRenderer(
                   )}
                 </span>
                 {page.quote?.child?.avatar_url && (
-                  <div className="author-avatar">
+                  <div class="author-avatar">
                     <img
                       crossOrigin="anonymous"
                       src={page.quote.child.avatar_url}
@@ -502,22 +502,22 @@ export default function PageRenderer(
         {page.layout_style === "quote_only_centered" && page.quote && (
           <>
             {page.quote?.child?.avatar_url && (
-              <div className="avatar-container">
+              <div class="avatar-container">
                 <img crossOrigin="anonymous" src={page.quote.child.avatar_url} alt="Child Avatar" />
               </div>
             )}
-            <div className="quote-section">
+            <div class="quote-section">
               <h3>"{page.quote.text.trim()}"</h3>
-              <div className="author-details">
+              <div class="author-details">
                 {page.quote.child?.nickname || page.quote.child?.name}
                 {getAgeLabel(page.quote.child?.date_of_birth, page.quote.date)}
               </div>
             </div>
             {page.quote.context && page.show_context !== false && (
-              <div className="context-bar">
-                <div className="context-row">
+              <div class="context-bar">
+                <div class="context-row">
                   {page.quote?.parent?.avatar_url && (
-                    <div className="parent-avatar">
+                    <div class="parent-avatar">
                       <img
                         crossOrigin="anonymous"
                         src={page.quote.parent.avatar_url}
@@ -525,11 +525,11 @@ export default function PageRenderer(
                       />
                     </div>
                   )}
-                  <div className="text-container">
-                    <p className="context-text">
+                  <div class="text-container">
+                    <p class="context-text">
                       {page.quote.context.trim()}
                     </p>
-                    <span className="context-date">
+                    <span class="context-date">
                       {new Date(page.quote.date).toLocaleDateString(undefined, {
                         month: "short",
                         day: "numeric",
@@ -556,7 +556,7 @@ export default function PageRenderer(
           "photo_window_top_quote_bottom",
           "quote_only_centered",
         ].includes(page.layout_style) && (
-          <p className="unrecognized-layout">
+          <p class="unrecognized-layout">
             Unrecognized Layout: {page.layout_style}
           </p>
         )}

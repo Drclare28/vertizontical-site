@@ -177,12 +177,13 @@ function renderPage(page: BookPageData, dim: { w: number; h: number; inW: number
   return `<div class="print-page theme-babbl_theme" style="${containerStyle}"><div style="padding:2em;font-size:0.9em;color:#999;">Unknown layout: ${layout}</div></div>`;
 }
 
-// Use define.handlers so we can return a raw Response (not JSX)
 export const handlers = define.handlers({
-  async GET(ctx: Parameters<Parameters<typeof define.handlers>[0]["GET"]>[0]) {
-    const url = new URL(ctx.url);
+  async GET(ctx) {
+    const { url } = ctx;
     const bookId = url.searchParams.get("bookId");
     const token = url.searchParams.get("token");
+    const formatStr = url.searchParams.get("format") || "mini";
+    const format = formatStr.toLowerCase() as BookFormat;
 
     if (!bookId || !token) {
       return new Response("Unauthorized", { status: 401 });
@@ -190,6 +191,8 @@ export const handlers = define.handlers({
 
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const apiSecret = Deno.env.get("API_SECRET");
+    const supabaseUrl = globalThis.Deno?.env.get("SUPABASE_URL") || "";
+    const supabaseAnonKey = globalThis.Deno?.env.get("SUPABASE_ANON_KEY") || "";
     const isAdminBypass =
       (serviceRoleKey && token === serviceRoleKey) ||
       (apiSecret && token === apiSecret);
