@@ -1127,7 +1127,7 @@ export default function BookEditor(
               <Icon name="book-outline" style={{ fontSize: "14px" }} />
               <div class="flex flex-col items-start leading-none justify-center">
                 <span>Mini</span>
-                <span class="text-[10px] opacity-70">6.0x6.0"</span>
+                <span class="text-[10px] opacity-70">5.5x5.5"</span>
               </div>
             </button>
             <button
