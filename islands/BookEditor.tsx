@@ -91,6 +91,16 @@ const SVG_ICONS: Record<
       />
     </svg>
   ),
+  "pencil": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+      />
+    </svg>
+  ),
   "moon-outline": (props) => (
     <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
@@ -265,6 +275,49 @@ const SVG_ICONS: Record<
       />
     </svg>
   ),
+  "close": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  ),
+  "card-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="3" y="5" width="18" height="14" rx="2" stroke-width="2" />
+      <path stroke-linecap="round" stroke-width="2" d="M3 10h18" />
+    </svg>
+  ),
+  "lock-closed-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <rect x="5" y="11" width="14" height="10" rx="2" stroke-width="2" />
+      <path stroke-linecap="round" stroke-width="2" d="M8 11V7a4 4 0 118 0v4" />
+    </svg>
+  ),
+  "information-circle": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" stroke-width="2" />
+      <path stroke-linecap="round" stroke-width="2" d="M12 8v4m0 4h.01" />
+    </svg>
+  ),
+  "trash-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+  ),
+  "add-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    </svg>
+  ),
+  "chevron-up-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+    </svg>
+  ),
+  "chevron-down-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+    </svg>
+  ),
 };
 
 interface BookEditorProps {
@@ -305,12 +358,13 @@ function Icon({ name, class: className, style }: {
     );
   }
 
+  // Fallback for missing SVG mappings
   return (
     <div
       class={`inline-flex items-center justify-center ${className || ""}`}
       style={style}
     >
-      <ion-icon name={name} style="font-size: inherit;" />
+      <span style="font-size: 0.8em; font-weight: bold;">?</span>
     </div>
   );
 }
@@ -466,13 +520,47 @@ export default function BookEditor(
   }, [currentPageIndex, bookId]);
 
   // Initialize Supabase client locally in the island to avoid server-only dependencies
-  const [supabase] = useState(() =>
-    createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: `Bearer ${token}` },
-      },
-    })
-  );
+  const [supabase] = useState(() => {
+    try {
+      if (!supabaseUrl || !supabaseAnonKey) {
+        console.warn("Supabase credentials missing, some features will be disabled.");
+        return null;
+      }
+      return createClient(supabaseUrl, supabaseAnonKey, {
+        global: {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      });
+    } catch (e) {
+      console.error("Failed to initialize Supabase client:", e);
+      return null;
+    }
+  });
+
+  // Track hydration for debugging
+  useEffect(() => {
+    console.log("BookEditor hydrated successfully!");
+    // @ts-ignore
+    window.hydrated = true;
+
+    // Bridge logs to native app
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    console.log = (...args) => {
+      originalLog(...args);
+      window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'CONSOLE_LOG', data: args.map(String) }));
+    };
+    console.error = (...args) => {
+      originalError(...args);
+      window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'CONSOLE_ERROR', data: args.map(String) }));
+    };
+    console.warn = (...args) => {
+      originalWarn(...args);
+      window.ReactNativeWebView?.postMessage(JSON.stringify({ type: 'CONSOLE_WARN', data: args.map(String) }));
+    };
+  }, []);
 
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
