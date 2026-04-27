@@ -107,8 +107,8 @@ export const THEMES: Record<string, BookTheme> = {
 
 export const BOOK_DIMENSIONS: Record<BookFormat, Dimensions> = {
   mini: {
-    widthInches: 5.5,
-    heightInches: 5.5,
+    widthInches: 6,
+    heightInches: 6,
   },
   classic: {
     widthInches: 8,

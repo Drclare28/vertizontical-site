@@ -1127,7 +1127,7 @@ export default function BookEditor(
               <Icon name="book-outline" style={{ fontSize: "14px" }} />
               <div class="flex flex-col items-start leading-none justify-center">
                 <span>Mini</span>
-                <span class="text-[10px] opacity-70">5.5x5.5"</span>
+                <span class="text-[10px] opacity-70">6.0x6.0"</span>
               </div>
             </button>
             <button
@@ -1151,29 +1151,37 @@ export default function BookEditor(
 
       {/* MID: Book Canvas */}
       {isPrintMode ? (
-        <div class="print-book-container w-full flex flex-col items-center bg-white">
+        <div class="print-book-container bg-white" style={{ width: `${dimensions.widthInches}in` }}>
           <style>
             {`
-              @media print {
-                @page {
-                  margin: 0;
-                  size: ${dimensions.widthInches}in ${dimensions.heightInches}in;
-                }
-                body { margin: 0; padding: 0; }
-                .print-page { page-break-after: always; break-after: page; }
+              /* Force specific page size and remove margins for the PDF generator */
+              @page {
+                margin: 0;
+                size: ${dimensions.widthInches}in ${dimensions.heightInches}in;
               }
-              /* Headless browser specific for Api2Pdf */
+              
+              /* Ensure the container and body don't have stray padding/margins */
+              body { margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+              
+              .print-book-container {
+                width: ${dimensions.widthInches}in !important;
+                margin: 0 auto;
+              }
+
               .print-page { 
-                 width: ${dimensions.widthInches * 96}px; 
-                 height: ${dimensions.heightInches * 96}px;
-                 position: relative;
+                 width: ${dimensions.widthInches}in !important; 
+                 height: ${dimensions.heightInches}in !important;
                  overflow: hidden;
-                 page-break-after: always;
-                 break-after: page;
+                 position: relative;
+                 page-break-after: always !important;
+                 break-after: page !important;
+                 display: block !important;
+                 margin: 0 !important;
+                 padding: 0 !important;
               }
             `}
           </style>
-          {localPages.map((page, idx) => (
+          {pages.map((page, idx) => (
             <div key={idx} class="print-page">
               <PageRenderer
                 format={format}
@@ -1181,7 +1189,7 @@ export default function BookEditor(
                   ...page,
                   layout_style: idx === 0 
                     ? "cover" 
-                    : idx === localPages.length - 1 
+                    : idx === pages.length - 1 
                     ? "back_cover" 
                     : page.layout_style
                 }}
