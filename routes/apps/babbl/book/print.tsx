@@ -2,6 +2,8 @@ import { define } from "../../../../utils.ts";
 import { BookPageData } from "./_data.ts";
 import { getSupabaseClient } from "../../../../lib/supabase.ts";
 
+let cachedCss = "";
+
 // Book dimensions in pixels at 96 DPI
 const BOOK_PX: Record<string, { w: number; h: number; inW: number; inH: number }> = {
   mini: { w: 576, h: 576, inW: 6, inH: 6 },
@@ -282,16 +284,35 @@ export const handler = define.handlers({
 
     const bookBuilderUrl = Deno.env.get("BOOK_BUILDER_URL") ?? "https://vertizonticalstudios.com";
 
+    let inlineCss = "";
+    try {
+      if (!cachedCss) {
+        const babblUrl = new URL("../../../../assets/css/themes/babbl.css", import.meta.url);
+        const bookUrl = new URL("../../../../assets/css/book.css", import.meta.url);
+        const babbl = await Deno.readTextFile(babblUrl);
+        const book = await Deno.readTextFile(bookUrl);
+        cachedCss = book.replace(/@import\s+['"].\/themes\/babbl\.css['"];?/g, "") + "\n" + babbl;
+      }
+      
+      // Inject the base URL explicitly into CSS rules targeting /images/
+      inlineCss = cachedCss.replace(/url\(["']?\/images\//g, `url("${bookBuilderUrl}/images/`);
+    } catch (e) {
+      console.error("Failed to read inline CSS:", e);
+    }
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=${dim.w}, initial-scale=1.0" />
   <title>Babbl Book Print</title>
+  <base href="${bookBuilderUrl}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="${bookBuilderUrl}/assets/css/book.css" />
+  <style>
+    ${inlineCss}
+  </style>
   <style>
     @page {
       margin: 0;
