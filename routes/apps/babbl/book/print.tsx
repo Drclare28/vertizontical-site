@@ -287,8 +287,8 @@ export const handler = define.handlers({
     let inlineCss = "";
     try {
       if (!cachedCss) {
-        const babblUrl = new URL("../../../../assets/css/themes/babbl.css", import.meta.url);
-        const bookUrl = new URL("../../../../assets/css/book.css", import.meta.url);
+        const babblUrl = `${Deno.cwd()}/assets/css/themes/babbl.css`;
+        const bookUrl = `${Deno.cwd()}/assets/css/book.css`;
         const babbl = await Deno.readTextFile(babblUrl);
         const book = await Deno.readTextFile(bookUrl);
         cachedCss = book.replace(/@import\s+['"].\/themes\/babbl\.css['"];?/g, "") + "\n" + babbl;
