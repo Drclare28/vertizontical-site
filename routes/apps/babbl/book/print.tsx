@@ -36,7 +36,7 @@ function renderPage(
   const layout = page.layout_style;
   const q = page.quote;
 
-  const containerStyle = `width:${dim.w}px;height:${dim.h}px;overflow:hidden;position:relative;flex-shrink:0;padding:0.25in;`;
+  const containerStyle = `width:${dim.w}px;height:${dim.h}px;overflow:hidden;position:relative;flex-shrink:0;`;
 
   const childName = () => q?.child?.nickname || q?.child?.name || "";
   const childAge = () => getAgeLabel(q?.child?.date_of_birth, q?.date);
