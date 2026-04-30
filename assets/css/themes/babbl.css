@@ -95,20 +95,23 @@
     .title-container {
       z-index: 100;
       position: absolute;
-      top: -1.5em;
-      /* left: -4.25em; */
-      margin-left: -14.5em;
-      background: url("/images/babbl-bubble-outlined.svg") bottom right;
-      background-size: cover;
-      background-position: center;
+      top: 2%;
+      left: 50%;
+      transform: translateX(-50%) rotate(-1.25deg);
+      width: 100%;
+      aspect-ratio: 1/1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: url("/images/babbl-bubble-outlined.svg") center center;
+      background-size: 85% auto;
       background-repeat: no-repeat;
-      padding: 5em;
     }
 
     .text {
       font-family: "Yomogi", sans-serif;
-      padding-left: 6rem;
-      transform: rotate(-1.25deg);
+      text-align: center;
+      padding: 0;
     }
 
     h1 {
@@ -144,7 +147,7 @@
     img {
       border-radius: 9999px;
       object-fit: cover;
-      border: 1.5em solid var(--babbl-accent-coral);
+      border: 0.5em solid var(--babbl-accent-coral);
       position: relative;
     }
 
@@ -990,7 +993,6 @@
   }
 
   /* Format Modifiers (Responsive) */
-  &.format-mini {}
 
   &.format-classic {
     font-size: 1.45rem;

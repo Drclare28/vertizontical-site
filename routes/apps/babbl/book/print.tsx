@@ -1,5 +1,5 @@
 import { define } from "../../../../utils.ts";
-import { BookPageData } from "./_data.ts";
+import { BabblQuote, BookPageData } from "./_data.ts";
 import { getSupabaseClient } from "../../../../lib/supabase.ts";
 
 // Book dimensions in pixels at 96 DPI
@@ -31,7 +31,7 @@ function formatDate(dateStr?: string): string {
 function renderPage(
   page: BookPageData,
   dim: { w: number; h: number; inW: number; inH: number },
-  extra?: { childrenProfiles?: any[]; yearRange?: string }
+  extra?: { childrenProfiles?: BabblQuote["child"][]; yearRange?: string }
 ): string {
   const layout = page.layout_style;
   const q = page.quote;
@@ -49,7 +49,7 @@ function renderPage(
     let avatarsHtml = "";
     if (extra?.childrenProfiles && extra.childrenProfiles.length > 0) {
       avatarsHtml = [...extra.childrenProfiles].reverse().map(child =>
-        child.avatar_url ? `<div class="child-avatar-container"><img crossorigin="anonymous" src="${child.avatar_url}" alt="${child.name || 'Cover'}" /></div>` : ""
+        (child && child.avatar_url) ? `<div class="child-avatar-container"><img crossorigin="anonymous" src="${child.avatar_url}" alt="${child.name || 'Cover'}" /></div>` : ""
       ).join("");
     } else if (photoUrl) {
       avatarsHtml = `<div class="child-avatar-container"><img crossorigin="anonymous" src="${photoUrl}" alt="Cover Default" /></div>`;
@@ -226,7 +226,6 @@ export const handler = define.handlers({
       return new Response(`Book not found: ${bookError?.message}`, { status: 404 });
     }
 
-    // Fetch book quotes
     const { data: bookQuotes, error: quotesError } = await supabase
       .from("book_quotes")
       .select(`
@@ -264,14 +263,14 @@ export const handler = define.handlers({
     const dim = BOOK_PX[finalFormat] || BOOK_PX.mini;
 
     // Map quotes to pages
-    // deno-lint-ignore no-explicit-any
-    const innerPages: BookPageData[] = (bookQuotes || []).map((bq: any) => {
-      const quoteData = Array.isArray(bq.quote) ? bq.quote[0] : bq.quote;
+    const innerPages: BookPageData[] = (bookQuotes || []).map((bq) => {
+      const bqAny = bq as Record<string, any>;
+      const quoteData = Array.isArray(bqAny.quote) ? bqAny.quote[0] : bqAny.quote;
       if (!quoteData) return null;
       return {
-        page_number: bq.order_index + 1,
-        layout_style: bq.layout_style || "photo_window_top_quote_bottom",
-        show_context: bq.show_context !== false,
+        page_number: (bqAny.order_index as number) + 1,
+        layout_style: (bqAny.layout_style as string) || "photo_window_top_quote_bottom",
+        show_context: bqAny.show_context !== false,
         quote: {
           id: quoteData.id,
           text: quoteData.quote_text,
@@ -289,8 +288,9 @@ export const handler = define.handlers({
     }).filter(Boolean) as BookPageData[];
 
     // Calculate values for cover
-    const dates = (bookQuotes || []).map((bq: any) => {
-      const qd = Array.isArray(bq.quote) ? bq.quote[0] : bq.quote;
+    const dates = (bookQuotes || []).map((bq) => {
+      const bqAny = bq as Record<string, any>;
+      const qd = Array.isArray(bqAny.quote) ? bqAny.quote[0] : bqAny.quote;
       return qd?.quote_date ? new Date(qd.quote_date).getFullYear() : NaN;
     }).filter((y: number) => !isNaN(y));
     const minYear = dates.length ? Math.min(...dates) : new Date().getFullYear();
@@ -298,8 +298,9 @@ export const handler = define.handlers({
     const yearRange = minYear === maxYear ? `${minYear}` : `${minYear} - ${maxYear}`;
 
     const childrenMap = new Map();
-    (bookQuotes || []).forEach((bq: any) => {
-      const qd = Array.isArray(bq.quote) ? bq.quote[0] : bq.quote;
+    (bookQuotes || []).forEach((bq) => {
+      const bqAny = bq as Record<string, any>;
+      const qd = Array.isArray(bqAny.quote) ? bqAny.quote[0] : bqAny.quote;
       const child = Array.isArray(qd?.child) ? qd.child[0] : qd?.child;
       if (child) {
         childrenMap.set(child.id, child);
@@ -322,8 +323,13 @@ export const handler = define.handlers({
       inlineCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/book.css") + "\n" +
                   await Deno.readTextFile(Deno.cwd() + "/assets/css/themes/babbl.css");
       
-      // Fix relative image paths in the inline CSS by substituting with the absolute URL
-      inlineCss = inlineCss.replace(/url\([^)]+\/images\//g, `url(${bookBuilderUrl}/images/`);
+      // Fix relative/absolute asset paths in the inline CSS by substituting with the absolute URL
+      inlineCss = inlineCss.replace(/url\(["']?([^"']*(?:images|fonts)[^"']*)["']?\)/g, (_match, path) => {
+        if (path.startsWith("http") || path.startsWith("data:")) return `url("${path}")`;
+        // Remove leading ../ or ./ or / to get a clean relative path
+        const cleanPath = path.replace(/^(\.\.\/|\.\/|\/)/, "");
+        return `url("${bookBuilderUrl}/${cleanPath}")`;
+      });
     } catch (e) {
       console.error("Failed to read inline CSS:", e);
     }
@@ -337,7 +343,7 @@ export const handler = define.handlers({
   <base href="${bookBuilderUrl}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Rosario:wght@400;700&family=Yomogi&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     ${inlineCss}
   </style>
