@@ -345,7 +345,20 @@ export const handler = define.handlers({
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
+    .print-page {
+      font-size: 16px;
+    }
+  </style>
+  <style>
     ${inlineCss}
+    html, body {
+      font-size: 16px;
+      margin: 0;
+      padding: 0;
+    }
+    .print-page {
+      font-size: 16px;
+    }
   </style>
   <style>
     @page {
