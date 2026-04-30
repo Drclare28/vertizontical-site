@@ -53,7 +53,7 @@ export default function PageRenderer(
       style={{
         width: `${dimensions.widthInches}in`,
         height: `${dimensions.heightInches}in`,
-        padding: "0.25in",
+        padding: "0",
         boxShadow: "0 10px 30px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.05)",
       }}
     >
@@ -73,14 +73,10 @@ export default function PageRenderer(
       <div
         class={`page-layout layout-${page.layout_style}`}
         style={{
-          top: `${safeAreaMarginInches}in`,
-          left: `${safeAreaMarginInches}in`,
-          // width: `calc(${dimensions.widthInches}in - ${
-          //   safeAreaMarginInches * 2
-          // }in)`,
-          // height: `calc(${dimensions.heightInches}in - ${
-          //   safeAreaMarginInches * 2
-          // }in)`,
+          top: "0",
+          left: "0",
+          width: "100%",
+          height: "100%",
           position: "absolute",
         }}
       >
