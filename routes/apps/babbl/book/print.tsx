@@ -2,8 +2,6 @@ import { define } from "../../../../utils.ts";
 import { BookPageData } from "./_data.ts";
 import { getSupabaseClient } from "../../../../lib/supabase.ts";
 
-let cachedCss = "";
-
 // Book dimensions in pixels at 96 DPI
 const BOOK_PX: Record<string, { w: number; h: number; inW: number; inH: number }> = {
   mini: { w: 576, h: 576, inW: 6, inH: 6 },
@@ -30,11 +28,15 @@ function formatDate(dateStr?: string): string {
   });
 }
 
-function renderPage(page: BookPageData, dim: { w: number; h: number; inW: number; inH: number }): string {
+function renderPage(
+  page: BookPageData,
+  dim: { w: number; h: number; inW: number; inH: number },
+  extra?: { childrenProfiles?: any[]; yearRange?: string }
+): string {
   const layout = page.layout_style;
   const q = page.quote;
 
-  const containerStyle = `width:${dim.w}px;height:${dim.h}px;overflow:hidden;position:relative;flex-shrink:0;`;
+  const containerStyle = `width:${dim.w}px;height:${dim.h}px;overflow:hidden;position:relative;flex-shrink:0;padding:0.25in;`;
 
   const childName = () => q?.child?.nickname || q?.child?.name || "";
   const childAge = () => getAgeLabel(q?.child?.date_of_birth, q?.date);
@@ -44,15 +46,27 @@ function renderPage(page: BookPageData, dim: { w: number; h: number; inW: number
   const photoUrl = q?.photo_url;
 
   if (layout === "cover") {
+    let avatarsHtml = "";
+    if (extra?.childrenProfiles && extra.childrenProfiles.length > 0) {
+      avatarsHtml = [...extra.childrenProfiles].reverse().map(child =>
+        child.avatar_url ? `<div class="child-avatar-container"><img crossorigin="anonymous" src="${child.avatar_url}" alt="${child.name || 'Cover'}" /></div>` : ""
+      ).join("");
+    } else if (photoUrl) {
+      avatarsHtml = `<div class="child-avatar-container"><img crossorigin="anonymous" src="${photoUrl}" alt="Cover Default" /></div>`;
+    }
+
     return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
       <div class="page-layout layout-cover" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="bg-shape-1"></div>
         <div class="bg-shape-2"></div>
         <div class="bg-shape-3"></div>
         <div class="title-container">
-          <div class="text"><h1>${page.title || "Book Title"}</h1></div>
+          <div class="text">
+            <h1>${page.title || "Book Title"}</h1>
+            ${extra?.yearRange ? `<div class="date-range">${extra.yearRange}</div>` : ""}
+          </div>
         </div>
-        ${avatarUrl ? `<div class="child-avatar-container"><img crossorigin="anonymous" src="${avatarUrl}" alt="Cover" /></div>` : ""}
+        ${avatarsHtml}
       </div>
     </div>`;
   }
@@ -274,28 +288,46 @@ export const handler = define.handlers({
       };
     }).filter(Boolean) as BookPageData[];
 
+    // Calculate values for cover
+    const dates = (bookQuotes || []).map((bq: any) => {
+      const qd = Array.isArray(bq.quote) ? bq.quote[0] : bq.quote;
+      return qd?.quote_date ? new Date(qd.quote_date).getFullYear() : NaN;
+    }).filter((y: number) => !isNaN(y));
+    const minYear = dates.length ? Math.min(...dates) : new Date().getFullYear();
+    const maxYear = dates.length ? Math.max(...dates) : new Date().getFullYear();
+    const yearRange = minYear === maxYear ? `${minYear}` : `${minYear} - ${maxYear}`;
+
+    const childrenMap = new Map();
+    (bookQuotes || []).forEach((bq: any) => {
+      const qd = Array.isArray(bq.quote) ? bq.quote[0] : bq.quote;
+      const child = Array.isArray(qd?.child) ? qd.child[0] : qd?.child;
+      if (child) {
+        childrenMap.set(child.id, child);
+      }
+    });
+    const childrenProfiles = Array.from(childrenMap.values());
+
     const allPages: BookPageData[] = [
       { page_number: 0, layout_style: "cover", title: book.title },
       ...innerPages,
       { page_number: innerPages.length + 1, layout_style: "back_cover" },
     ];
 
-    const renderedPages = allPages.map((p) => renderPage(p, dim)).join("\n");
+    const renderedPages = allPages.map((p) => renderPage(p, dim, { childrenProfiles, yearRange })).join("\n");
 
     const bookBuilderUrl = Deno.env.get("BOOK_BUILDER_URL") ?? "https://vertizonticalstudios.com";
 
     let inlineCss = "";
     try {
-      if (!cachedCss) {
-        const babblUrl = `${Deno.cwd()}/assets/css/themes/babbl.css`;
-        const bookUrl = `${Deno.cwd()}/assets/css/book.css`;
-        const babbl = await Deno.readTextFile(babblUrl);
-        const book = await Deno.readTextFile(bookUrl);
-        cachedCss = book.replace(/@import\s+['"].\/themes\/babbl\.css['"];?/g, "") + "\n" + babbl;
-      }
+      inlineCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/book.css") + "\n" +
+                  await Deno.readTextFile(Deno.cwd() + "/assets/css/themes/babbl.css");
       
-      // Inject the base URL explicitly into CSS rules targeting /images/
-      inlineCss = cachedCss.replace(/url\(["']?\/images\//g, `url("${bookBuilderUrl}/images/`);
+      // Fix relative image paths in the inline CSS by substituting with the absolute URL
+      inlineCss = inlineCss.replace(/url\([^)]+\/images\//g, `url(${bookBuilderUrl}/images/`);
+      
+      // Replace proprietary Charter font with Lora fallback for headless browser
+      inlineCss = inlineCss.replace(/"Charter"\s*,\s*sans-serif/g, '"Charter", "Lora", serif')
+                           .replace(/"Charter"\s*,\s*serif/g, '"Charter", "Lora", serif');
     } catch (e) {
       console.error("Failed to read inline CSS:", e);
     }
@@ -309,14 +341,14 @@ export const handler = define.handlers({
   <base href="${bookBuilderUrl}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Rosario:wght@400;700&family=Yomogi&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     ${inlineCss}
   </style>
   <style>
     @page {
-      margin: 0;
-      size: ${dim.inW}in ${dim.inH}in;
+      margin: 0 !important;
+      size: ${dim.inW}in ${dim.inH}in !important;
     }
     *, *::before, *::after { box-sizing: border-box; }
     html, body {
