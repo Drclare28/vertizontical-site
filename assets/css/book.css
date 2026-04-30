@@ -1,6 +1,9 @@
 /* Note: Add specific fonts for themes if necessary */
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
 
+/* Entry point for all book-related styles */
+@import "./themes/babbl.css";
+
 @font-face {
     font-family: 'Charter';
     src: url('../fonts/charter/webfonts/charter_regular-webfont.woff') format('woff'),
@@ -36,6 +39,3 @@
     font-style: italic;
     font-display: swap;
 }
-
-/* Entry point for all book-related styles */
-@import "./themes/babbl.css";
