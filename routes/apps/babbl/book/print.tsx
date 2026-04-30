@@ -324,10 +324,6 @@ export const handler = define.handlers({
       
       // Fix relative image paths in the inline CSS by substituting with the absolute URL
       inlineCss = inlineCss.replace(/url\([^)]+\/images\//g, `url(${bookBuilderUrl}/images/`);
-      
-      // Replace proprietary Charter font with Lora fallback for headless browser
-      inlineCss = inlineCss.replace(/"Charter"\s*,\s*sans-serif/g, '"Charter", "Lora", serif')
-                           .replace(/"Charter"\s*,\s*serif/g, '"Charter", "Lora", serif');
     } catch (e) {
       console.error("Failed to read inline CSS:", e);
     }

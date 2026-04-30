@@ -12,11 +12,11 @@ export const config: RouteConfig = {
 
 export default define.page(async function Book(ctx) {
   const url = new URL(ctx.url);
-  let bookId = url.searchParams.get("bookId");
-  let token = url.searchParams.get("token");
+  const bookId = url.searchParams.get("bookId");
+  const token = url.searchParams.get("token");
   const mode = url.searchParams.get("mode");
 
-  const isLocal = url.hostname === "localhost" ||
+  const _isLocal = url.hostname === "localhost" ||
     url.hostname === "127.0.0.1" ||
     url.hostname.startsWith("192.168.") ||
     url.hostname.startsWith("10.");
@@ -235,7 +235,7 @@ export default define.page(async function Book(ctx) {
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&family=Charter:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&display=swap"
           rel="stylesheet"
         />
 

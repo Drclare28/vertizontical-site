@@ -1,5 +1,41 @@
 /* Note: Add specific fonts for themes if necessary */
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
 
+@font-face {
+    font-family: 'Charter';
+    src: url('../fonts/charter/webfonts/charter_regular-webfont.woff') format('woff'),
+         url('../fonts/charter/ttf/Charter Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Charter';
+    src: url('../fonts/charter/webfonts/charter_italic-webfont.woff') format('woff'),
+         url('../fonts/charter/ttf/Charter Italic.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Charter';
+    src: url('../fonts/charter/webfonts/charter_bold-webfont.woff') format('woff'),
+         url('../fonts/charter/ttf/Charter Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Charter';
+    src: url('../fonts/charter/webfonts/charter_bold_italic-webfont.woff') format('woff'),
+         url('../fonts/charter/ttf/Charter Bold Italic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
 /* Entry point for all book-related styles */
 @import "./themes/babbl.css";

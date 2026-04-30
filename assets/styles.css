@@ -1,6 +1,42 @@
 @import url("https://fonts.googleapis.com/css2?family=PT+Sans+Caption:wght@400;700&family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&family=PT+Serif+Caption:ital@0;1&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Rosario:ital,wght@0,300..700;1,300..700&display=swap");
 
+@font-face {
+    font-family: 'Charter';
+    src: url('./fonts/charter/webfonts/charter_regular-webfont.woff') format('woff'),
+         url('./fonts/charter/ttf/Charter Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Charter';
+    src: url('./fonts/charter/webfonts/charter_italic-webfont.woff') format('woff'),
+         url('./fonts/charter/ttf/Charter Italic.ttf') format('truetype');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Charter';
+    src: url('./fonts/charter/webfonts/charter_bold-webfont.woff') format('woff'),
+         url('./fonts/charter/ttf/Charter Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Charter';
+    src: url('./fonts/charter/webfonts/charter_bold_italic-webfont.woff') format('woff'),
+         url('./fonts/charter/ttf/Charter Bold Italic.ttf') format('truetype');
+    font-weight: 700;
+    font-style: italic;
+    font-display: swap;
+}
+
 @import "tailwindcss";
 
 .home-background-grad {
