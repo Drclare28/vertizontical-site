@@ -82,12 +82,17 @@ function renderPage(
   if (!q) return `<div class="print-page theme-babbl_theme" style="${containerStyle}"></div>`;
 
   if (layout === "circle_photo") {
+    const qText = q.text || "";
+    const fontSize = Math.max(1.0, Math.min(2.5, 60 / (qText.length + 2)));
+    const topOffset = -(3.5 / fontSize);
+    const h3Style = `font-size:${fontSize}em;top:${topOffset}em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;`;
+
     return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
       <div class="page-layout layout-circle_photo" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="bg-image">${photoUrl ? `<img crossorigin="anonymous" src="${photoUrl}" alt="Background" />` : `<span>No image available.</span>`}</div>
         <div class="content-card">
           ${avatarUrl ? `<div class="avatar-container"><img crossorigin="anonymous" src="${avatarUrl}" alt="Child" /></div>` : ""}
-          <h3>${q.text}</h3>
+          <h3 style="${h3Style}">"${qText}"</h3>
           <div class="meta-container"><span class="meta-date">${photoDate()}</span><span class="meta-separator">-</span><span class="meta-author">${childName()}${childAge()}</span></div>
         </div>
       </div>
