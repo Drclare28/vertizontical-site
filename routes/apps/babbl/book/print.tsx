@@ -321,8 +321,11 @@ export const handler = define.handlers({
     let inlineCss = "";
     try {
       const bookCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/book.css");
-      const babblCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/themes/babbl_flattened.css");
-      inlineCss = bookCss + "\n" + babblCss;
+      const babblCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/themes/babbl.css");
+      
+      // Remove @import from bookCss to prevent redundant/broken loading of babbl.css
+      const cleanBookCss = bookCss.replace(/@import\s+["'].*babbl\.css["'];/g, "");
+      inlineCss = cleanBookCss + "\n" + babblCss;
       
       // Fix relative/absolute asset paths in the inline CSS by substituting with the absolute URL
       inlineCss = inlineCss.replace(/url\(["']?([^"']*(?:images|fonts)[^"']*)["']?\)/g, (_match, path) => {
