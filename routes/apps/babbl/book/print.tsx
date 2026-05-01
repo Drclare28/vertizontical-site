@@ -354,15 +354,34 @@ export const handler = define.handlers({
     }
   </style>
   <style>
-    ${inlineCss}
+    /* COMPREHENSIVE PDF RESET */
+    *, *::before, *::after { 
+      box-sizing: border-box; 
+      -webkit-print-color-adjust: exact;
+    }
     html, body {
       font-size: 16px;
       margin: 0;
       padding: 0;
+      line-height: normal;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4, h5, h6, p {
+      margin: 0;
+      padding: 0;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      display: block;
     }
     .print-page {
       font-size: 16px;
+      overflow: hidden;
+      position: relative;
+      background: white;
     }
+    ${inlineCss}
   </style>
   <style>
     @page {
