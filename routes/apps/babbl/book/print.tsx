@@ -5,7 +5,7 @@ import { getSupabaseClient } from "../../../../lib/supabase.ts";
 // Book dimensions in pixels at 96 DPI
 const BOOK_PX: Record<string, { w: number; h: number; inW: number; inH: number }> = {
   mini: { w: 576, h: 576, inW: 6, inH: 6 },
-  classic: { w: 768, h: 768, inW: 8, inH: 8 },
+  classic: { w: 816, h: 816, inW: 8.5, inH: 8.5 },
 };
 
 function getAgeLabel(dobString?: string | null, quoteDateString?: string | null): string {
@@ -31,7 +31,7 @@ function formatDate(dateStr?: string): string {
 function renderPage(
   page: BookPageData,
   dim: { w: number; h: number; inW: number; inH: number },
-  extra?: { childrenProfiles?: BabblQuote["child"][]; yearRange?: string }
+  extra?: { childrenProfiles?: BabblQuote["child"][]; yearRange?: string; format?: string }
 ): string {
   const layout = page.layout_style;
   const q = page.quote;
@@ -55,7 +55,7 @@ function renderPage(
       avatarsHtml = `<div class="child-avatar-container"><img crossorigin="anonymous" src="${photoUrl}" alt="Cover Default" /></div>`;
     }
 
-    return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
+    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-cover" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="bg-shape-1"></div>
         <div class="bg-shape-2"></div>
@@ -72,14 +72,14 @@ function renderPage(
   }
 
   if (layout === "back_cover") {
-    return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
+    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-back_cover" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <img src="/images/babbl-book.svg" alt="Back Cover" />
       </div>
     </div>`;
   }
 
-  if (!q) return `<div class="print-page theme-babbl_theme" style="${containerStyle}"></div>`;
+  if (!q) return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}"></div>`;
 
   if (layout === "circle_photo") {
     const qText = q.text || "";
@@ -87,7 +87,7 @@ function renderPage(
     const topOffset = -(3.5 / fontSize);
     const h3Style = `font-size:${fontSize}em;top:${topOffset}em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;`;
 
-    return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
+    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-circle_photo" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="bg-image">${photoUrl ? `<img crossorigin="anonymous" src="${photoUrl}" alt="Background" />` : `<span>No image available.</span>`}</div>
         <div class="content-card">
@@ -100,7 +100,7 @@ function renderPage(
   }
 
   if (layout === "quote_top_photo_bottom") {
-    return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
+    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-quote_top_photo_bottom" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="quote-section">
           ${avatarUrl ? `<div class="avatar-container"><img crossorigin="anonymous" src="${avatarUrl}" alt="Child" /></div>` : ""}
@@ -119,7 +119,7 @@ function renderPage(
   }
 
   if (layout === "full_page_photo_quote_centered") {
-    return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
+    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-full_page_photo_quote_centered" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="author-pill">
           ${avatarUrl ? `<div class="author-avatar"><img crossorigin="anonymous" src="${avatarUrl}" alt="Child" /></div>` : ""}
@@ -133,7 +133,7 @@ function renderPage(
   }
 
   if (layout === "full_width_photo_top_quote_bottom") {
-    return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
+    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-full_width_photo_top_quote_bottom" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="image-section">${photoUrl ? `<img crossorigin="anonymous" src="${photoUrl}" alt="Photo" />` : `<span>No image available.</span>`}</div>
         <div class="quote-section">
@@ -149,7 +149,7 @@ function renderPage(
   }
 
   if (layout === "full_screen_photo_short_quote") {
-    return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
+    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-full_screen_photo_short_quote" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="quote-section">
           <div class="main-text"><h3>"${q.text}"</h3><div class="meta-row">${photoDate()}</div></div>
@@ -164,7 +164,7 @@ function renderPage(
   }
 
   if (layout === "photo_window_top_quote_bottom") {
-    return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
+    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-photo_window_top_quote_bottom" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="bg-photo">${photoUrl ? `<img crossorigin="anonymous" src="${photoUrl}" alt="Photo" />` : `<span>No image available.</span>`}</div>
         <div class="quote-card">
@@ -183,7 +183,7 @@ function renderPage(
   }
 
   if (layout === "quote_only_centered") {
-    return `<div class="print-page theme-babbl_theme" style="${containerStyle}">
+    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-quote_only_centered" style="width:100%;height:100%;overflow:hidden;position:relative;">
         ${avatarUrl ? `<div class="avatar-container"><img crossorigin="anonymous" src="${avatarUrl}" alt="Child" /></div>` : ""}
         <div class="quote-section">
@@ -195,7 +195,7 @@ function renderPage(
     </div>`;
   }
 
-  return `<div class="print-page theme-babbl_theme" style="${containerStyle}"><div style="padding:2em;font-size:0.9em;color:#999;">Unknown layout: ${layout}</div></div>`;
+  return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}"><div style="padding:2em;font-size:0.9em;color:#999;">Unknown layout: ${layout}</div></div>`;
 }
 
 export const handler = define.handlers({
@@ -319,7 +319,7 @@ export const handler = define.handlers({
       { page_number: innerPages.length + 1, layout_style: "back_cover" },
     ];
 
-    const renderedPages = allPages.map((p) => renderPage(p, dim, { childrenProfiles, yearRange })).join("\n");
+    const renderedPages = allPages.map((p) => renderPage(p, dim, { childrenProfiles, yearRange, format: finalFormat })).join("\n");
 
     const bookBuilderUrl = Deno.env.get("BOOK_BUILDER_URL") ?? "https://vertizonticalstudios.com";
 
