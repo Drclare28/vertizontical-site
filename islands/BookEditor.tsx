@@ -308,6 +308,11 @@ const SVG_ICONS: Record<
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
     </svg>
   ),
+  "remove-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+    </svg>
+  ),
   "chevron-up-outline": (props) => (
     <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
@@ -590,6 +595,7 @@ export default function BookEditor(
     } | null
   >(null);
   const [isQuoting, setIsQuoting] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const quoteCount = localPages.length > 2 ? localPages.length - 2 : 0;
 
@@ -785,6 +791,7 @@ export default function BookEditor(
       return;
     }
     setCheckoutWarning(null);
+    setQuantity(1);
     setIsCheckoutModalOpen(true);
 
     if (
@@ -830,10 +837,11 @@ export default function BookEditor(
         type: "START_CHECKOUT",
         payload: {
           bookId: bookId,
-          amount: totalCost,
+          amount: (parseFloat(totalCost) * quantity).toFixed(2),
           format: format,
           binding: bindingType,
           pages: quoteCount,
+          quantity: quantity,
         },
       }));
     } else {
@@ -1715,6 +1723,33 @@ export default function BookEditor(
                         </div>
                       </div>
 
+                      <div class="flex items-center justify-between py-4 border-y border-gray-100 mb-6">
+                        <div class="flex flex-col">
+                          <span class="font-bold text-gray-900">Quantity</span>
+                          <span class="text-xs text-gray-500">Order multiple copies</span>
+                        </div>
+                        <div class="flex items-center gap-4 bg-gray-50 p-1.5 rounded-xl border border-gray-200">
+                          <button
+                            type="button"
+                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                            disabled={quantity <= 1}
+                            class="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-sm text-gray-600 hover:text-[#9B51E0] disabled:opacity-30 transition-all border border-gray-100 active:scale-95"
+                          >
+                            <Icon name="remove-outline" class="text-lg" />
+                          </button>
+                          <span class="font-black text-xl w-8 text-center text-gray-900">
+                            {quantity}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setQuantity(quantity + 1)}
+                            class="w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-sm text-gray-600 hover:text-[#9B51E0] transition-all border border-gray-100 active:scale-95"
+                          >
+                            <Icon name="add-outline" class="text-lg" />
+                          </button>
+                        </div>
+                      </div>
+
                       <div class="bg-gray-50/80 rounded-2xl p-5 mb-8 border border-gray-200/60 shadow-sm">
                         {isQuoting
                           ? (
@@ -1748,7 +1783,7 @@ export default function BookEditor(
                                 </span>
                                 <span class="font-bold text-gray-900">
                                   ${((parseFloat(checkoutQuote?.cost || "0") -
-                                    4.99) * 1.6).toFixed(2)}
+                                    4.99) * 1.6 * quantity).toFixed(2)}
                                 </span>
                               </div>
                               <div class="flex justify-between items-center mb-4">
@@ -1756,7 +1791,7 @@ export default function BookEditor(
                                   Standard Shipping
                                 </span>
                                 <span class="font-bold text-gray-900">
-                                  ${(4.99 * 1.6).toFixed(2)}
+                                  ${(4.99 * 1.6 * quantity).toFixed(2)}
                                 </span>
                               </div>
                               <div class="h-px w-full bg-gray-300 mb-4" />
@@ -1765,7 +1800,7 @@ export default function BookEditor(
                                   Total
                                 </span>
                                 <span class="font-black text-2xl text-[#9B51E0]">
-                                  ${checkoutQuote?.price || "0.00"}
+                                  ${(parseFloat(checkoutQuote?.price || "0") * quantity).toFixed(2)}
                                 </span>
                               </div>
                             </>
