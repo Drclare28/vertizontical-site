@@ -130,6 +130,16 @@ export default function AppLayout({ Component }: PageProps) {
                 />
               </a>
             </li>
+            <li>
+              <a href="/apps/gap-sucker" class="block w-9">
+                <div class="bg-green-700 rounded-xl" style="padding: .15rem">
+                  <img
+                    src="/images/gapsucker-logo.svg"
+                    alt="GapSucker"
+                  />
+                </div>
+              </a>
+            </li>
           </ul>
         </nav>
       </header>

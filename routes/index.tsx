@@ -80,6 +80,27 @@ export default define.page(function Home() {
             />
           </a>
         </div>
+        <hr class="w-50 border-gray-500/25 mt-12" />
+        <div class="gap-sucker flex flex-col justify-center items-center mt-12 mb-24">
+          <a href="apps/gap-sucker" class="flex flex-col items-center">
+            <div class="bg-green-700 rounded-[27.5%] w-32 md:w-48 flex items-center justify-center p-4">
+              <img
+                src="/images/gapsucker-logo.svg"
+                alt="GapSucker"
+                class="w-full"
+              />
+            </div>
+            <span class="max-w-48 block w-full pt-serif-caption-regular text-xl mt-4 text-center text-gray-400">
+              GapSucker
+            </span>
+          </a>
+          <a
+            href="apps/gap-sucker"
+            class="mt-4 bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded-lg text-sm transition-colors"
+          >
+            Learn More
+          </a>
+        </div>
       </main>
     </div>
   );
