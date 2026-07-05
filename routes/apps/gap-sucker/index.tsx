@@ -15,7 +15,8 @@ export default define.page(function GapSucker() {
         />
         <h1 class="text-4xl pt-serif-caption-regular mt-4">GapSucker</h1>
         <a
-          href="#gumroad"
+          href="https://drclare.gumroad.com/l/gapsucker"
+          target="_blank"
           class="bg-green-600 hover:bg-green-500 text-white font-semibold py-3 px-8 rounded-xl mt-8 text-lg transition-colors"
         >
           Buy

@@ -1,0 +1,142 @@
+export interface PageView {
+  path: string;
+  referrer: string;
+  session_id: string;
+  user_agent: string;
+  created_at: string;
+}
+
+export interface AnalyticsSummary {
+  totalViews: number;
+  uniqueVisitors: number;
+  viewsToday: number;
+}
+
+export interface TopPath {
+  path: string;
+  count: number;
+}
+
+export interface TopReferrer {
+  referrer: string;
+  count: number;
+}
+
+export interface ViewsOverTime {
+  date: string;
+  count: number;
+}
+
+const DATA_DIR = Deno.cwd() + "/.analytics";
+const DATA_FILE = DATA_DIR + "/page_views.jsonl";
+
+function ensureDir() {
+  try {
+    Deno.mkdirSync(DATA_DIR, { recursive: true });
+  } catch {
+    // dir already exists
+  }
+}
+
+async function appendView(view: PageView) {
+  ensureDir();
+  await Deno.writeTextFile(DATA_FILE, JSON.stringify(view) + "\n", {
+    append: true,
+  });
+}
+
+async function readAllViews(): Promise<PageView[]> {
+  try {
+    const text = await Deno.readTextFile(DATA_FILE);
+    const views: PageView[] = [];
+    for (const line of text.split("\n").filter(Boolean)) {
+      try {
+        views.push(JSON.parse(line));
+      } catch {
+        // skip malformed lines
+      }
+    }
+    return views;
+  } catch {
+    return [];
+  }
+}
+
+function filterByRange(views: PageView[], from: string, to: string) {
+  const fromMs = new Date(from).getTime();
+  const toMs = new Date(to + "T23:59:59.999Z").getTime();
+  return views.filter((v) => {
+    const t = new Date(v.created_at).getTime();
+    return t >= fromMs && t <= toMs;
+  });
+}
+
+export async function trackView(view: PageView) {
+  await appendView(view);
+}
+
+export async function getSummary(
+  from: string,
+  to: string,
+): Promise<AnalyticsSummary> {
+  const views = filterByRange(await readAllViews(), from, to);
+  const sessions = new Set(views.map((v) => v.session_id));
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const viewsToday = views.filter((v) =>
+    v.created_at.startsWith(todayStr)
+  ).length;
+
+  return {
+    totalViews: views.length,
+    uniqueVisitors: sessions.size,
+    viewsToday,
+  };
+}
+
+export async function getTopPaths(
+  from: string,
+  to: string,
+  limit = 10,
+): Promise<TopPath[]> {
+  const views = filterByRange(await readAllViews(), from, to);
+  const counts = new Map<string, number>();
+  for (const v of views) {
+    counts.set(v.path, (counts.get(v.path) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([path, count]) => ({ path, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+export async function getTopReferrers(
+  from: string,
+  to: string,
+  limit = 10,
+): Promise<TopReferrer[]> {
+  const views = filterByRange(await readAllViews(), from, to);
+  const counts = new Map<string, number>();
+  for (const v of views) {
+    const ref = v.referrer || "(direct)";
+    counts.set(ref, (counts.get(ref) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([referrer, count]) => ({ referrer, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+export async function getViewsOverTime(
+  from: string,
+  to: string,
+): Promise<ViewsOverTime[]> {
+  const views = filterByRange(await readAllViews(), from, to);
+  const counts = new Map<string, number>();
+  for (const v of views) {
+    const date = v.created_at.slice(0, 10);
+    counts.set(date, (counts.get(date) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}

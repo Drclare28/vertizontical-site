@@ -9,6 +9,7 @@ export default defineConfig({
       clientEntry: "./client.ts",
       islandsDir: "./islands",
       routeDir: "./routes",
+
     }),
     tailwindcss(),
   ],
