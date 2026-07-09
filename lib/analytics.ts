@@ -30,7 +30,22 @@ export interface ViewsOverTime {
 const DATA_DIR = Deno.cwd() + "/.analytics";
 const DATA_FILE = DATA_DIR + "/page_views.jsonl";
 
-function ensureDir() {
+let kv: Deno.Kv | null = null;
+let useFileFallback = false;
+
+async function getKv(): Promise<Deno.Kv | null> {
+  if (kv) return kv;
+  if (useFileFallback) return null;
+  try {
+    kv = await Deno.openKv();
+    return kv;
+  } catch {
+    useFileFallback = true;
+    return null;
+  }
+}
+
+function ensureFileDir() {
   try {
     Deno.mkdirSync(DATA_DIR, { recursive: true });
   } catch {
@@ -38,14 +53,14 @@ function ensureDir() {
   }
 }
 
-async function appendView(view: PageView) {
-  ensureDir();
+async function appendFile(view: PageView) {
+  ensureFileDir();
   await Deno.writeTextFile(DATA_FILE, JSON.stringify(view) + "\n", {
     append: true,
   });
 }
 
-async function readAllViews(): Promise<PageView[]> {
+async function readAllFromFile(): Promise<PageView[]> {
   try {
     const text = await Deno.readTextFile(DATA_FILE);
     const views: PageView[] = [];
@@ -72,7 +87,26 @@ function filterByRange(views: PageView[], from: string, to: string) {
 }
 
 export async function trackView(view: PageView) {
-  await appendView(view);
+  const client = await getKv();
+  if (client) {
+    const key = ["page_views", view.created_at, view.session_id];
+    await client.set(key, view);
+  } else {
+    await appendFile(view);
+  }
+}
+
+async function readAllViews(): Promise<PageView[]> {
+  const client = await getKv();
+  if (client) {
+    const iter = client.list<PageView>({ prefix: ["page_views"] });
+    const views: PageView[] = [];
+    for await (const entry of iter) {
+      views.push(entry.value);
+    }
+    return views;
+  }
+  return await readAllFromFile();
 }
 
 export async function getSummary(

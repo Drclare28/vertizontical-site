@@ -1,7 +1,7 @@
 import { PageProps } from "fresh";
 
 const trackingScript = {
-  __html: `(function(){var p=window.location.pathname;if(p.startsWith("/admin"))return;var s=localStorage.getItem("gs_s");if(!s){s=crypto.randomUUID();localStorage.setItem("gs_s",s)}fetch("/api/analytics/track",{method:"POST",body:JSON.stringify({path:p,referrer:document.referrer||"",session_id:s,user_agent:navigator.userAgent}),headers:{"Content-Type":"application/json"}}).catch(function(){})})()`,
+  __html: `(function(){var p=window.location.pathname;if(p.startsWith("/admin"))return;var s=localStorage.getItem("gs_s");if(!s){s=crypto.randomUUID();localStorage.setItem("gs_s",s)}fetch("/api/v",{method:"POST",body:JSON.stringify({path:p,referrer:document.referrer||"",session_id:s,user_agent:navigator.userAgent}),headers:{"Content-Type":"application/json"}}).catch(function(){})})()`,
 };
 
 export default function App({ Component }: PageProps) {

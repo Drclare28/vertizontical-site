@@ -1,5 +1,5 @@
-import { define } from "../../../utils.ts";
-import { trackView } from "../../../lib/analytics.ts";
+import { define } from "@/utils.ts";
+import { trackView } from "@/lib/analytics.ts";
 
 export default define.page(async function Track(ctx) {
   if (ctx.req.method !== "POST") {
