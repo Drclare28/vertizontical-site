@@ -27,34 +27,39 @@ export interface ViewsOverTime {
   count: number;
 }
 
+// --- Storage backend selection ---
+
 const DATA_DIR = Deno.cwd() + "/.analytics";
 const DATA_FILE = DATA_DIR + "/page_views.jsonl";
 
 let kv: Deno.Kv | null = null;
-let useFileFallback = false;
+let storage: "kv" | "file" = "file";
+let storageError = "";
 
-async function getKv(): Promise<Deno.Kv | null> {
-  if (kv) return kv;
-  if (useFileFallback) return null;
+async function initKv() {
   try {
     kv = await Deno.openKv();
-    return kv;
-  } catch {
-    useFileFallback = true;
-    return null;
+    storage = "kv";
+    console.log("[analytics] using Deno KV");
+  } catch (e) {
+    storageError = e instanceof Error ? e.message : String(e);
+    console.log("[analytics] Deno.openKv() failed, using file storage:", storageError);
+    try {
+      Deno.mkdirSync(DATA_DIR, { recursive: true });
+    } catch {
+      // dir already exists
+    }
   }
 }
 
-function ensureFileDir() {
-  try {
-    Deno.mkdirSync(DATA_DIR, { recursive: true });
-  } catch {
-    // dir already exists
-  }
+// Initialize eagerly so KV is available from the start.
+const initPromise = initKv();
+
+async function ensureInit() {
+  await initPromise;
 }
 
 async function appendFile(view: PageView) {
-  ensureFileDir();
   await Deno.writeTextFile(DATA_FILE, JSON.stringify(view) + "\n", {
     append: true,
   });
@@ -86,20 +91,25 @@ function filterByRange(views: PageView[], from: string, to: string) {
   });
 }
 
+export function getStorageInfo() {
+  return { storage, error: storageError, onDenoDeploy: !!Deno.env.get("DENO_DEPLOYMENT_ID") };
+}
+
+// --- Public API ---
+
 export async function trackView(view: PageView) {
-  const client = await getKv();
-  if (client) {
-    const key = ["page_views", view.created_at, view.session_id];
-    await client.set(key, view);
+  await ensureInit();
+  if (storage === "kv" && kv) {
+    await kv.set(["pv", view.created_at, view.session_id], view);
   } else {
     await appendFile(view);
   }
 }
 
 async function readAllViews(): Promise<PageView[]> {
-  const client = await getKv();
-  if (client) {
-    const iter = client.list<PageView>({ prefix: ["page_views"] });
+  await ensureInit();
+  if (storage === "kv" && kv) {
+    const iter = kv.list<PageView>({ prefix: ["pv"] });
     const views: PageView[] = [];
     for await (const entry of iter) {
       views.push(entry.value);

@@ -11,6 +11,7 @@ import {
   type ViewsOverTime,
 } from "../../lib/analytics.ts";
 import AnalyticsChart from "../../islands/AnalyticsChart.tsx";
+import { getStorageInfo } from "../../lib/analytics.ts";
 
 function getCookies(header: string | null): Record<string, string> {
   const cookies: Record<string, string> = {};
@@ -70,8 +71,10 @@ export default define.page(async function Analytics(ctx) {
     ]);
   } catch (e) {
     console.error("Analytics error:", e);
-    loadError = "Error loading analytics data. Is Deno KV available?";
+    loadError = "Error loading analytics data: " + (e instanceof Error ? e.message : String(e));
   }
+
+  const storageInfo = getStorageInfo();
 
   return (
     <div>
@@ -202,6 +205,23 @@ export default define.page(async function Analytics(ctx) {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          <div class="mt-8 p-4 bg-gray-900 rounded-xl text-xs text-gray-400">
+            <p>
+              Storage:{" "}
+              <span class={storageInfo.storage === "kv" ? "text-green-400" : "text-yellow-400"}>
+                {storageInfo.storage}
+              </span>
+            </p>
+            {storageInfo.onDenoDeploy && <p>Runtime: Deno Deploy</p>}
+            {storageInfo.error && <p>Error: <span class="text-red-400">{storageInfo.error}</span></p>}
+            {storageInfo.onDenoDeploy && storageInfo.storage !== "kv" && (
+              <p class="text-yellow-400 mt-2">
+                Deno KV is not available. Enable it in your project settings at{" "}
+                <a href="https://dash.deno.com" class="text-blue-400 underline hover:text-blue-300">dash.deno.com</a>.
+              </p>
+            )}
           </div>
         </div>
       </div>
