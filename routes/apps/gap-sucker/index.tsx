@@ -72,6 +72,11 @@ export default define.page(function GapSucker() {
             GapSucker requires macOS 10.15 or later and Accessibility access
             permission.
           </p>
+          <p class="mt-6 text-center text-gray-400 text-sm">
+            <a href="/apps/gap-sucker/privacy" class="text-blue-400">Privacy Policy</a>
+            {" | "}
+            <a href="/apps/gap-sucker/terms" class="text-blue-400">Terms of Use</a>
+          </p>
         </div>
       </main>
     </div>
