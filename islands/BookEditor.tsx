@@ -587,6 +587,8 @@ export default function BookEditor(
   const [checkoutWarning, setCheckoutWarning] = useState<string | null>(null);
   const [checkoutQuote, setCheckoutQuote] = useState<
     {
+      print: string;
+      shipping: string;
       cost: string;
       price: string;
       binding: string;
@@ -793,27 +795,36 @@ export default function BookEditor(
     setCheckoutWarning(null);
     setQuantity(1);
     setIsCheckoutModalOpen(true);
+  };
 
-    if (
-      !checkoutQuote ||
-      checkoutQuote.pagesRequiredForHardcover !== Math.max(0, 26 - quoteCount)
-    ) {
-      setIsQuoting(true);
+  // Fetch the live quote whenever the checkout modal is open and the
+  // quantity changes, so the displayed total always matches what will be charged.
+  useEffect(() => {
+    if (!isCheckoutModalOpen || quoteCount < 4) return;
+    let cancelled = false;
+    setIsQuoting(true);
+
+    const fetchQuote = async () => {
       try {
         const res = await fetch(
-          `/api/checkout/quote?pages=${quoteCount}&format=${format}`,
+          `/api/checkout/quote?pages=${quoteCount}&format=${format}&quantity=${quantity}`,
         );
         if (res.ok) {
           const data = await res.json();
-          setCheckoutQuote(data);
+          if (!cancelled) setCheckoutQuote(data);
         }
       } catch (err) {
         console.error("Pricing quote failed", err);
       } finally {
-        setIsQuoting(false);
+        if (!cancelled) setIsQuoting(false);
       }
-    }
-  };
+    };
+
+    fetchQuote();
+    return () => {
+      cancelled = true;
+    };
+  }, [isCheckoutModalOpen, quoteCount, format, quantity]);
 
   const confirmOrderAndTriggerCheckout = () => {
     // Dismiss modal first so it doesn't show behind native sheet
@@ -837,7 +848,7 @@ export default function BookEditor(
         type: "START_CHECKOUT",
         payload: {
           bookId: bookId,
-          amount: (parseFloat(totalCost) * quantity).toFixed(2),
+          amount: parseFloat(totalCost).toFixed(2),
           format: format,
           binding: bindingType,
           pages: quoteCount,
@@ -1782,8 +1793,8 @@ export default function BookEditor(
                                   Printing & Production
                                 </span>
                                 <span class="font-bold text-gray-900">
-                                  ${((parseFloat(checkoutQuote?.cost || "0") -
-                                    4.99) * 1.6 * quantity).toFixed(2)}
+                                  ${(parseFloat(checkoutQuote?.print || "0") *
+                                    quantity).toFixed(2)}
                                 </span>
                               </div>
                               <div class="flex justify-between items-center mb-4">
@@ -1791,7 +1802,8 @@ export default function BookEditor(
                                   Standard Shipping
                                 </span>
                                 <span class="font-bold text-gray-900">
-                                  ${(4.99 * 1.6 * quantity).toFixed(2)}
+                                  ${(parseFloat(checkoutQuote?.shipping || "0") *
+                                    quantity).toFixed(2)}
                                 </span>
                               </div>
                               <div class="h-px w-full bg-gray-300 mb-4" />
@@ -1800,7 +1812,7 @@ export default function BookEditor(
                                   Total
                                 </span>
                                 <span class="font-black text-2xl text-[#9B51E0]">
-                                  ${(parseFloat(checkoutQuote?.price || "0") * quantity).toFixed(2)}
+                                  ${(parseFloat(checkoutQuote?.price || "0")).toFixed(2)}
                                 </span>
                               </div>
                             </>
