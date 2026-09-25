@@ -218,7 +218,7 @@ export default function Privacy() {
 
       <hr style="margin: 40px 0;" />
       <p style="text-align: center; color: white;">
-        <a href="/apps/babbl/terms">Terms of Service</a> |
+        <a href="/apps/babbl/terms">Terms of Service</a> |{" "}
         <a href="mailto:babbl@vertizonticalstudios.com">Contact Us</a>
       </p>
     </div>

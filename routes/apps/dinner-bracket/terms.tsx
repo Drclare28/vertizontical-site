@@ -122,7 +122,7 @@ export default function Terms() {
 
       <hr style="margin: 40px 0;" />
       <p style="text-align: center; color: white;">
-        <a href="/apps/dinner-bracket/privacy">Privacy Policy</a> |
+        <a href="/apps/dinner-bracket/privacy">Privacy Policy</a> |{" "}
         <a href="mailto:drclare2884+dinnerbracket@icloud.com">Contact Us</a>
       </p>
     </div>

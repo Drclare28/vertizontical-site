@@ -118,7 +118,7 @@ export default function Privacy() {
 
       <hr style="margin: 40px 0;" />
       <p style="text-align: center; color: white;">
-        <a href="/apps/dinner-bracket/terms">Terms of Use</a> |
+        <a href="/apps/dinner-bracket/terms">Terms of Use</a> |{" "}
         <a href="mailto:drclare2884+dinnerbracket@icloud.com">Contact Us</a>
       </p>
     </div>

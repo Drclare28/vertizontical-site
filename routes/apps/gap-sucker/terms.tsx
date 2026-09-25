@@ -124,7 +124,7 @@ export default function Terms() {
 
       <hr style="margin: 40px 0;" />
       <p style="text-align: center; color: white;">
-        <a href="/apps/gap-sucker/privacy">Privacy Policy</a> |
+        <a href="/apps/gap-sucker/privacy">Privacy Policy</a> |{" "}
         <a href="mailto:gapsucker@icloud.com">Contact Us</a>
       </p>
     </div>

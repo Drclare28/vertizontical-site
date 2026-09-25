@@ -162,7 +162,7 @@ export default function Terms() {
 
       <hr style="margin: 40px 0;" />
       <p style="text-align: center; color: white;">
-        <a href="/apps/babbl/privacy">Privacy Policy</a> |
+        <a href="/apps/babbl/privacy">Privacy Policy</a> |{" "}
         <a href="mailto:babbl@vertizonticalstudios.com">Contact Us</a>
       </p>
     </div>

@@ -33,14 +33,20 @@ export default function Privacy() {
 
       <h2>2. Information We Collect</h2>
       <p>
-        <strong>GapSucker collects no personal information, no usage data, and
-        no analytics.</strong> The App operates entirely on your local machine
-        and does not transmit any data to external servers.
+        <strong>
+          GapSucker collects no personal information, no usage data, and no
+          analytics.
+        </strong>{" "}
+        The App operates entirely on your local machine and does not transmit
+        any data to external servers.
       </p>
       <p>Specifically, GapSucker does NOT:</p>
       <ul>
         <li>Collect your name, email, or any identifying information</li>
-        <li>Track your screen contents or mouse positions beyond what is required for cursor warping</li>
+        <li>
+          Track your screen contents or mouse positions beyond what is required
+          for cursor warping
+        </li>
         <li>Use analytics, crash reporting, or tracking SDKs</li>
         <li>Send any data over the network</li>
         <li>Use advertising or marketing identifiers</li>
@@ -51,8 +57,8 @@ export default function Privacy() {
       <p>
         GapSucker requires macOS Accessibility access to function. This
         permission allows the App to monitor mouse cursor position and detect
-        when the cursor reaches a screen edge, enabling it to warp the cursor
-        to an adjacent display. The Accessibility permission is managed by macOS
+        when the cursor reaches a screen edge, enabling it to warp the cursor to
+        an adjacent display. The Accessibility permission is managed by macOS
         and can be revoked at any time in System Settings &gt; Privacy &amp;
         Security &gt; Accessibility.
       </p>
@@ -78,9 +84,9 @@ export default function Privacy() {
 
       <h2>7. Changes to This Policy</h2>
       <p>
-        We may update this Privacy Policy from time to time. Any changes will
-        be reflected on this page with an updated date. Your continued use of
-        the App after changes constitutes acceptance of the updated policy.
+        We may update this Privacy Policy from time to time. Any changes will be
+        reflected on this page with an updated date. Your continued use of the
+        App after changes constitutes acceptance of the updated policy.
       </p>
 
       <h2>8. Contact Us</h2>
@@ -96,7 +102,7 @@ export default function Privacy() {
 
       <hr style="margin: 40px 0;" />
       <p style="text-align: center; color: white;">
-        <a href="/apps/gap-sucker/terms">Terms of Use</a> |
+        <a href="/apps/gap-sucker/terms">Terms of Use</a> |{" "}
         <a href="mailto:gapsucker@icloud.com">Contact Us</a>
       </p>
     </div>
