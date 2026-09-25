@@ -140,6 +140,15 @@ export default function AppLayout({ Component }: PageProps) {
                 </div>
               </a>
             </li>
+            <li>
+              <a href="/apps/dinner-bracket" class="block w-9">
+                <img
+                  src="/images/dinner-bracket-icon.png"
+                  alt="DinnerBracket"
+                  class="rounded-xl"
+                />
+              </a>
+            </li>
           </ul>
         </nav>
       </header>

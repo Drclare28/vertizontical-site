@@ -81,7 +81,7 @@ export default define.page(function Home() {
           </a>
         </div>
         <hr class="w-50 border-gray-500/25 mt-12" />
-        <div class="gap-sucker flex flex-col justify-center items-center mt-12 mb-24">
+        <div class="gap-sucker flex flex-col justify-center items-center mt-12">
           <a href="apps/gap-sucker" class="flex flex-col items-center">
             <div class="bg-green-700 rounded-[27.5%] w-32 md:w-48 flex items-center justify-center p-4">
               <img
@@ -99,6 +99,29 @@ export default define.page(function Home() {
             class="mt-4 bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-6 rounded-lg text-sm transition-colors"
           >
             Learn More
+          </a>
+        </div>
+        <hr class="w-50 border-gray-500/25 mt-12" />
+        <div class="dinner-bracket flex flex-col justify-center items-center mt-12 mb-24">
+          <a href="apps/dinner-bracket">
+            <img
+              src="/images/dinner-bracket-icon.png"
+              alt="DinnerBracket"
+              class="w-32 md:w-48 drop-shadow-xl mx-auto rounded-[27.5%]"
+            />
+            <span class="max-w-48 block w-full pt-serif-caption-regular text-xl mt-4 text-center text-gray-400">
+              DinnerBracket
+            </span>
+          </a>
+          <a
+            href="https://apps.apple.com/app/id6816172758"
+            class="mt-4 h-12 block"
+          >
+            <img
+              src="/images/DownloadOnAppStore.svg"
+              alt="Download on the App Store"
+              class="h-full w-auto"
+            />
           </a>
         </div>
       </main>
