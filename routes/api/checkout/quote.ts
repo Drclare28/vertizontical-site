@@ -1,10 +1,10 @@
 import type { FreshContext } from "fresh";
 
 // The price shown in the builder MUST match exactly what the React Native app
-// charges. The app's create-payment-intent edge function fetches the real
-// Gelato wholesale price, adds a shipping estimate, and applies a 60% gross
-// margin (x1.6). This endpoint mirrors that exact math so the displayed total
-// equals the amount on the Stripe payment sheet.
+// charges. The app's create-payment-intent edge function fetches a real Gelato
+// quote (product price + shipping for the destination country), applies a 60%
+// gross margin (x1.6). This endpoint mirrors that exact math so the displayed
+// total equals the amount on the Stripe payment sheet.
 //
 // Keep in sync with kid-quotes: supabase/functions/create-payment-intent/index.ts
 
@@ -52,39 +52,77 @@ export const handler = {
 
     let printCostPerUnitCents = FALLBACK_PRINT_COST_CENTS[format] ??
       FALLBACK_PRINT_COST_CENTS.classic;
+    let shipTotalCents = shippingCostCents * quantity;
 
     try {
       const apiKey = Deno.env.get("GELATO_API_KEY");
       if (apiKey) {
-        const priceRes = await fetch(
-          `https://product.gelatoapis.com/v3/products/${productUid}/prices?pageCount=${totalPages}&currency=USD`,
-          { headers: { "X-API-KEY": apiKey } },
+        // Real Gelato quote: product price AND shipping for the destination
+        // country. Both prices are totals for the whole quantity.
+        const quoteRes = await fetch(
+          "https://order.gelatoapis.com/v3/orders:quote",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-API-KEY": apiKey,
+            },
+            body: JSON.stringify({
+              orderReferenceId: `quote-${crypto.randomUUID()}`,
+              customerReferenceId: "babbl-checkout-quote",
+              currency: "USD",
+              allowMultipleQuotes: false,
+              recipient: {
+                country: country.toUpperCase(),
+                // Generic placeholder: Gelato only needs a plausible address to
+                // compute carrier rates; the real one is used at dispatch time.
+                firstName: "Quote",
+                lastName: "Recipient",
+                addressLine1: "123 Main Street",
+                city: "Portland",
+                state: "OR",
+                postCode: "97201",
+              },
+              products: [{
+                itemReferenceId: "item1",
+                productUid,
+                fileUrl:
+                  "https://cdn-origin.gelato-api-dashboard.ie.live.gelato.tech/docs/sample-print-files/business_card_empty.pdf",
+                quantity,
+                pageCount: totalPages,
+              }],
+            }),
+          },
         );
 
-        if (priceRes.ok) {
-          const priceData = await priceRes.json();
-          const price = priceData.find((p: any) =>
-            p.country?.toLowerCase() === country
-          ) ||
-            priceData[0];
-          if (price?.price) {
-            printCostPerUnitCents = Math.round(price.price * 100);
+        if (quoteRes.ok) {
+          const quoteData = await quoteRes.json();
+          const quote = quoteData.quotes?.[0];
+          const productTotal = quote?.products?.[0]?.price;
+          const methods = [...(quote?.shipmentMethods ?? [])].sort(
+            (a: any, b: any) => a.price - b.price,
+          );
+          const method = methods.find((m: any) => m.type === "normal") ||
+            methods[0];
+          if (productTotal && method?.price) {
+            printCostPerUnitCents = Math.round(productTotal * 100 / quantity);
+            shipTotalCents = Math.round(method.price * 100);
           }
         }
       }
     } catch (err) {
-      console.error("Gelato price fetch failed, using fallback:", err);
+      console.error("Gelato quote fetch failed, using fallback:", err);
     }
 
-    // Same math as create-payment-intent: (print + shipping, incl. quantity) x 1.6, rounded up.
-    const totalCostCents = (printCostPerUnitCents + shippingCostCents) *
-      quantity;
+    // Same math as create-payment-intent: (print + shipping totals) x 1.6, rounded up.
+    const totalCostCents = printCostPerUnitCents * quantity + shipTotalCents;
     const totalPriceCents = Math.ceil(totalCostCents * MARKUP_MULTIPLIER);
 
     // Per-unit marked-up breakdown for the builder's line items.
     const printMarkup = (printCostPerUnitCents * MARKUP_MULTIPLIER) / 100;
-    const shippingMarkup = (shippingCostCents * MARKUP_MULTIPLIER) / 100;
-    const costPerUnit = (printCostPerUnitCents + shippingCostCents) / 100;
+    const shippingMarkup = (shipTotalCents * MARKUP_MULTIPLIER / quantity) / 100;
+    const costPerUnit =
+      (printCostPerUnitCents + shipTotalCents / quantity) / 100;
 
     const isHardcover = pages >= 26;
 
