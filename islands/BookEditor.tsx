@@ -1613,10 +1613,10 @@ export default function BookEditor(
           >
             {isCheckoutModalOpen && (
               <div
-                class={`bg-white shadow-[0_50px_120px_-15px_rgba(0,0,0,0.85)] overflow-hidden animate-sheet border border-gray-100 flex flex-col max-h-full ${
+                class={`bg-white shadow-[0_50px_120px_-15px_rgba(0,0,0,0.85)] overflow-hidden animate-sheet border border-gray-100 ${
                   checkoutWarning
                     ? "rounded-3xl w-full max-w-md"
-                    : "rounded-t-3xl sm:rounded-3xl w-full max-w-lg"
+                    : "w-full max-w-lg flex flex-col h-[100dvh] sm:h-auto sm:max-h-full"
                 }`}
               >
                 {checkoutWarning
@@ -1660,7 +1660,7 @@ export default function BookEditor(
                       </button>
                     </div>
 
-                    <div class="px-6 pb-16 sm:px-8 sm:pb-8 overflow-y-auto min-h-0">
+                    <div class="px-6 sm:px-8 pb-6 sm:pb-8 overflow-y-auto min-h-0 flex-1">
 
                       <div class="flex items-start gap-4 mb-8">
                         <div
@@ -1821,6 +1821,10 @@ export default function BookEditor(
                           )}
                       </div>
 
+                    </div>
+
+                    <div class="relative shrink-0 px-6 sm:px-8 pb-16 sm:pb-8">
+                      <div class="pointer-events-none absolute inset-x-0 -top-10 h-10 -mx-6 sm:-mx-8 bg-gradient-to-t from-white to-transparent" />
                       <button
                         type="button"
                         disabled={isQuoting}
