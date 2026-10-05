@@ -1613,7 +1613,7 @@ export default function BookEditor(
           >
             {isCheckoutModalOpen && (
               <div
-                class={`bg-white shadow-[0_50px_120px_-15px_rgba(0,0,0,0.85)] overflow-hidden animate-sheet border border-gray-100 ${
+                class={`bg-white shadow-[0_50px_120px_-15px_rgba(0,0,0,0.85)] overflow-hidden animate-sheet border border-gray-100 flex flex-col max-h-full ${
                   checkoutWarning
                     ? "rounded-3xl w-full max-w-md"
                     : "rounded-t-3xl sm:rounded-3xl w-full max-w-lg"
@@ -1646,19 +1646,21 @@ export default function BookEditor(
                     </div>
                   )
                   : (
-                    <div class="px-6 pt-6 pb-16 sm:p-8">
-                      <div class="flex justify-between items-start mb-6">
-                        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">
-                          Review Order
-                        </h2>
-                        <button
-                          type="button"
-                          onClick={() => setIsCheckoutModalOpen(false)}
-                          class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors"
-                        >
-                          <Icon name="close" class="text-xl" />
-                        </button>
-                      </div>
+                    <>
+                    <div class="flex justify-between items-start px-6 pt-6 pb-6 sm:px-8 sm:pt-8 shrink-0">
+                      <h2 class="text-2xl font-bold text-gray-900 tracking-tight">
+                        Review Order
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={() => setIsCheckoutModalOpen(false)}
+                        class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors"
+                      >
+                        <Icon name="close" class="text-xl" />
+                      </button>
+                    </div>
+
+                    <div class="px-6 pb-16 sm:px-8 sm:pb-8 overflow-y-auto min-h-0">
 
                       <div class="flex items-start gap-4 mb-8">
                         <div
@@ -1835,6 +1837,7 @@ export default function BookEditor(
                           : "Continue to Payment"}
                       </button>
                     </div>
+                    </>
                   )}
               </div>
             )}
