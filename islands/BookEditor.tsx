@@ -598,6 +598,22 @@ export default function BookEditor(
   >(null);
   const [isQuoting, setIsQuoting] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [shippingForm, setShippingForm] = useState({
+    firstName: "",
+    lastName: "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postcode: "",
+    country: "US",
+    phone: "",
+  });
+  const [addressError, setAddressError] = useState<string | null>(null);
+  const addressSectionRef = useRef<HTMLDivElement>(null);
+
+  const addressInputClass =
+    "px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#9B51E0] focus:bg-white focus:ring-2 focus:ring-[#9B51E0]/15 transition-colors";
 
   const quoteCount = localPages.length > 2 ? localPages.length - 2 : 0;
 
@@ -807,7 +823,7 @@ export default function BookEditor(
     const fetchQuote = async () => {
       try {
         const res = await fetch(
-          `/api/checkout/quote?pages=${quoteCount}&format=${format}&quantity=${quantity}`,
+          `/api/checkout/quote?pages=${quoteCount}&format=${format}&quantity=${quantity}&country=${encodeURIComponent(shippingForm.country)}`,
         );
         if (res.ok) {
           const data = await res.json();
@@ -824,9 +840,30 @@ export default function BookEditor(
     return () => {
       cancelled = true;
     };
-  }, [isCheckoutModalOpen, quoteCount, format, quantity]);
+  }, [isCheckoutModalOpen, quoteCount, format, quantity, shippingForm.country]);
 
   const confirmOrderAndTriggerCheckout = () => {
+    // Require a real shipping address: Gelato ships the physical book to it.
+    const requiredFields: Array<[keyof typeof shippingForm, string]> = [
+      ["firstName", "First name"],
+      ["lastName", "Last name"],
+      ["addressLine1", "Street address"],
+      ["city", "City"],
+      ["state", "State / Province"],
+      ["postcode", "ZIP / Postcode"],
+    ];
+    const missing = requiredFields
+      .filter(([key]) => !shippingForm[key].trim())
+      .map(([, label]) => label);
+    if (missing.length > 0) {
+      setAddressError(`Please fill in: ${missing.join(", ")}.`);
+      addressSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      return;
+    }
+    setAddressError(null);
     // Dismiss modal first so it doesn't show behind native sheet
     setIsCheckoutModalOpen(false);
     // Keep the background blurred for the native sheet
@@ -850,9 +887,21 @@ export default function BookEditor(
           bookId: bookId,
           amount: parseFloat(totalCost).toFixed(2),
           format: format,
+          size: format,
           binding: bindingType,
           pages: quoteCount,
           quantity: quantity,
+          shippingDetails: {
+            firstName: shippingForm.firstName.trim(),
+            lastName: shippingForm.lastName.trim(),
+            addressLine1: shippingForm.addressLine1.trim(),
+            addressLine2: shippingForm.addressLine2.trim(),
+            city: shippingForm.city.trim(),
+            state: shippingForm.state.trim(),
+            postcode: shippingForm.postcode.trim(),
+            country: shippingForm.country,
+            phone: shippingForm.phone.trim(),
+          },
         },
       }));
     } else {
@@ -1761,6 +1810,161 @@ export default function BookEditor(
                             <Icon name="add-outline" class="text-lg" />
                           </button>
                         </div>
+                      </div>
+
+                      <div class="mb-6" ref={addressSectionRef}>
+                        <span class="font-bold text-gray-900">
+                          Shipping Address
+                        </span>
+                        <p class="text-xs text-gray-500 mt-0.5 mb-3">
+                          Where should we send your book?
+                        </p>
+                        <div class="space-y-2.5">
+                          <div class="flex gap-2.5">
+                            <input
+                              type="text"
+                              value={shippingForm.firstName}
+                              onInput={(e) =>
+                                setShippingForm({
+                                  ...shippingForm,
+                                  firstName: (e.target as HTMLInputElement).value,
+                                })}
+                              placeholder="First name"
+                              autoComplete="given-name"
+                              class={`${addressInputClass} flex-1 min-w-0`}
+                            />
+                            <input
+                              type="text"
+                              value={shippingForm.lastName}
+                              onInput={(e) =>
+                                setShippingForm({
+                                  ...shippingForm,
+                                  lastName: (e.target as HTMLInputElement).value,
+                                })}
+                              placeholder="Last name"
+                              autoComplete="family-name"
+                              class={`${addressInputClass} flex-1 min-w-0`}
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            value={shippingForm.addressLine1}
+                            onInput={(e) =>
+                              setShippingForm({
+                                ...shippingForm,
+                                addressLine1: (e.target as HTMLInputElement).value,
+                              })}
+                            placeholder="Street address"
+                            autoComplete="address-line1"
+                            class={`${addressInputClass} w-full`}
+                          />
+                          <input
+                            type="text"
+                            value={shippingForm.addressLine2}
+                            onInput={(e) =>
+                              setShippingForm({
+                                ...shippingForm,
+                                addressLine2: (e.target as HTMLInputElement).value,
+                              })}
+                            placeholder="Apt, suite, unit (optional)"
+                            autoComplete="address-line2"
+                            class={`${addressInputClass} w-full`}
+                          />
+                          <div class="flex gap-2.5">
+                            <input
+                              type="text"
+                              value={shippingForm.city}
+                              onInput={(e) =>
+                                setShippingForm({
+                                  ...shippingForm,
+                                  city: (e.target as HTMLInputElement).value,
+                                })}
+                              placeholder="City"
+                              autoComplete="address-level2"
+                              class={`${addressInputClass} min-w-0 flex-1`}
+                            />
+                            <input
+                              type="text"
+                              value={shippingForm.state}
+                              onInput={(e) =>
+                                setShippingForm({
+                                  ...shippingForm,
+                                  state: (e.target as HTMLInputElement).value,
+                                })}
+                              placeholder="State"
+                              autoComplete="address-level1"
+                              class={`${addressInputClass} w-24 shrink-0`}
+                            />
+                            <input
+                              type="text"
+                              value={shippingForm.postcode}
+                              onInput={(e) =>
+                                setShippingForm({
+                                  ...shippingForm,
+                                  postcode: (e.target as HTMLInputElement).value,
+                                })}
+                              placeholder="ZIP"
+                              autoComplete="postal-code"
+                              class={`${addressInputClass} w-28 shrink-0`}
+                            />
+                          </div>
+                          <div class="flex gap-2.5">
+                            <select
+                              value={shippingForm.country}
+                              onInput={(e) =>
+                                setShippingForm({
+                                  ...shippingForm,
+                                  country: (e.target as HTMLSelectElement).value,
+                                })}
+                              onChange={(e) =>
+                                setShippingForm({
+                                  ...shippingForm,
+                                  country: (e.target as HTMLSelectElement).value,
+                                })}
+                              autoComplete="country"
+                              class={`${addressInputClass} w-40 shrink-0 appearance-none`}
+                            >
+                              <option value="US">United States</option>
+                              <option value="CA">Canada</option>
+                              <option value="GB">United Kingdom</option>
+                              <option value="AU">Australia</option>
+                              <option value="NZ">New Zealand</option>
+                              <option value="IE">Ireland</option>
+                              <option value="DE">Germany</option>
+                              <option value="FR">France</option>
+                              <option value="ES">Spain</option>
+                              <option value="IT">Italy</option>
+                              <option value="NL">Netherlands</option>
+                              <option value="BE">Belgium</option>
+                              <option value="AT">Austria</option>
+                              <option value="CH">Switzerland</option>
+                              <option value="SE">Sweden</option>
+                              <option value="NO">Norway</option>
+                              <option value="DK">Denmark</option>
+                              <option value="FI">Finland</option>
+                              <option value="PT">Portugal</option>
+                              <option value="PL">Poland</option>
+                              <option value="JP">Japan</option>
+                            </select>
+                            <input
+                              type="tel"
+                              value={shippingForm.phone}
+                              onInput={(e) =>
+                                setShippingForm({
+                                  ...shippingForm,
+                                  phone: (e.target as HTMLInputElement).value,
+                                })}
+                              placeholder="Phone (optional)"
+                              autoComplete="tel"
+                              class={`${addressInputClass} min-w-0 flex-1`}
+                            />
+                          </div>
+                        </div>
+                        {addressError && (
+                          <p class="mt-2.5 text-xs font-medium text-red-500">
+                            {addressError}
+                          </p>
+                        )}
                       </div>
 
                       <div class="bg-gray-50/80 rounded-2xl p-5 mb-8 border border-gray-200/60 shadow-sm">
