@@ -286,6 +286,7 @@ export default define.page(async function Book(ctx) {
           supabaseUrl={Deno.env.get("SUPABASE_URL") || ""}
           supabaseAnonKey={Deno.env.get("SUPABASE_ANON_KEY") || ""}
           isPrintMode={mode === "print"}
+          familyId={payload.book.family_id}
         />
       </main>
     </div>

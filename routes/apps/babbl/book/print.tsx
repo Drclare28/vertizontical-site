@@ -198,6 +198,106 @@ function renderPage(
   return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}"><div style="padding:2em;font-size:0.9em;color:#999;">Unknown layout: ${layout}</div></div>`;
 }
 
+// ---------------------------------------------------------------------------
+// Gelato print structure (single PDF): page 1 = flat cover spread
+// (back cover + spine + front cover), page 2 = blank endpaper, last page =
+// blank endpaper, inner pages = single square pages. All layout numbers come
+// from Gelato's cover-dimensions API (mm) and are passed in via query params
+// by stitch-pdf. See kid-quotes supabase/functions/stitch-pdf.
+// ---------------------------------------------------------------------------
+const MM2PX = (mm: number) => (mm / 25.4) * 96;
+const mm2in = (mm: number) => mm / 25.4;
+
+function renderGelatoSpread(
+  p: {
+    coverW: number; coverH: number;
+    backLeft: number; backTop: number;
+    contentW: number; contentH: number;
+    spineLeft: number; spineW: number;
+    frontLeft: number;
+  },
+  frontHtml: string,
+  backHtml: string,
+  spineTitle: string,
+): string {
+  const px = (mm: number) => MM2PX(mm).toFixed(2);
+  const spineRight = p.spineLeft + p.spineW;
+
+  // FULL BLEED: the background must extend to the very edge of the print
+  // file. Each panel spans the whole bleed canvas (back = left edge → spine,
+  // front = spine → right edge, both full height) and is painted with the
+  // theme background; the design content is then inset to Gelato's safe-area
+  // rect inside the panel. No white borders anywhere.
+  const designBox = (leftOffsetInPanel: number, inner: string) =>
+    `<div style="position:absolute;left:${px(leftOffsetInPanel)}px;top:${px(p.backTop)}px;width:${px(p.contentW)}px;height:${px(p.contentH)}px;overflow:hidden;">${inner}</div>`;
+
+  // Spine text is only legible once the spine is wide enough (the hardcover's
+  // spine is a fixed 6mm; softcovers were ~2.7mm). Reading top-to-bottom:
+  // title first, then "Babbl Book" at the bottom, in the theme heading font.
+  const spineInner = p.spineW >= 5
+    ? `<div style="position:absolute;inset:0;background:var(--babbl-primary);display:flex;align-items:center;justify-content:center;">
+        <div style="writing-mode:vertical-rl;height:100%;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;padding:${px(15)}px 0;font-family:var(--babbl-font-heading,'Fredoka',sans-serif);font-weight:600;font-size:12px;line-height:${px(p.spineW)}px;color:#ffffff;white-space:nowrap;">
+          <span style="max-height:62%;overflow:hidden;text-overflow:ellipsis;">${spineTitle}</span>
+          <span>Babbl Book</span>
+        </div>
+      </div>`
+    : `<div style="position:absolute;inset:0;background:var(--babbl-primary);"></div>`;
+
+  // Each region's bleed extends its own artwork: back/s spine in the brand
+  // purple (matching .layout-back_cover), front in the theme magenta (matching
+  // the cover page background).
+  return `<div class="print-page gelato-spread theme-babbl_theme" style="width:${px(p.coverW)}px;height:${px(p.coverH)}px;position:relative;overflow:hidden;">
+    <div style="position:absolute;left:0;top:0;width:${px(p.spineLeft)}px;height:100%;overflow:hidden;background:var(--babbl-primary);">
+      ${designBox(p.backLeft, backHtml)}
+    </div>
+    <div style="position:absolute;left:${px(p.spineLeft)}px;top:0;width:${px(p.spineW)}px;height:100%;overflow:hidden;">${spineInner}</div>
+    <div style="position:absolute;left:${px(spineRight)}px;top:0;width:${px(p.coverW - spineRight)}px;height:100%;overflow:hidden;background:var(--babbl-accent-dark);">
+      ${designBox(Math.max(0, p.frontLeft - spineRight), frontHtml)}
+    </div>
+  </div>`;
+}
+
+function renderGelatoTitlePage(
+  dim: { w: number; h: number },
+  bookTitle: string,
+  yearRange: string,
+  format: string,
+): string {
+  return `<div class="print-page theme-babbl_theme format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;">
+    <div style="position:absolute;top:-4em;right:-4em;width:11em;height:11em;background:var(--babbl-accent-coral);opacity:0.25;border-radius:9999px;"></div>
+    <div style="position:absolute;bottom:-5em;left:-5em;width:13em;height:13em;background:var(--babbl-text-primary);opacity:0.18;border-radius:9999px;"></div>
+    <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10%;text-align:center;">
+      <div style="font-family:'Yomogi',sans-serif;font-size:0.95em;color:var(--babbl-text-primary);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:1.5em;">A Babbl Book</div>
+      <h1 style="font-family:'Fredoka',sans-serif;font-weight:600;color:var(--babbl-accent-dark);font-size:2.2em;line-height:1.15;margin:0;">${bookTitle}</h1>
+      ${yearRange ? `<div style="font-family:'Rosario',sans-serif;font-size:1.05em;color:var(--babbl-text-primary);margin-top:1.2em;">${yearRange}</div>` : ""}
+    </div>
+  </div>`;
+}
+
+function renderGelatoNotesPage(
+  dim: { w: number; h: number },
+  format: string,
+): string {
+  // White background with theme-colored ruled lines for handwritten notes
+  // (user-requested "notes page" style). Line pitch scales with page size.
+  return `<div class="print-page theme-babbl_theme format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;">
+    <div style="position:absolute;top:9%;left:10%;right:10%;bottom:9%;display:flex;flex-direction:column;">
+      <div style="font-family:'Fredoka',sans-serif;font-weight:500;font-size:1.1em;color:var(--babbl-text-primary);margin-bottom:0.6em;">Notes</div>
+      <div style="flex:1;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 2.4em, rgba(182,49,152,0.38) 2.4em, rgba(182,49,152,0.38) calc(2.4em + 1px));"></div>
+    </div>
+  </div>`;
+}
+
+// Standalone renderer used by the book builder to preview the Notes page that
+// the print pipeline appends after the last Babbl. Lives in islands/pageHtml.ts
+// (client-safe) and is re-exported here for the print route.
+export { renderNotesPageHtml } from "../../../../islands/pageHtml.ts";
+
+function renderGelatoBlankPage(dim: { w: number; h: number }, format: string): string {
+  // Blank endpaper - must stay completely unprinted per Gelato spec.
+  return `<div class="print-page theme-babbl_theme format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;"></div>`;
+}
+
 export const handler = define.handlers({
   async GET(ctx) {
     const { url } = ctx;
@@ -312,6 +412,166 @@ export const handler = define.handlers({
       }
     });
     const childrenProfiles = Array.from(childrenMap.values());
+
+    // ----- Gelato print structure modes (used by stitch-pdf) -----
+    const gelatoMode = url.searchParams.get("mode");
+    if (gelatoMode === "cover" || gelatoMode === "interior") {
+      const num = (name: string, fallback: number) => {
+        const v = parseFloat(url.searchParams.get(name) || "");
+        return Number.isFinite(v) ? v : fallback;
+      };
+      // Fallback anatomy per size: classic = the Gelato HARDCOVER 8x8 (fixed
+      // 6mm spine, 8mm joints, 17mm board wrap + 3mm bleed); mini = softcover
+      // mini. stitch-pdf always sends the real numbers from the
+      // cover-dimensions API; these only cover unreachable-API cases.
+      const fallback = finalFormat === "mini"
+        ? { coverW: 288.72, coverH: 146, backLeft: 3, backTop: 3, contentW: 140, contentH: 140, spineLeft: 143, spineW: 2.72, frontLeft: 145.72 }
+        : { coverW: 458, coverH: 246, backLeft: 20, backTop: 20, contentW: 198, contentH: 206, spineLeft: 226, spineW: 6, frontLeft: 240 };
+      const p = {
+        coverW: num("coverW", fallback.coverW),
+        coverH: num("coverH", fallback.coverH),
+        backLeft: num("backLeft", fallback.backLeft),
+        backTop: num("backTop", fallback.backTop),
+        contentW: num("contentW", fallback.contentW),
+        contentH: num("contentH", fallback.contentH),
+        spineLeft: num("spineLeft", fallback.spineLeft),
+        spineW: num("spineW", fallback.spineW),
+        frontLeft: num("frontLeft", fallback.frontLeft),
+      };
+      const contentDim = {
+        w: MM2PX(p.contentW),
+        h: MM2PX(p.contentH),
+        inW: mm2in(p.contentW),
+        inH: mm2in(p.contentH),
+      };
+      // Interior pages are always rendered at the photobook TRIM size
+      // (200x200mm for the 8x8 hardcover) — never at the cover's safe-area
+      // rect, which is a different shape (198x206 incl. board wrap bleed).
+      const trimDim = {
+        w: MM2PX(num("interiorW", finalFormat === "mini" ? 140 : 200)),
+        h: MM2PX(num("interiorH", finalFormat === "mini" ? 140 : 200)),
+        inW: mm2in(num("interiorW", finalFormat === "mini" ? 140 : 200)),
+        inH: mm2in(num("interiorH", finalFormat === "mini" ? 140 : 200)),
+      };
+      const bookBuilderUrl = Deno.env.get("BOOK_BUILDER_URL") ??
+        "https://vertizonticalstudios.com";
+
+      let bodyHtml: string;
+      let pageWpx: number, pageHpx: number, pageWIn: number, pageHIn: number;
+      const escapeHtml = (s: string) =>
+        s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      if (gelatoMode === "cover") {
+        const frontHtml = renderPage(
+          { page_number: -1, layout_style: "cover", title: book.title },
+          contentDim,
+          { childrenProfiles, yearRange, format: finalFormat },
+        );
+        const backHtml = renderPage(
+          { page_number: -2, layout_style: "back_cover" },
+          contentDim,
+          { format: finalFormat },
+        );
+        bodyHtml = renderGelatoSpread(
+          p,
+          frontHtml,
+          backHtml,
+          escapeHtml(book.title || "Our Babbl Book"),
+        );
+        pageWpx = MM2PX(p.coverW);
+        pageHpx = MM2PX(p.coverH);
+        pageWIn = mm2in(p.coverW);
+        pageHIn = mm2in(p.coverH);
+      } else {
+        // Interior: [blank endpaper] + title + quotes + notes padding + [blank endpaper]
+        const innerSlots = Math.max(3, num("innerSlots", 29));
+        const contentPages: string[] = [];
+        contentPages.push(renderGelatoBlankPage(trimDim, finalFormat));
+        contentPages.push(
+          renderGelatoTitlePage(trimDim, book.title || "Our Book", yearRange, finalFormat),
+        );
+        for (const q of innerPages) {
+          contentPages.push(renderPage(q, trimDim, { format: finalFormat }));
+        }
+        // contentPages[0] is the leading blank endpaper, so the loop runs
+        // until length == innerSlots + 1, leaving exactly `innerSlots`
+        // content slots (title + quotes + notes) between the two endpapers.
+        while (contentPages.length < innerSlots + 1) {
+          contentPages.push(renderGelatoNotesPage(trimDim, finalFormat));
+        }
+        contentPages.push(renderGelatoBlankPage(trimDim, finalFormat));
+        bodyHtml = contentPages.join("\n");
+        pageWpx = trimDim.w;
+        pageHpx = trimDim.h;
+        pageWIn = trimDim.inW;
+        pageHIn = trimDim.inH;
+      }
+
+      let inlineCss = "";
+      try {
+        const bookCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/book.css");
+        const babblCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/themes/babbl.css");
+        const cleanBookCss = bookCss.replace(/@import\s+["'].*babbl\.css["'];/g, "");
+        inlineCss = cleanBookCss + "\n" + babblCss;
+        inlineCss = inlineCss.replace(
+          /url\(["']?([^"']*(?:images|fonts)[^"']*)["']?\)/g,
+          (_match, path) => {
+            if (path.startsWith("http") || path.startsWith("data:")) return `url("${path}")`;
+            const cleanPath = path.replace(/^(\.\.\/|\.\/|\/)/, "");
+            return `url("${bookBuilderUrl}/${cleanPath}")`;
+          },
+        );
+      } catch (e) {
+        console.error("Failed to read inline CSS:", e);
+      }
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=${pageWpx}, initial-scale=1.0" />
+  <title>Babbl Book Print (${gelatoMode})</title>
+  <base href="${bookBuilderUrl}" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact;
+    }
+    html, body {
+      font-size: 16px;
+      margin: 0;
+      padding: 0;
+      width: ${pageWpx}px;
+      background: white;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4, h5, h6, p { margin: 0; padding: 0; }
+    img { max-width: 100%; height: auto; display: block; }
+    .print-page { font-size: 16px; overflow: hidden; position: relative; background: white; }
+    ${inlineCss}
+  </style>
+  <style>
+    @page {
+      margin: 0 !important;
+      size: ${pageWIn}in ${pageHIn}in !important;
+    }
+    body > .print-page { page-break-after: always; break-after: page; }
+    body > .print-page:last-child { page-break-after: avoid; break-after: avoid; }
+    img { max-width: none; }
+  </style>
+</head>
+<body>
+${bodyHtml}
+</body>
+</html>`;
+
+      return new Response(html, {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
 
     const allPages: BookPageData[] = [
       { page_number: 0, layout_style: "cover", title: book.title },

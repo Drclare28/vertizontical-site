@@ -4,9 +4,11 @@ import { createClient } from "@supabase/supabase-js";
 import Sortable, { SortableEvent } from "sortablejs";
 import {
   BOOK_DIMENSIONS,
+  BabblQuote,
   BookFormat,
   BookPageData,
 } from "../routes/apps/babbl/book/_data.ts";
+import { renderNotesPageHtml } from "./pageHtml.ts";
 import PageRenderer from "./PageRenderer.tsx";
 
 declare module "preact" {
@@ -21,9 +23,7 @@ declare module "preact" {
       };
     }
   }
-}
-
-interface BookEditorProps {
+}interface BookEditorProps {
   initialFormat?: BookFormat;
   initialTheme?: string;
   pages: BookPageData[];
@@ -32,8 +32,8 @@ interface BookEditorProps {
   supabaseUrl: string;
   supabaseAnonKey: string;
   isPrintMode?: boolean;
+  familyId?: string;
 }
-
 interface CustomSelectProps {
   value: string;
   options: { label: string; value: string; icon: string }[];
@@ -308,6 +308,42 @@ const SVG_ICONS: Record<
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
     </svg>
   ),
+  "search-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"
+      />
+    </svg>
+  ),
+  "close-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  ),
+  "close-circle": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" stroke-width="2" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 9l-6 6M9 9l6 6" />
+    </svg>
+  ),
+  "person-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  ),
+  "chatbubble-ellipses-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4-.8l-3.9 1.2 1.2-3.9A7.7 7.7 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+      />
+    </svg>
+  ),
   "remove-outline": (props) => (
     <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
@@ -328,9 +364,7 @@ const SVG_ICONS: Record<
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
   ),
-};
-
-interface BookEditorProps {
+};interface BookEditorProps {
   initialFormat?: BookFormat;
   initialTheme?: string;
   pages: BookPageData[];
@@ -339,8 +373,8 @@ interface BookEditorProps {
   supabaseUrl: string;
   supabaseAnonKey: string;
   isPrintMode?: boolean;
+  familyId?: string;
 }
-
 interface CustomSelectProps {
   value: string;
   options: { label: string; value: string; icon: string }[];
@@ -482,6 +516,7 @@ export default function BookEditor(
     supabaseUrl,
     supabaseAnonKey,
     isPrintMode: isPrintProp = false,
+    familyId,
   }: BookEditorProps,
 ) {
   const [format, setFormat] = useState<BookFormat>(initialFormat);
@@ -591,9 +626,7 @@ export default function BookEditor(
       shipping: string;
       cost: string;
       price: string;
-      binding: string;
-      isHardcoverAvailable: boolean;
-      pagesRequiredForHardcover: number;
+      totalPages: number;
     } | null
   >(null);
   const [isQuoting, setIsQuoting] = useState(false);
@@ -625,12 +658,57 @@ export default function BookEditor(
 
   const dimensions = BOOK_DIMENSIONS[format];
 
-  const generateAndUploadCover = async () => {
-    if (!coverSnapshotRef.current) return;
+  // Convert a fully-loaded, CORS-clean <img> to a data URL via canvas — no
+  // network needed. Returns null if the canvas is tainted (cross-origin image
+  // without CORS headers); in that case we leave the src alone and let
+  // html-to-image's own fetch path try.
+  const imageToDataUrl = (img: HTMLImageElement): string | null => {
     try {
+      if (!img.naturalWidth || !img.naturalHeight) return null;
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return null;
+      ctx.drawImage(img, 0, 0);
+      return canvas.toDataURL("image/png");
+    } catch {
+      return null;
+    }
+  };
+
+  const generateAndUploadCover = async () => {
+    const snapshotEl = coverSnapshotRef.current;
+    if (!snapshotEl) return;
+    // html-to-image re-fetches every <img> over the network before capture and,
+    // when a fetch fails (WebView CORS quirks, bot protection, flaky network),
+    // silently embeds an EMPTY image and caches that failure — producing
+    // thumbnails with missing photos. Avoid that path entirely: wait for each
+    // image to load, then swap in data URLs converted via canvas, and restore
+    // the original srcs afterwards.
+    const imgs = Array.from(snapshotEl.querySelectorAll("img"));
+    await Promise.all(
+      imgs.map((im) =>
+        im.complete
+          ? Promise.resolve()
+          : new Promise<void>((res) => {
+            im.onload = () => res();
+            im.onerror = () => res();
+          }),
+      ),
+    );
+    const originals = new Map<HTMLImageElement, string>();
+    try {
+      imgs.forEach((im) => {
+        if (!im.src || im.src.startsWith("data:")) return;
+        const dataUrl = imageToDataUrl(im);
+        if (dataUrl) {
+          originals.set(im, im.src);
+          im.src = dataUrl;
+        }
+      });
       const { toBlob } = await import("html-to-image");
-      const blob = await toBlob(coverSnapshotRef.current, {
-        cacheBust: true,
+      const blob = await toBlob(snapshotEl, {
         canvasWidth: dimensions.widthInches * 96,
         canvasHeight: dimensions.heightInches * 96,
         pixelRatio: 1,
@@ -664,6 +742,10 @@ export default function BookEditor(
       console.log("Cover thumbnail successfully synced to DB!");
     } catch (e) {
       console.error("Failed snapping cover DOM:", e);
+    } finally {
+      originals.forEach((src, im) => {
+        im.src = src;
+      });
     }
   };
 
@@ -803,7 +885,7 @@ export default function BookEditor(
       setCheckoutWarning(
         `You currently have ${quoteCount} Babbl${
           quoteCount !== 1 ? "s" : ""
-        }. You need at least 4 Babbls to print a Softcover Booklet, or 26 Babbls for a Hardcover Book!`,
+        }. You need at least 4 Babbls to print your book — Notes pages fill the space until you add more!`,
       );
       setIsCheckoutModalOpen(true);
       return;
@@ -876,8 +958,6 @@ export default function BookEditor(
 
     // @ts-ignore: Checking bridge availability
     if (win && win.ReactNativeWebView && win.ReactNativeWebView.postMessage) {
-      const bindingType = checkoutQuote?.binding ||
-        (quoteCount < 26 ? "saddle_stitch" : "hardcover");
       const totalCost = checkoutQuote?.price || "39.99";
 
       // @ts-ignore: Posting to bridge
@@ -888,7 +968,6 @@ export default function BookEditor(
           amount: parseFloat(totalCost).toFixed(2),
           format: format,
           size: format,
-          binding: bindingType,
           pages: quoteCount,
           quantity: quantity,
           shippingDetails: {
@@ -1017,6 +1096,153 @@ export default function BookEditor(
     }
   };
 
+  // --- ADD BABBL PAGE ---
+  // Lets the user append another quote page from the family's Babbl bank.
+  // Notes pages at the end of the printed book are recomputed at print time,
+  // so every added Babbl automatically removes one padding Notes page.
+  const [isAddQuoteOpen, setIsAddQuoteOpen] = useState(false);
+  const [availableQuotes, setAvailableQuotes] = useState<BabblQuote[]>([]);
+  const [isLoadingQuotes, setIsLoadingQuotes] = useState(false);
+  const [addQuoteError, setAddQuoteError] = useState<string | null>(null);
+  // Search box text + active child filter for the Add-a-Babbl modal.
+  const [quoteSearch, setQuoteSearch] = useState("");
+  const [quoteChildFilter, setQuoteChildFilter] = useState<string | null>(null);
+
+  const openAddQuoteModal = async () => {
+    setIsAddQuoteOpen(true);
+    setAddQuoteError(null);
+    setQuoteSearch("");
+    setQuoteChildFilter(null);
+    if (!familyId) {
+      setAddQuoteError(
+        "This book isn't linked to a family, so new Babbls can't be added here.",
+      );
+      return;
+    }
+    setIsLoadingQuotes(true);
+    try {
+      const inBook = new Set(
+        localPages.map((p) => p.quote?.id).filter(Boolean) as string[],
+      );
+      const { data, error } = await supabase!
+        .from("quotes")
+        .select(
+          `id, quote_text, quote_date, media_url,
+           child:children (id, name, nickname, date_of_birth, avatar_url),
+           parent:profiles!recorded_by (full_name, avatar_url)`,
+        )
+        .eq("family_id", familyId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      const rows = (data || []) as Array<Record<string, any>>;
+      setAvailableQuotes(
+        rows
+          .filter((q) => !inBook.has(q.id))
+          .map((q) => {
+            const child = Array.isArray(q.child) ? q.child[0] : q.child;
+            const parent = Array.isArray(q.parent) ? q.parent[0] : q.parent;
+            return {
+              id: q.id,
+              text: q.quote_text,
+              date: q.quote_date,
+              child,
+              parent: parent?.full_name
+                ? { name: parent.full_name, avatar_url: parent.avatar_url }
+                : undefined,
+              photo_url: q.media_url || undefined,
+            } as BabblQuote;
+          }),
+      );
+    } catch (err) {
+      console.error("Load available quotes failed:", err);
+      setAddQuoteError("Couldn't load your Babbls. Please try again.");
+    } finally {
+      setIsLoadingQuotes(false);
+    }
+  };
+
+  const handleAddQuotePage = async (quote: BabblQuote) => {
+    // pages = cover + N quotes + back cover, so the new quote's order_index
+    // is the current quote count and its page_number is count + 1.
+    const nextOrderIndex = Math.max(0, localPages.length - 2);
+    const { error } = await supabase!.from("book_quotes").insert({
+      book_id: bookId,
+      quote_id: quote.id,
+      order_index: nextOrderIndex,
+      layout_style: "photo_window_top_quote_bottom",
+      show_context: true,
+    });
+    if (error) {
+      console.error("Add quote page failed:", error);
+      setAddQuoteError("Couldn't add that Babbl. Please try again.");
+      return;
+    }
+    setLocalPages((cur) => {
+      const withoutBack = cur.slice(0, cur.length - 1);
+      const back = cur[cur.length - 1];
+      return [
+        ...withoutBack,
+        {
+          page_number: nextOrderIndex + 1,
+          layout_style: "photo_window_top_quote_bottom",
+          show_context: true,
+          quote,
+        } as BookPageData,
+        back,
+      ];
+    });
+    setIsAddQuoteOpen(false);
+  };
+
+  // Distinct children present in the available-Babbl list, for filter chips.
+  const quoteFilterChildren = useMemo(() => {
+    const map = new Map<
+      string,
+      { id: string; name: string; avatar_url?: string }
+    >();
+    availableQuotes.forEach((q) => {
+      if (q.child?.id && !map.has(q.child.id)) {
+        map.set(q.child.id, {
+          id: q.child.id,
+          name: q.child.nickname || q.child.name || "Babbl",
+          avatar_url: q.child.avatar_url,
+        });
+      }
+    });
+    return Array.from(map.values());
+  }, [availableQuotes]);
+
+  // Search + child filter applied to the available-Babbl list. Matches quote
+  // text, child name/nickname, and the parent who recorded it.
+  const filteredQuotes = useMemo(() => {
+    const needle = quoteSearch.trim().toLowerCase();
+    return availableQuotes.filter((q) => {
+      if (quoteChildFilter && q.child?.id !== quoteChildFilter) return false;
+      if (!needle) return true;
+      const haystack = [
+        q.text,
+        q.child?.name,
+        q.child?.nickname,
+        q.parent?.name,
+      ].filter(Boolean).join(" ").toLowerCase();
+      return haystack.includes(needle);
+    });
+  }, [availableQuotes, quoteSearch, quoteChildFilter]);
+
+  // Printed page math (mirrors quote.ts / stitch-pdf): content = title page +
+  // one page per quote; request R = max(28, content); total T = R + 4
+  // (cover spread + 2 endpapers + 1), floor 32. Notes pages fill the end.
+  const printedTotalPages = Math.max(32, Math.max(28, quoteCount + 1) + 4);
+  const printedNotesPages = Math.max(0, printedTotalPages - 4 - quoteCount);
+  // Preview mode: while true, the page viewer shows the auto-appended Notes
+  // page instead of book pages. Purely visual — nothing is stored.
+  const [showingNotesPage, setShowingNotesPage] = useState(false);
+  const notesPageHtml = useMemo(
+    () => renderNotesPageHtml(dimensions),
+    [dimensions],
+  );
+
   useEffect(() => {
     if (isGridView && gridContainerRef.current) {
       sortableRef.current = Sortable.create(gridContainerRef.current, {
@@ -1085,7 +1311,40 @@ export default function BookEditor(
     return () => observer.disconnect();
   }, [isGridView, localPages.length]);
 
+  // Page flow: [cover, ...quotes, NOTES PREVIEW, back cover]. The Notes page
+  // is not a stored page — it's a preview of what the print pipeline appends
+  // after the last Babbl to satisfy the page minimum.
+  const lastQuoteIndex = Math.max(1, localPages.length - 2);
   const goToNextPage = () => {
+    if (showingNotesPage && !animating) {
+      // Notes -> back cover.
+      setAnimating(true);
+      setAnimationClass("animate-turn-next-out");
+      setTimeout(() => {
+        setCurrentPageIndex(localPages.length - 1);
+        setShowingNotesPage(false);
+        setAnimationClass("animate-turn-next-in");
+        setTimeout(() => {
+          setAnimationClass("");
+          setAnimating(false);
+        }, 200);
+      }, 150);
+      return;
+    }
+    if (currentPageIndex === lastQuoteIndex && !animating) {
+      // Last Babbl page -> preview the auto-appended Notes page.
+      setAnimating(true);
+      setAnimationClass("animate-turn-next-out");
+      setTimeout(() => {
+        setShowingNotesPage(true);
+        setAnimationClass("animate-turn-next-in");
+        setTimeout(() => {
+          setAnimationClass("");
+          setAnimating(false);
+        }, 200);
+      }, 150);
+      return;
+    }
     if (currentPageIndex < localPages.length - 1 && !animating) {
       setAnimating(true);
       setAnimationClass("animate-turn-next-out");
@@ -1101,6 +1360,35 @@ export default function BookEditor(
   };
 
   const goToPrevPage = () => {
+    if (showingNotesPage && !animating) {
+      // Notes -> last Babbl page.
+      setAnimating(true);
+      setAnimationClass("animate-turn-prev-out");
+      setTimeout(() => {
+        setCurrentPageIndex(lastQuoteIndex);
+        setShowingNotesPage(false);
+        setAnimationClass("animate-turn-prev-in");
+        setTimeout(() => {
+          setAnimationClass("");
+          setAnimating(false);
+        }, 200);
+      }, 150);
+      return;
+    }
+    if (currentPageIndex === localPages.length - 1 && !animating) {
+      // Back cover -> preview the Notes page (which sits before it).
+      setAnimating(true);
+      setAnimationClass("animate-turn-prev-out");
+      setTimeout(() => {
+        setShowingNotesPage(true);
+        setAnimationClass("animate-turn-prev-in");
+        setTimeout(() => {
+          setAnimationClass("");
+          setAnimating(false);
+        }, 200);
+      }, 150);
+      return;
+    }
     if (currentPageIndex > 0 && !animating) {
       setAnimating(true);
       setAnimationClass("animate-turn-prev-out");
@@ -1276,6 +1564,8 @@ export default function BookEditor(
             />
           </div>
 
+          {/* Two sizes: Mini 5.5" (softcover — Gelato has no hardcover mini)
+              and Classic 8" (hardcover). */}
           <div class="flex bg-gray-100/50 backdrop-blur-sm p-1 rounded-2xl shadow-inner border border-gray-200/50 h-14 items-center shrink-0">
             <button
               type="button"
@@ -1287,9 +1577,12 @@ export default function BookEditor(
               }`}
             >
               <Icon name="book-outline" style={{ fontSize: "14px" }} />
-              <div class="flex flex-col items-start leading-none justify-center">
-                <span>Mini</span>
-                <span class="text-[10px] opacity-70">5.5x5.5"</span>
+              <div class="flex flex-col items-center leading-tight whitespace-nowrap">
+                <div class="flex items-center">
+                  <span>Mini&nbsp;</span>
+                  <span class="text-[10px] font-semibold opacity-60">5.5x5.5"</span>
+                </div>
+                <span class="text-[10px] font-medium opacity-60">Softcover</span>
               </div>
             </button>
             <button
@@ -1302,9 +1595,12 @@ export default function BookEditor(
               }`}
             >
               <Icon name="book-outline" style={{ fontSize: "22px" }} />
-              <div class="flex flex-col items-start leading-none justify-center">
-                <span>Classic</span>
-                <span class="text-[10px] opacity-70">8x8"</span>
+              <div class="flex flex-col items-center leading-tight whitespace-nowrap">
+                <div class="flex items-center">
+                  <span>Classic&nbsp;</span>
+                  <span class="text-[10px] font-semibold opacity-60">8x8"</span>
+                </div>
+                <span class="text-[10px] font-medium opacity-60">Hardcover</span>
               </div>
             </button>
           </div>
@@ -1380,6 +1676,7 @@ export default function BookEditor(
                   onClick={() => {
                     setCurrentPageIndex(actualIndex);
                     setIsGridView(false);
+                    setShowingNotesPage(false);
                   }}
                 >
                   <div
@@ -1422,6 +1719,26 @@ export default function BookEditor(
               );
             })}
           </div>
+
+          {/* Add another Babbl page + printed-structure explainer */}
+          <div class="max-w-3xl mx-auto mt-4 flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={openAddQuoteModal}
+              class="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-[#9B51E0]/40 bg-[#9B51E0]/5 text-[#9B51E0] font-bold hover:bg-[#9B51E0]/10 hover:border-[#9B51E0]/60 transition-colors"
+            >
+              <Icon name="add-outline" class="text-xl" />
+              Add a Babbl Page
+            </button>
+            <p class="text-xs text-gray-500 text-center leading-relaxed max-w-md">
+              Your book prints {format === "mini" ? "as a softcover" : "as a hardcover"} with
+              at least 32 pages: cover, blank endpapers, your Babbls, Notes
+              pages (after the last Babbl), and the back cover.
+              {printedNotesPages > 0
+                ? ` Right now ${printedNotesPages} Notes page${printedNotesPages !== 1 ? "s" : ""} pad the end — each new Babbl you add removes one automatically.`
+                : " Your Babbls fill the book!"}
+            </p>
+          </div>
         </div>
       ) : (
         <div
@@ -1446,17 +1763,31 @@ export default function BookEditor(
                 transformOrigin: "top left",
               }}
             >
-              <PageRenderer
-                format={format}
-                page={{
-                  ...localPages[currentPageIndex],
-                  layout_style: effectiveLayoutStyle,
-                }}
-                themeId={themeId}
-                yearRange={yearRange}
-                childrenProfiles={uniqueChildren}
-                hideBleed={false}
-              />
+              {showingNotesPage
+                ? (
+                  // Preview of the auto-appended Notes page the print pipeline
+                  // adds after the last Babbl. Visual only — not stored.
+                  <div
+                    style={{
+                      width: `${dimensions.widthInches * 96}px`,
+                      height: `${dimensions.heightInches * 96}px`,
+                    }}
+                    dangerouslySetInnerHTML={{ __html: notesPageHtml }}
+                  />
+                )
+                : (
+                  <PageRenderer
+                    format={format}
+                    page={{
+                      ...localPages[currentPageIndex],
+                      layout_style: effectiveLayoutStyle,
+                    }}
+                    themeId={themeId}
+                    yearRange={yearRange}
+                    childrenProfiles={uniqueChildren}
+                    hideBleed={false}
+                  />
+                )}
             </div>
           </div>
         </div>
@@ -1466,7 +1797,7 @@ export default function BookEditor(
       {!isPrintMode && (
         <footer class="w-full max-w-xl px-6 pt-4 pb-12 flex flex-col gap-4 relative z-50 shrink-0">
           {/* Selectors Row */}
-          {!isCoverOrBackCover && !isGridView && (
+          {!isCoverOrBackCover && !isGridView && !showingNotesPage && (
             <div class="flex items-center gap-2 md:gap-4 w-full">
               <div class="flex-1 min-w-0">
                 <CustomSelect
@@ -1508,7 +1839,7 @@ export default function BookEditor(
                 <button
                   type="button"
                   onClick={goToPrevPage}
-                  disabled={currentPageIndex === 0}
+                  disabled={currentPageIndex === 0 && !showingNotesPage}
                   class="w-12 md:flex-1 shrink-0 h-full flex items-center justify-center text-gray-700 hover:bg-[#9B51E0]/5 hover:text-[#9B51E0] disabled:opacity-20 transition-all active:bg-[#9B51E0]/10 border-r border-gray-100/50"
                   aria-label="Previous Page"
                 >
@@ -1516,13 +1847,16 @@ export default function BookEditor(
                 </button>
                 <div class="flex-1 flex items-center justify-center h-full min-w-16 px-2 truncate">
                   <span class="text-xs font-bold text-gray-700 whitespace-nowrap">
-                    {currentPageIndex + 1} / {localPages.length}
+                    {showingNotesPage
+                      ? "Notes"
+                      : `${currentPageIndex + 1} / ${localPages.length}`}
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={goToNextPage}
-                  disabled={currentPageIndex === localPages.length - 1}
+                  disabled={currentPageIndex === localPages.length - 1 &&
+                    !showingNotesPage}
                   class="w-12 md:flex-1 shrink-0 h-full flex items-center justify-center text-gray-700 hover:bg-[#9B51E0]/5 hover:text-[#9B51E0] disabled:opacity-20 transition-all active:bg-[#9B51E0]/10 border-l border-gray-100/50"
                   aria-label="Next Page"
                 >
@@ -1535,7 +1869,10 @@ export default function BookEditor(
                 {/* Grid Toggle Button */}
                 <button
                   type="button"
-                  onClick={() => setIsGridView(true)}
+                  onClick={() => {
+                    setIsGridView(true);
+                    setShowingNotesPage(false);
+                  }}
                   class="w-14 h-14 shrink-0 flex items-center justify-center rounded-2xl shadow-sm border transition-all bg-white/90 backdrop-blur-md border-gray-200/50 text-gray-700 hover:bg-gray-50 active:bg-gray-100"
                   aria-label="Enter Grid View"
                 >
@@ -1558,11 +1895,23 @@ export default function BookEditor(
             </div>
           )}
 
+          {/* Notes page explainer: shown while the Notes preview is on screen. */}
+          {!isGridView && showingNotesPage && (
+            <p class="text-xs text-gray-500 text-center leading-relaxed px-2">
+              Notes pages like this are added after your last Babbl, as many as
+              needed to fill the book's minimum page count (32 pages). As you
+              add more Babbls, they're removed one-for-one automatically.
+            </p>
+          )}
+
           {isGridView && (
             <div class="flex items-center justify-center w-full">
               <button
                 type="button"
-                onClick={() => setIsGridView(false)}
+                onClick={() => {
+                  setIsGridView(false);
+                  setShowingNotesPage(false);
+                }}
                 class="flex items-center justify-center gap-2 bg-[#9B51E0] text-white px-6 h-14 rounded-2xl shadow-md font-bold hover:bg-[#8A44C8] transition-all"
               >
                 <Icon name="book-outline" class="text-lg" />
@@ -1630,6 +1979,190 @@ export default function BookEditor(
               childrenProfiles={uniqueChildren}
               hideBleed={true}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Add Babbl Page Modal */}
+      {isAddQuoteOpen && (
+        <div
+          class="fixed inset-0 bg-white/10 backdrop-blur-md flex justify-center items-end sm:items-center sm:p-6 p-0 animate-overlay font-rosario"
+          style={{ zIndex: 9999 }}
+          onClick={() => setIsAddQuoteOpen(false)}
+        >
+          <div
+            class="bg-white shadow-[0_50px_120px_-15px_rgba(0,0,0,0.85)] overflow-hidden animate-sheet border border-gray-100 w-full max-w-lg flex flex-col h-[100dvh] sm:h-auto sm:max-h-[80vh] sm:rounded-3xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div class="flex justify-between items-start px-6 pt-6 pb-4 shrink-0">
+              <div>
+                <h2 class="text-2xl font-bold text-gray-900 tracking-tight">
+                  Add a Babbl Page
+                </h2>
+                <p class="text-gray-500 text-sm mt-1">
+                  Pick a Babbl to add at the end of the book.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddQuoteOpen(false)}
+                class="w-9 h-9 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                aria-label="Close"
+              >
+                <Icon name="close-outline" class="text-lg" />
+              </button>
+            </div>
+            <div class="flex-1 overflow-y-auto px-6 pb-8 custom-scrollbar">
+              {addQuoteError && (
+                <div class="mb-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-3 py-2">
+                  {addQuoteError}
+                </div>
+              )}
+              {isLoadingQuotes
+                ? (
+                  <div class="py-10 flex justify-center">
+                    <div class="w-8 h-8 border-4 border-[#9B51E0]/20 border-t-[#9B51E0] rounded-full animate-spin">
+                    </div>
+                  </div>
+                )
+                : availableQuotes.length === 0
+                ? (
+                  <p class="text-center text-gray-500 text-sm py-10">
+                    Every Babbl in your family is already in this book. Add new
+                    ones from the Babbl app first!
+                  </p>
+                )
+                : (
+                  <div class="flex flex-col gap-3">
+                    {/* Search + child filter */}
+                    <div class="relative shrink-0">
+                      <Icon
+                        name="search-outline"
+                        class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      />
+                      <input
+                        type="text"
+                        value={quoteSearch}
+                        onInput={(e) => setQuoteSearch((e.target as HTMLInputElement).value)}
+                        placeholder="Search Babbls..."
+                        class="w-full pl-10 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#9B51E0] focus:bg-white focus:ring-2 focus:ring-[#9B51E0]/15 transition-colors"
+                      />
+                      {quoteSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setQuoteSearch("")}
+                          class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          aria-label="Clear search"
+                        >
+                          <Icon name="close-circle" class="text-lg" />
+                        </button>
+                      )}
+                    </div>
+                    {quoteFilterChildren.length > 1 && (
+                      <div class="flex items-center gap-1.5 flex-wrap shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setQuoteChildFilter(null)}
+                          class={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                            quoteChildFilter === null
+                              ? "bg-[#9B51E0] text-white shadow-sm"
+                              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                          }`}
+                        >
+                          All
+                        </button>
+                        {quoteFilterChildren.map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() =>
+                              setQuoteChildFilter(
+                                quoteChildFilter === c.id ? null : c.id,
+                              )}
+                            class={`flex items-center gap-1.5 pl-1.5 pr-3 py-1 rounded-full text-xs font-bold transition-colors ${
+                              quoteChildFilter === c.id
+                                ? "bg-[#9B51E0] text-white shadow-sm"
+                                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            }`}
+                          >
+                            {c.avatar_url
+                              ? (
+                                <img
+                                  src={c.avatar_url}
+                                  alt={c.name}
+                                  class="w-5 h-5 rounded-full object-cover"
+                                />
+                              )
+                              : (
+                                <span class="w-5 h-5 rounded-full bg-[#9B51E0]/15 flex items-center justify-center">
+                                  <Icon
+                                    name="person-outline"
+                                    class="text-[10px] text-[#9B51E0]"
+                                  />
+                                </span>
+                              )}
+                            {c.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {filteredQuotes.length === 0
+                      ? (
+                        <p class="text-center text-gray-500 text-sm py-8">
+                          No Babbls match
+                          {quoteSearch && ` "${quoteSearch}"`}
+                          {quoteChildFilter && " this filter"}.
+                        </p>
+                      )
+                      : (
+                        <div class="flex flex-col gap-2">
+                          {filteredQuotes.map((q) => (
+                            <button
+                              key={q.id}
+                              type="button"
+                              onClick={() => handleAddQuotePage(q)}
+                              class="text-left flex items-start gap-3 p-3 rounded-2xl border border-gray-200 hover:border-[#9B51E0] hover:bg-[#9B51E0]/5 transition-colors"
+                            >
+                              {q.child?.avatar_url
+                                ? (
+                                  <img
+                                    src={q.child.avatar_url}
+                                    alt={q.child.name}
+                                    class="w-9 h-9 rounded-full object-cover shrink-0"
+                                  />
+                                )
+                                : (
+                                  <div class="w-9 h-9 rounded-full bg-[#9B51E0]/10 text-[#9B51E0] flex items-center justify-center shrink-0">
+                                    <Icon
+                                      name="chatbubble-ellipses-outline"
+                                      class="text-base"
+                                    />
+                                  </div>
+                                )}
+                              <span class="min-w-0">
+                                <span class="block text-sm font-semibold text-gray-900 truncate">
+                                  {q.child?.nickname || q.child?.name || "Babbl"}
+                                </span>
+                                <span class="block text-sm text-gray-600 line-clamp-2">
+                                  "{q.text}"
+                                </span>
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                )}
+            </div>
+            <div class="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
+              <button
+                type="button"
+                onClick={() => setIsAddQuoteOpen(false)}
+                class="w-full py-3.5 rounded-2xl font-bold text-[#9B51E0] bg-[#9B51E0]/10 hover:bg-[#9B51E0]/20 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -1745,43 +2278,27 @@ export default function BookEditor(
                           </h3>
                           <p class="text-gray-500 text-sm mb-1.5">
                             {format === "mini"
-                              ? "Mini Format"
-                              : "Classic Format"}
+                              ? "5.5x5.5 Softcover"
+                              : "8x8 Hardcover"} •
                             {" "}
-                            • {quoteCount} Babbl{quoteCount !== 1 ? "s" : ""}
+                            {quoteCount} Babbl{quoteCount !== 1 ? "s" : ""}
                           </p>
 
-                          {isQuoting
-                            ? (
-                              <div class="h-4 w-32 bg-gray-200 animate-pulse rounded mt-1">
-                              </div>
-                            )
-                            : (
-                              <p class="text-gray-500 text-sm font-medium">
-                                Binding:{" "}
-                                <span class="text-gray-800">
-                                  {checkoutQuote?.binding === "hardcover"
-                                    ? "Premium Hardcover"
-                                    : "Premium Softcover (Stapled)"}
-                                </span>
-                              </p>
-                            )}
-
-                          {checkoutQuote &&
-                            !checkoutQuote.isHardcoverAvailable &&
-                            (
-                              <div class="mt-2 inline-flex items-start gap-1.5 bg-[#9B51E0]/10 text-[#9B51E0] border border-[#9B51E0]/20 px-2 py-1.5 rounded-lg text-xs leading-snug">
-                                <Icon
-                                  name="information-circle"
-                                  class="text-sm mt-0.5 shrink-0"
-                                />
-                                <span>
-                                  Add {checkoutQuote.pagesRequiredForHardcover}
-                                  {" "}
-                                  more Babbls to unlock Hardcover printing!
-                                </span>
-                              </div>
-                            )}
+                          <div class="mt-2 inline-flex items-start gap-1.5 bg-[#9B51E0]/10 text-[#9B51E0] border border-[#9B51E0]/20 px-2 py-1.5 rounded-lg text-xs leading-snug">
+                            <Icon
+                              name="information-circle"
+                              class="text-sm mt-0.5 shrink-0"
+                            />
+                            <span>
+                              Prints {format === "mini" ? "softcover" : "hardcover"} with
+                              at least 32 pages: cover, blank endpapers,
+                              your Babbls, Notes pages (after the last Babbl),
+                              and the back cover.
+                              {printedNotesPages > 0
+                                ? ` ${printedNotesPages} Notes page${printedNotesPages !== 1 ? "s" : ""} right now — they're removed automatically as you add Babbls.`
+                                : ""}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
