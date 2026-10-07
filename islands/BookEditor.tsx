@@ -1730,6 +1730,17 @@ export default function BookEditor(
               <Icon name="add-outline" class="text-xl" />
               Add a Babbl Page
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setIsGridView(false);
+                setShowingNotesPage(false);
+              }}
+              class="flex items-center justify-center gap-2 bg-[#9B51E0] text-white px-6 h-14 rounded-2xl shadow-md font-bold hover:bg-[#8A44C8] transition-all"
+            >
+              <Icon name="book-outline" class="text-lg" />
+              Return to Book
+            </button>
             <p class="text-xs text-gray-500 text-center leading-relaxed max-w-md">
               Your book prints {format === "mini" ? "as a softcover" : "as a hardcover"} with
               at least 32 pages: cover, blank endpapers, your Babbls, Notes
@@ -1793,8 +1804,10 @@ export default function BookEditor(
         </div>
       )}
 
-      {/* FOOTER: Controls (No Background) */}
-      {!isPrintMode && (
+      {/* FOOTER: Controls (No Background). Not rendered in grid view — its only
+          content there ("Return to Book") lives at the end of the grid scroll,
+          under the Add a Babbl Page button. */}
+      {!isPrintMode && !isGridView && (
         <footer class="w-full max-w-xl px-6 pt-4 pb-12 flex flex-col gap-4 relative z-50 shrink-0">
           {/* Selectors Row */}
           {!isCoverOrBackCover && !isGridView && !showingNotesPage && (
@@ -1904,21 +1917,6 @@ export default function BookEditor(
             </p>
           )}
 
-          {isGridView && (
-            <div class="flex items-center justify-center w-full">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsGridView(false);
-                  setShowingNotesPage(false);
-                }}
-                class="flex items-center justify-center gap-2 bg-[#9B51E0] text-white px-6 h-14 rounded-2xl shadow-md font-bold hover:bg-[#8A44C8] transition-all"
-              >
-                <Icon name="book-outline" class="text-lg" />
-                Return to Book
-              </button>
-            </div>
-          )}
 
           {/* Status */}
         </footer>
