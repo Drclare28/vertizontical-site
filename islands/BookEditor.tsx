@@ -698,6 +698,7 @@ export default function BookEditor(
       ),
     );
     const originals = new Map<HTMLImageElement, string>();
+    const failedSrcs: string[] = [];
     try {
       imgs.forEach((im) => {
         if (!im.src || im.src.startsWith("data:")) return;
@@ -705,8 +706,21 @@ export default function BookEditor(
         if (dataUrl) {
           originals.set(im, im.src);
           im.src = dataUrl;
+        } else {
+          failedSrcs.push(im.src);
         }
       });
+      // Hard gate: if any photo couldn't be converted to a data URL, html-to-image
+      // would fall back to its network re-fetch path — the exact path that silently
+      // embeds EMPTY photos in the app's WebView and overwrites a good stored
+      // thumbnail with a blank one. Abort instead and keep the existing thumbnail.
+      if (failedSrcs.length > 0) {
+        console.error(
+          "Cover capture aborted — photos failed data-URL conversion (would render blank):",
+          failedSrcs,
+        );
+        return;
+      }
       const { toBlob } = await import("html-to-image");
       const blob = await toBlob(snapshotEl, {
         canvasWidth: dimensions.widthInches * 96,
@@ -715,6 +729,14 @@ export default function BookEditor(
       });
 
       if (!blob) return;
+      // Second gate: a cover that should contain photos but captured tiny is
+      // blank — refuse to overwrite the stored thumbnail with it.
+      if (imgs.length > 0 && blob.size < 20_000) {
+        console.error(
+          `Cover capture aborted — blob is only ${blob.size} bytes; refusing to overwrite the stored thumbnail.`,
+        );
+        return;
+      }
 
       const fileName = `cover_${bookId}_${format}_${themeId}.png`;
 
@@ -735,11 +757,16 @@ export default function BookEditor(
 
       // Save URL path to DB
       const finalUrl = `${publicUrl}?t=${Date.now()}`;
-      await supabase.from("books").update({ cover_url: finalUrl }).eq(
-        "id",
-        bookId,
-      );
-      console.log("Cover thumbnail successfully synced to DB!");
+      const { error: dbErr } = await supabase.from("books").update({
+        cover_url: finalUrl,
+      }).eq("id", bookId);
+      if (dbErr) {
+        // Surface this — a silent failure here leaves the app pointing at a
+        // stale cover_url forever (the app only reads books.cover_url).
+        console.error("Cover thumbnail DB update failed:", dbErr.message);
+      } else {
+        console.log("Cover thumbnail successfully synced to DB!");
+      }
     } catch (e) {
       console.error("Failed snapping cover DOM:", e);
     } finally {
@@ -1660,7 +1687,7 @@ export default function BookEditor(
           ))}
         </div>
       ) : isGridView ? (
-        <div class="flex-1 w-full overflow-y-auto px-4 py-6 custom-scrollbar">
+        <div class="flex-1 w-full overflow-y-auto px-4 pt-6 pb-24 custom-scrollbar">
           <div
             ref={gridContainerRef}
             class="grid grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-6 max-w-3xl mx-auto"
@@ -1994,7 +2021,7 @@ export default function BookEditor(
           >
             <div class="flex justify-between items-start px-6 pt-6 pb-4 shrink-0">
               <div>
-                <h2 class="text-2xl font-bold text-gray-900 tracking-tight">
+                <h2 class="text-2xl font-bold text-[#9B51E0] tracking-tight">
                   Add a Babbl Page
                 </h2>
                 <p class="text-gray-500 text-sm mt-1">
@@ -2152,7 +2179,7 @@ export default function BookEditor(
                   </div>
                 )}
             </div>
-            <div class="shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
+            <div class="shrink-0 px-6 pt-4 pb-28 sm:pb-4 border-t border-gray-100 bg-white">
               <button
                 type="button"
                 onClick={() => setIsAddQuoteOpen(false)}
