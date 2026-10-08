@@ -193,7 +193,7 @@
 
   /* --- 2. Back Cover --- */
   .layout-back_cover {
-    background-color: var(--babbl-primary);
+    background-color: var(--babbl-accent-dark);
     align-items: center;
     justify-content: center;
     padding: 1rem;

@@ -235,19 +235,18 @@ function renderGelatoSpread(
   // spine is a fixed 6mm; softcovers were ~2.7mm). Reading top-to-bottom:
   // title first, then "Babbl Book" at the bottom, in the theme heading font.
   const spineInner = p.spineW >= 5
-    ? `<div style="position:absolute;inset:0;background:var(--babbl-primary);display:flex;align-items:center;justify-content:center;">
+    ? `<div style="position:absolute;inset:0;background:var(--babbl-accent-dark);display:flex;align-items:center;justify-content:center;">
         <div style="writing-mode:vertical-rl;height:100%;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;padding:${px(15)}px 0;font-family:var(--babbl-font-heading,'Fredoka',sans-serif);font-weight:600;font-size:12px;line-height:${px(p.spineW)}px;color:#ffffff;white-space:nowrap;">
           <span style="max-height:62%;overflow:hidden;text-overflow:ellipsis;">${spineTitle}</span>
           <span>Babbl Book</span>
         </div>
       </div>`
-    : `<div style="position:absolute;inset:0;background:var(--babbl-primary);"></div>`;
+    : `<div style="position:absolute;inset:0;background:var(--babbl-accent-dark);"></div>`;
 
-  // Each region's bleed extends its own artwork: back/s spine in the brand
-  // purple (matching .layout-back_cover), front in the theme magenta (matching
-  // the cover page background).
+  // Each region's bleed uses the same theme magenta so the stitched cover
+  // reads as one continuous background across back, spine, and front.
   return `<div class="print-page gelato-spread theme-babbl_theme" style="width:${px(p.coverW)}px;height:${px(p.coverH)}px;position:relative;overflow:hidden;">
-    <div style="position:absolute;left:0;top:0;width:${px(p.spineLeft)}px;height:100%;overflow:hidden;background:var(--babbl-primary);">
+    <div style="position:absolute;left:0;top:0;width:${px(p.spineLeft)}px;height:100%;overflow:hidden;background:var(--babbl-accent-dark);">
       ${designBox(p.backLeft, backHtml)}
     </div>
     <div style="position:absolute;left:${px(p.spineLeft)}px;top:0;width:${px(p.spineW)}px;height:100%;overflow:hidden;">${spineInner}</div>
