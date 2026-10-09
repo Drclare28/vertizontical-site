@@ -677,6 +677,27 @@ export default function BookEditor(
     }
   };
 
+  // Convert an image URL to a data URL over the network — the fallback when
+  // canvas conversion fails (tainted canvas from a non-CORS cached image, or
+  // an image that never decoded). The cache-busting query defeats the
+  // WebView's poisoned cache entry.
+  const fetchToDataUrl = async (url: string): Promise<string | null> => {
+    try {
+      const bust = url.includes("?") ? "&" : "?";
+      const res = await fetch(`${url}${bust}cover_capture=${Date.now()}`, { mode: "cors" });
+      if (!res.ok) return null;
+      const blob = await res.blob();
+      return await new Promise<string | null>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
+  };
+
   const generateAndUploadCover = async () => {
     const snapshotEl = coverSnapshotRef.current;
     if (!snapshotEl) return;
@@ -684,8 +705,8 @@ export default function BookEditor(
     // when a fetch fails (WebView CORS quirks, bot protection, flaky network),
     // silently embeds an EMPTY image and caches that failure — producing
     // thumbnails with missing photos. Avoid that path entirely: wait for each
-    // image to load, then swap in data URLs converted via canvas, and restore
-    // the original srcs afterwards.
+    // image to load, then swap in data URLs converted via canvas (or fetched),
+    // and restore the original srcs afterwards.
     const imgs = Array.from(snapshotEl.querySelectorAll("img"));
     await Promise.all(
       imgs.map((im) =>
@@ -697,82 +718,168 @@ export default function BookEditor(
           }),
       ),
     );
-    const originals = new Map<HTMLImageElement, string>();
-    const failedSrcs: string[] = [];
-    try {
-      imgs.forEach((im) => {
-        if (!im.src || im.src.startsWith("data:")) return;
-        const dataUrl = imageToDataUrl(im);
-        if (dataUrl) {
-          originals.set(im, im.src);
-          im.src = dataUrl;
-        } else {
-          failedSrcs.push(im.src);
+
+    // One full swap -> capture -> verify cycle. Returns the verified blob, or
+    // null if any gate refused (the stored thumbnail is then left untouched).
+    const captureVerifiedBlob = async (): Promise<Blob | null> => {
+      const originals = new Map<HTMLImageElement, string>();
+      const failedSrcs: string[] = [];
+      try {
+        for (const im of imgs) {
+          if (!im.src || im.src.startsWith("data:")) continue;
+          let dataUrl = imageToDataUrl(im);
+          // Canvas conversion fails when the image was cached without CORS
+          // headers (tainted canvas) or is not decodable. Retry over the
+          // network with a cache-busting URL before giving up on this photo.
+          if (!dataUrl) dataUrl = await fetchToDataUrl(im.src);
+          if (dataUrl) {
+            originals.set(im, im.src);
+            im.src = dataUrl;
+          } else {
+            failedSrcs.push(im.src);
+          }
         }
-      });
-      // Hard gate: if any photo couldn't be converted to a data URL, html-to-image
-      // would fall back to its network re-fetch path — the exact path that silently
-      // embeds EMPTY photos in the app's WebView and overwrites a good stored
-      // thumbnail with a blank one. Abort instead and keep the existing thumbnail.
-      if (failedSrcs.length > 0) {
-        console.error(
-          "Cover capture aborted — photos failed data-URL conversion (would render blank):",
-          failedSrcs,
-        );
-        return;
+        // html-to-image copies pixels from the live DOM. If we swapped in data
+        // URLs, force a decode pass so the canvas isn't snapshotted mid-swap
+        // (on slow WebViews the swap can land between the layout and capture,
+        // leaving photos as empty boxes in the blob even though the fetch
+        // gates passed).
+        if (originals.size > 0) {
+          await Promise.all(
+            Array.from(originals.keys()).map((im) => im.decode().catch(() => {})),
+          );
+        }
+        // Hard gate: if any photo couldn't be converted to a data URL,
+        // html-to-image would fall back to its network re-fetch path — the
+        // exact path that silently embeds EMPTY photos in the app's WebView
+        // and overwrites a good stored thumbnail with a blank one.
+        if (failedSrcs.length > 0) {
+          console.error(
+            "Cover capture attempt refused — photos failed data-URL conversion (would render blank):",
+            failedSrcs,
+          );
+          return null;
+        }
+        const { toBlob } = await import("html-to-image");
+        const blob = await toBlob(snapshotEl, {
+          canvasWidth: dimensions.widthInches * 96,
+          canvasHeight: dimensions.heightInches * 96,
+          pixelRatio: 1,
+        });
+
+        if (!blob) return null;
+        // Gate: a cover that should contain photos but captured tiny is
+        // blank — refuse to overwrite the stored thumbnail with it.
+        if (imgs.length > 0 && blob.size < 20_000) {
+          console.error(
+            `Cover capture attempt refused — blob is only ${blob.size} bytes.`,
+          );
+          return null;
+        }
+        // Final gate: actually VERIFY the photos are in the capture. A silent
+        // html-to-image failure (or a mid-swap decode race in some WebViews)
+        // can still emit a full-size blob with empty photo boxes. Compare each
+        // converted photo against the blob's pixels via a small canvas match.
+        const blobBitmap = await createImageBitmap(blob);
+        const matchCanvas = document.createElement("canvas");
+        matchCanvas.width = 24;
+        matchCanvas.height = 24;
+        const matchCtx = matchCanvas.getContext("2d", { willReadFrequently: true });
+        if (matchCtx && originals.size > 0) {
+          const avg = (px: Uint8ClampedArray) => {
+            let r = 0, g = 0, b = 0;
+            const n = px.length / 4;
+            for (let i = 0; i < px.length; i += 4) { r += px[i]; g += px[i + 1]; b += px[i + 2]; }
+            return [r / n, g / n, b / n];
+          };
+          const mismatched: string[] = [];
+          for (const im of originals.keys()) {
+            try {
+              matchCtx.clearRect(0, 0, 24, 24);
+              matchCtx.drawImage(im, 0, 0, 24, 24);
+              const target = matchCtx.getImageData(0, 0, 24, 24).data;
+              // Sample the blob at the photo's viewport position.
+              const rect = im.getBoundingClientRect();
+              const snapRect = snapshotEl.getBoundingClientRect();
+              const cx = Math.round(((rect.left + rect.width / 2 - snapRect.left) / snapRect.width) * blobBitmap.width);
+              const cy = Math.round(((rect.top + rect.height / 2 - snapRect.top) / snapRect.height) * blobBitmap.height);
+              const sx = Math.max(0, Math.min(blobBitmap.width - 8, cx - 4));
+              const sy = Math.max(0, Math.min(blobBitmap.height - 8, cy - 4));
+              matchCtx.clearRect(0, 0, 24, 24);
+              matchCtx.drawImage(blobBitmap, sx, sy, 8, 8, 0, 0, 24, 24);
+              const actual = matchCtx.getImageData(0, 0, 24, 24).data;
+              const targetAvg = avg(target);
+              const actualAvg = avg(actual);
+              // An EMPTY render is near-uniform theme color. Require plausible
+              // color agreement between capture and source photo; allow
+              // generous drift for scaling and cropping artifacts.
+              const dist = Math.abs(targetAvg[0] - actualAvg[0]) + Math.abs(targetAvg[1] - actualAvg[1]) + Math.abs(targetAvg[2] - actualAvg[2]);
+              if (dist > 210) {
+                mismatched.push(im.src.slice(0, 120) + `(\u0394${dist})`);
+              }
+            } catch { /* treat unverifiable photos as OK — don't block good captures */ }
+          }
+          blobBitmap.close?.();
+          if (mismatched.length > 0) {
+            console.error("Cover capture attempt refused — photos missing from capture:", mismatched);
+            return null;
+          }
+        }
+        return blob;
+      } catch (e) {
+        console.error("Cover capture attempt threw:", e);
+        return null;
+      } finally {
+        originals.forEach((src, im) => {
+          im.src = src;
+        });
       }
-      const { toBlob } = await import("html-to-image");
-      const blob = await toBlob(snapshotEl, {
-        canvasWidth: dimensions.widthInches * 96,
-        canvasHeight: dimensions.heightInches * 96,
-        pixelRatio: 1,
-      });
+    };
 
-      if (!blob) return;
-      // Second gate: a cover that should contain photos but captured tiny is
-      // blank — refuse to overwrite the stored thumbnail with it.
-      if (imgs.length > 0 && blob.size < 20_000) {
-        console.error(
-          `Cover capture aborted — blob is only ${blob.size} bytes; refusing to overwrite the stored thumbnail.`,
-        );
-        return;
+    // Retry the whole capture up to 3 times. Transient WebView rendering races
+    // (mid-swap decode, delayed image paint) are the main source of photo-less
+    // thumbnails, and a single refusal used to leave a broken stored cover in
+    // place forever. Only an all-attempts failure keeps the old thumbnail.
+    let verifiedBlob: Blob | null = null;
+    for (let attempt = 1; attempt <= 3 && !verifiedBlob; attempt++) {
+      verifiedBlob = await captureVerifiedBlob();
+      if (!verifiedBlob && attempt < 3) {
+        await new Promise((r) => setTimeout(r, 1500 * attempt));
       }
+    }
+    if (!verifiedBlob) {
+      console.error("Cover capture failed after 3 attempts — keeping the existing stored thumbnail.");
+      return;
+    }
 
-      const fileName = `cover_${bookId}_${format}_${themeId}.png`;
+    const fileName = `cover_${bookId}_${format}_${themeId}.png`;
 
-      // Upload newly generated image blob to our Supabase Storage
-      const { error: uploadErr } = await supabase.storage
-        .from("book-covers")
-        .upload(fileName, blob, { upsert: true, contentType: "image/png" });
+    // Upload the verified image blob to our Supabase Storage
+    const { error: uploadErr } = await supabase.storage
+      .from("book-covers")
+      .upload(fileName, verifiedBlob, { upsert: true, contentType: "image/png" });
 
-      if (uploadErr) {
-        console.error("Cover upload error:", uploadErr);
-        return;
-      }
+    if (uploadErr) {
+      console.error("Cover upload error:", uploadErr);
+      return;
+    }
 
-      // Retrieve public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("book-covers")
-        .getPublicUrl(fileName);
+    // Retrieve public URL
+    const { data: { publicUrl } } = supabase.storage
+      .from("book-covers")
+      .getPublicUrl(fileName);
 
-      // Save URL path to DB
-      const finalUrl = `${publicUrl}?t=${Date.now()}`;
-      const { error: dbErr } = await supabase.from("books").update({
-        cover_url: finalUrl,
-      }).eq("id", bookId);
-      if (dbErr) {
-        // Surface this — a silent failure here leaves the app pointing at a
-        // stale cover_url forever (the app only reads books.cover_url).
-        console.error("Cover thumbnail DB update failed:", dbErr.message);
-      } else {
-        console.log("Cover thumbnail successfully synced to DB!");
-      }
-    } catch (e) {
-      console.error("Failed snapping cover DOM:", e);
-    } finally {
-      originals.forEach((src, im) => {
-        im.src = src;
-      });
+    // Save URL path to DB
+    const finalUrl = `${publicUrl}?t=${Date.now()}`;
+    const { error: dbErr } = await supabase.from("books").update({
+      cover_url: finalUrl,
+    }).eq("id", bookId);
+    if (dbErr) {
+      // Surface this — a silent failure here leaves the app pointing at a
+      // stale cover_url forever (the app only reads books.cover_url).
+      console.error("Cover thumbnail DB update failed:", dbErr.message);
+    } else {
+      console.log("Cover thumbnail successfully synced to DB!");
     }
   };
 
