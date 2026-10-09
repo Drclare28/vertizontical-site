@@ -884,13 +884,15 @@ export default function BookEditor(
   };
 
   useEffect(() => {
-    if (isInitialSnapshotMount.current) {
-      isInitialSnapshotMount.current = false;
-      return;
-    }
+    const initialMount = isInitialSnapshotMount.current;
+    if (initialMount) isInitialSnapshotMount.current = false;
+    // The initial mount gets a longer warm-up: the SSR snapshot renders before
+    // images and data settle, and this mount run is also the HEAL path — a
+    // previously broken stored thumbnail only recovers when the book is
+    // opened, because theme/format/title changes are the only other triggers.
     const timer = setTimeout(() => {
       generateAndUploadCover();
-    }, 2500);
+    }, initialMount ? 5000 : 2500);
     return () => clearTimeout(timer);
   }, [themeId, format, localPages.length > 0 ? localPages[0].title : ""]);
 
