@@ -49,10 +49,11 @@ export const handler = {
     // Gelato photo book page math (keep in sync with create-payment-intent,
     // stitch-pdf and dispatch-gelato-order):
     //   content = title page + one page per quote; request R = max(28, content)
-    //   total T = R + 4 (cover spread + 2 endpapers + 1), floor 32.
+    //   file pages T = R + 3, floor 35 (empirical: Gelato's unified hardcover
+    //   file-QC refused 32 pages demanding "exactly 35" for R=28).
     const contentPages = pages + 1;
     const requestPages = Math.max(28, contentPages);
-    const totalPages = Math.max(32, requestPages + 4);
+    const totalPages = Math.max(35, requestPages + 3);
 
     let printCostPerUnitCents = FALLBACK_PRINT_COST_CENTS[format] ??
       FALLBACK_PRINT_COST_CENTS.classic;
