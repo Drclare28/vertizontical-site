@@ -53,7 +53,10 @@ export const handler = {
     //   file-QC refused 32 pages demanding "exactly 35" for R=28).
     const contentPages = pages + 1;
     const requestPages = Math.max(28, contentPages);
-    const totalPages = Math.max(35, requestPages + 3);
+    // Final rule (see stitch-pdf in the app): Gelato submission only accepts
+    // even page counts; stitch renders even(R)+4 and declares that number.
+    const evenRequest = requestPages % 2 === 0 ? requestPages : requestPages + 1;
+    const totalPages = Math.max(36, evenRequest + 4);
 
     let printCostPerUnitCents = FALLBACK_PRINT_COST_CENTS[format] ??
       FALLBACK_PRINT_COST_CENTS.classic;
