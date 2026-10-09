@@ -642,6 +642,10 @@ export default function BookEditor(
     country: "US",
     phone: "",
   });
+  // Print partners email shipping/tracking notices here. Apple/Google relay
+  // addresses (used for sign-in) can't always receive carrier mail, so this
+  // is collected explicitly and required at checkout.
+  const [contactEmail, setContactEmail] = useState("");
   const [addressError, setAddressError] = useState<string | null>(null);
   const addressSectionRef = useRef<HTMLDivElement>(null);
 
@@ -1073,6 +1077,15 @@ export default function BookEditor(
     const missing = requiredFields
       .filter(([key]) => !shippingForm[key].trim())
       .map(([, label]) => label);
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail.trim());
+    if (!emailOk) {
+      setAddressError("Please enter a valid email for shipping notifications.");
+      addressSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      return;
+    }
     if (missing.length > 0) {
       setAddressError(`Please fill in: ${missing.join(", ")}.`);
       addressSectionRef.current?.scrollIntoView({
@@ -1116,6 +1129,7 @@ export default function BookEditor(
             postcode: shippingForm.postcode.trim(),
             country: shippingForm.country,
             phone: shippingForm.phone.trim(),
+            email: contactEmail.trim(),
           },
         },
       }));
@@ -2610,6 +2624,19 @@ export default function BookEditor(
                               class={`${addressInputClass} min-w-0 flex-1`}
                             />
                           </div>
+                        </div>
+                        <div class="flex gap-2.5">
+                          <input
+                            type="email"
+                            value={contactEmail}
+                            onInput={(e) =>
+                              setContactEmail(
+                                (e.target as HTMLInputElement).value,
+                              )}
+                            placeholder="Email for shipping notifications"
+                            autoComplete="email"
+                            class={`${addressInputClass} flex-1`}
+                          />
                         </div>
                         {addressError && (
                           <p class="mt-2.5 text-xs font-medium text-red-500">
