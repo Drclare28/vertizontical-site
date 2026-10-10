@@ -705,6 +705,15 @@ export default function BookEditor(
   const generateAndUploadCover = async () => {
     const snapshotEl = coverSnapshotRef.current;
     if (!snapshotEl) return;
+    // Gate: never heal-capture while the book data is still loading. If the
+    // pages haven't arrived yet, the cover renders WITHOUT photo <img> tags,
+    // giving the photo-verification gate nothing to verify — a blank
+    // theme-only cover then sails through and overwrites a good thumbnail
+    // (this exact race produced the blank 2026-10-09 heal). Bail instead.
+    if (!pages || pages.length === 0) {
+      console.log("Cover capture skipped — book pages not loaded yet.");
+      return;
+    }
     // html-to-image re-fetches every <img> over the network before capture and,
     // when a fetch fails (WebView CORS quirks, bot protection, flaky network),
     // silently embeds an EMPTY image and caches that failure — producing
@@ -784,6 +793,15 @@ export default function BookEditor(
         // html-to-image failure (or a mid-swap decode race in some WebViews)
         // can still emit a full-size blob with empty photo boxes. Compare each
         // converted photo against the blob's pixels via a small canvas match.
+        // Belt-and-braces: if the book HAS cover photos but the snapshot has
+        // zero <img> tags, the cover rendered from stale/empty state — refuse
+        // rather than verify a photo-free capture of a photo-bearing book.
+        if (originals.size === 0 && imgs.length === 0 && (uniqueChildren.length > 0 || localPages[0]?.quote?.photo_url)) {
+          console.error(
+            "Cover capture refused — book has photos but the cover rendered none (stale editor state).",
+          );
+          return null;
+        }
         const blobBitmap = await createImageBitmap(blob);
         const matchCanvas = document.createElement("canvas");
         matchCanvas.width = 24;
