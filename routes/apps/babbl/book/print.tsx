@@ -242,7 +242,7 @@ function renderGelatoSpread(
   const spinePadding = Math.max(12, p.coverH * 0.115);
   const spineInner = p.spineW >= 5
     ? `<div style="position:absolute;inset:0;background:var(--babbl-accent-dark);display:flex;align-items:center;justify-content:center;">
-        <div style="writing-mode:vertical-rl;height:100%;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;padding:${px(spinePadding)}px 0;font-family:var(--babbl-font-heading,'Fredoka',sans-serif);font-weight:600;font-size:12px;line-height:${px(p.spineW)}px;color:#ffffff;white-space:nowrap;">
+        <div style="writing-mode:vertical-rl;height:100%;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;padding:${px(spinePadding)}px 0;font-family:var(--babbl-font-heading,'Yomogi',sans-serif);font-weight:400;font-size:12px;line-height:${px(p.spineW)}px;color:#ffffff;white-space:nowrap;">
           <span style="max-height:62%;overflow:hidden;text-overflow:ellipsis;">${spineTitle}</span>
           <span>Babbl Book</span>
         </div>
@@ -272,8 +272,8 @@ function renderGelatoTitlePage(
     <div style="position:absolute;top:-4em;right:-4em;width:11em;height:11em;background:var(--babbl-accent-coral);opacity:0.25;border-radius:9999px;"></div>
     <div style="position:absolute;bottom:-5em;left:-5em;width:13em;height:13em;background:var(--babbl-text-primary);opacity:0.18;border-radius:9999px;"></div>
     <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10%;text-align:center;">
-      <div style="font-family:'Yomogi',sans-serif;font-size:0.95em;color:var(--babbl-text-primary);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:1.5em;">A Babbl Book</div>
-      <h1 style="font-family:'Fredoka',sans-serif;font-weight:600;color:var(--babbl-accent-dark);font-size:2.2em;line-height:1.15;margin:0;">${bookTitle}</h1>
+      <div style="font-family:'Charter',serif;font-size:0.95em;color:var(--babbl-text-primary);letter-spacing:0.25em;text-transform:uppercase;margin-bottom:1.5em;">A Babbl Book</div>
+      <h1 style="font-family:var(--babbl-font-heading,'Yomogi',sans-serif);font-weight:400;color:var(--babbl-accent-dark);font-size:2.2em;line-height:1.15;margin:0;">${bookTitle}</h1>
       ${yearRange ? `<div style="font-family:'Rosario',sans-serif;font-size:1.05em;color:var(--babbl-text-primary);margin-top:1.2em;">${yearRange}</div>` : ""}
     </div>
   </div>`;
@@ -291,7 +291,7 @@ function renderGelatoNotesPage(
   // editor preview is a literal WYSIWYG of this.
   return `<div class="print-page theme-babbl_theme format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;">
     <div style="position:absolute;top:9%;left:10%;right:10%;bottom:9%;display:flex;flex-direction:column;">
-      <div style="font-family:'Fredoka',sans-serif;font-weight:500;font-size:1.1em;color:var(--babbl-text-primary);margin-bottom:0.6em;">Notes</div>
+      <div style="font-family:var(--babbl-font-heading,'Yomogi',sans-serif);font-weight:500;font-size:1.1em;color:var(--babbl-text-primary);margin-bottom:0.6em;">Notes</div>
       <div style="flex:1;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 2.4em, rgba(182,49,152,0.55) 2.4em, rgba(182,49,152,0.55) calc(2.4em + 2px));"></div>
     </div>
   </div>`;
@@ -543,7 +543,7 @@ export const handler = define.handlers({
   <base href="${bookBuilderUrl}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after {
       box-sizing: border-box;
@@ -621,7 +621,7 @@ ${bodyHtml}
   <base href="${bookBuilderUrl}" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Aleo:wght@700&family=Rosario:wght@400;700&family=Yomogi&display=swap" rel="stylesheet" />
   <style>
     .print-page {
       font-size: 16px;

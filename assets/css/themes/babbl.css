@@ -17,9 +17,10 @@
   --babbl-gray-100: #f1f5f9;
   --babbl-gray-400: #9ca3af;
 
-  /* Fonts — the de-facto Babbl heading face; print extras (spine text, title
-     page) read this var so the theme stays the single source of truth. */
-  --babbl-font-heading: "Fredoka", "Trebuchet MS", sans-serif;
+  /* Fonts — print extras (spine text, title-page heading) read this var so
+     the theme stays the single source of truth. Yomogi (handwritten) matches
+     the cover title face; the book body remains Charter. */
+  --babbl-font-heading: "Yomogi", "Trebuchet MS", sans-serif;
 
   background: var(--babbl-accent-dark);
   font-family: "Charter", serif;
