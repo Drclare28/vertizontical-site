@@ -234,9 +234,15 @@ function renderGelatoSpread(
   // Spine text is only legible once the spine is wide enough (the hardcover's
   // spine is a fixed 6mm; softcovers were ~2.7mm). Reading top-to-bottom:
   // title first, then "Babbl Book" at the bottom, in the theme heading font.
+  // Vertical padding scales with cover height: on the printed hardcover the
+  // outermost ~25mm of the spine wraps around the boards' top/bottom caps, so
+  // text closer than that gets visually cut off (seen on a real print of
+  // order a538a08c). ~28mm on the classic 246mm spread; scales for both book
+  // sizes and still keeps title at top / "Babbl Book" at bottom.
+  const spinePadding = Math.max(12, p.coverH * 0.115);
   const spineInner = p.spineW >= 5
     ? `<div style="position:absolute;inset:0;background:var(--babbl-accent-dark);display:flex;align-items:center;justify-content:center;">
-        <div style="writing-mode:vertical-rl;height:100%;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;padding:${px(15)}px 0;font-family:var(--babbl-font-heading,'Fredoka',sans-serif);font-weight:600;font-size:12px;line-height:${px(p.spineW)}px;color:#ffffff;white-space:nowrap;">
+        <div style="writing-mode:vertical-rl;height:100%;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;padding:${px(spinePadding)}px 0;font-family:var(--babbl-font-heading,'Fredoka',sans-serif);font-weight:600;font-size:12px;line-height:${px(p.spineW)}px;color:#ffffff;white-space:nowrap;">
           <span style="max-height:62%;overflow:hidden;text-overflow:ellipsis;">${spineTitle}</span>
           <span>Babbl Book</span>
         </div>
@@ -279,10 +285,14 @@ function renderGelatoNotesPage(
 ): string {
   // White background with theme-colored ruled lines for handwritten notes
   // (user-requested "notes page" style). Line pitch scales with page size.
+  // Lines are 2px @96dpi ≈ 0.53mm at 0.55 alpha: the 1px hairlines printed
+  // invisibly thin on a real book (order a538a08c), so they were thickened.
+  // MUST stay in sync with islands/pageHtml.ts renderNotesPageHtml — the
+  // editor preview is a literal WYSIWYG of this.
   return `<div class="print-page theme-babbl_theme format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;">
     <div style="position:absolute;top:9%;left:10%;right:10%;bottom:9%;display:flex;flex-direction:column;">
       <div style="font-family:'Fredoka',sans-serif;font-weight:500;font-size:1.1em;color:var(--babbl-text-primary);margin-bottom:0.6em;">Notes</div>
-      <div style="flex:1;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 2.4em, rgba(182,49,152,0.38) 2.4em, rgba(182,49,152,0.38) calc(2.4em + 1px));"></div>
+      <div style="flex:1;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 2.4em, rgba(182,49,152,0.55) 2.4em, rgba(182,49,152,0.55) calc(2.4em + 2px));"></div>
     </div>
   </div>`;
 }

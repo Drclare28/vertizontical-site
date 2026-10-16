@@ -298,6 +298,12 @@ const SVG_ICONS: Record<
       <path stroke-linecap="round" stroke-width="2" d="M12 8v4m0 4h.01" />
     </svg>
   ),
+  "warning-outline": (props) => (
+    <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linejoin="round" stroke-width="2" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+      <path stroke-linecap="round" stroke-width="2" d="M12 9v4m0 4h.01" />
+    </svg>
+  ),
   "trash-outline": (props) => (
     <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -2466,6 +2472,16 @@ export default function BookEditor(
                             </span>
                           </div>
                         </div>
+                      </div>
+
+                      {/* WYSIWYG warning: the editor preview is exactly what the
+                          printer receives, so anything crowded or clipped here
+                          prints the same way. Last gate before payment. */}
+                      <div class="flex items-start gap-2.5 bg-amber-50 border border-amber-300/80 px-3.5 py-3 rounded-xl text-xs leading-snug text-amber-800 mb-6">
+                        <Icon name="warning-outline" class="text-base mt-0.5 shrink-0" />
+                        <span>
+                          <b>What you see in the editor is exactly what gets printed.</b> Please flip through every page before paying — a title that looks long or crowded on its template here will look the same on the printed book.
+                        </span>
                       </div>
 
                       <div class="flex items-center justify-between py-4 border-y border-gray-100 mb-6">
