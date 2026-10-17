@@ -21,6 +21,8 @@
      the theme stays the single source of truth. Yomogi (handwritten) matches
      the cover title face; the book body remains Charter. */
   --babbl-font-heading: "Yomogi", "Trebuchet MS", sans-serif;
+  /* Ruled-line color for printed/previewed Notes pages. */
+  --babbl-note-line: rgba(182, 49, 152, 0.55);
 
   background: var(--babbl-accent-dark);
   font-family: "Charter", serif;
@@ -101,13 +103,24 @@
       z-index: 100;
       position: absolute;
       top: -1.5em;
+      /* Fixed-size bubble: the background SVG needs a constant box, so the
+         container no longer grows with the title. Long titles must shrink
+         their font (renderers set h1 font-size by title length) and wrap
+         instead of stretching the bubble off the page. */
+      box-sizing: border-box;
+      width: 32em;
       /* left: -4.25em; */
-      margin-left: -14.5em;
+      /* Classic position: nudged right of the old -14.5em (now -12.5em after a
+         second 1em nudge per request). */
+      margin-left: -12.5em;
       background: url("/images/babbl-bubble-outlined.svg") bottom right;
-      background-size: cover;
-      background-position: center;
+      /* Fill the whole box instead of cover: the box is content-heighted,
+         and cover cropped the artwork's right side when the box got taller
+         than the SVG's 240:125 aspect. 100% 100% always paints the full
+         bubble outline (minor stretch at most). */
+      background-size: 100% 100%;
       background-repeat: no-repeat;
-      padding: 5em;
+      padding: 4em 5em 5em;
     }
 
     .text {
@@ -121,7 +134,11 @@
       font-weight: bold;
       line-height: 1;
       letter-spacing: -0.035em;
+      /* Default size for short titles; length tiers are applied inline by
+         PageRenderer/print.tsx for longer ones. */
       font-size: 4em;
+      white-space: normal;
+      overflow-wrap: anywhere;
       -webkit-text-stroke: 0.0175em var(--babbl-text-primary);
     }
 
@@ -1003,4 +1020,24 @@
   &.format-classic {
     font-size: 1.45rem;
   }
+
+  /* Mini covers: the bubble graphic is tuned for the classic page box,
+     so at mini size the text sits too far right inside the bubble and the
+     bubble's right edge clips at the cover edge. Compromise shift: nudge
+     the whole bubble slightly left AND the text partially left inside it
+     (half the original bubble-only shift, half the text-only shift).
+     Later nudged 1em right (now -15em) per request. */
+  &.format-mini {
+    .layout-cover .title-container {
+      margin-left: -15em;
+      /* Mini: nudge the whole bubble + text down a touch from the shared
+         top: -1.5em baseline (which pokes the swash off the top edge). */
+      margin-top: 1em;
+    }
+    .layout-cover .text {
+      padding-left: 5.25rem;
+      margin-left: -0.875rem;
+    }
+  }
 }
+

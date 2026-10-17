@@ -36,7 +36,7 @@ declare module "preact" {
 }
 interface CustomSelectProps {
   value: string;
-  options: { label: string; value: string; icon: string }[];
+  options: { label: string; value: string; icon: string; accent?: string }[];
   onChange: (value: string) => void;
   icon: string;
   placeholder?: string;
@@ -69,6 +69,15 @@ const SVG_ICONS: Record<
         stroke-width="2"
         d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
       />
+    </svg>
+  ),
+  "blue-orange-circle-icon": (props) => (
+    <svg {...props} fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      {/* Fixed duotone circle: left half blue, right half orange — never
+          re-tinted by the select's accent, so the theme swatch reads the
+          same everywhere. */}
+      <path fill="#2563eb" d="M12 2a10 10 0 0 0 0 20z" />
+      <path fill="#f97316" d="M12 2a10 10 0 0 1 0 20z" />
     </svg>
   ),
   "color-palette-outline": (props) => (
@@ -383,7 +392,7 @@ const SVG_ICONS: Record<
 }
 interface CustomSelectProps {
   value: string;
-  options: { label: string; value: string; icon: string }[];
+  options: { label: string; value: string; icon: string; accent?: string }[];
   onChange: (value: string) => void;
   icon: string;
   placeholder?: string;
@@ -448,6 +457,8 @@ function CustomSelect(
   }, []);
 
   const selectedOption = options.find((opt) => opt.value === value);
+  // Per-option accent color for the selected state (falls back to Babbl purple).
+  const accent = selectedOption?.accent ?? "#9B51E0";
 
   return (
     <div ref={containerRef} class="flex-1 relative">
@@ -455,15 +466,17 @@ function CustomSelect(
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        class={`w-full h-14 flex items-center bg-white/80 backdrop-blur-md border border-transparent shadow-sm text-gray-700 px-10 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 focus:ring-[#9B51E0] transition-all ${
+        class={`w-full h-14 flex items-center bg-white/80 backdrop-blur-md border border-transparent shadow-sm text-gray-700 px-10 rounded-xl font-bold text-sm focus:outline-none focus:ring-2 transition-all ${
           disabled
             ? "opacity-30 cursor-not-allowed"
             : "cursor-pointer hover:bg-white/90"
         }`}
+        style={`--tw-ring-color: ${accent};`}
       >
         <Icon
           name={selectedOption?.icon || icon}
-          class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9B51E0] text-lg pointer-events-none"
+          class="absolute left-3 top-1/2 -translate-y-1/2 text-lg pointer-events-none"
+          style={`color: ${accent};`}
         />
         <span class="truncate">
           {selectedOption ? selectedOption.label : placeholder}
@@ -481,30 +494,43 @@ function CustomSelect(
           } left-0 w-full bg-white border border-gray-200 rounded-2xl shadow-2xl z-50 overflow-hidden`}
         >
           <div class="max-h-96 overflow-y-auto py-2 custom-scrollbar">
-            {options.map((opt) => (
-              <button
-                type="button"
-                key={opt.value}
-                onClick={() => {
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }}
-                class={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
-                  value === opt.value
-                    ? "text-[#9B51E0] bg-purple-50/50"
-                    : "text-gray-700"
-                }`}
-              >
-                <Icon name={opt.icon} class="text-[#9B51E0] text-lg" />
-                <span class="font-bold text-sm">{opt.label}</span>
-                {value === opt.value && (
+            {options.map((opt) => {
+              // Selected rows take the option's accent; unselected rows are
+              // explicitly neutral GRAY — never text-gray-700's blue-gray,
+              // which reads as navy next to the accent color.
+              const selected = value === opt.value;
+              const rowColor = selected
+                ? opt.accent ?? "#9B51E0"
+                : "#6B7280";
+              return (
+                <button
+                  type="button"
+                  key={opt.value}
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  class={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
+                    selected ? "bg-slate-50" : "text-gray-700"
+                  }`}
+                  style={`color: ${rowColor};`}
+                >
                   <Icon
-                    name="checkmark-circle"
-                    class="ml-auto text-[#9B51E0]"
+                    name={opt.icon}
+                    class="text-lg"
+                    style={`color: ${rowColor};`}
                   />
-                )}
-              </button>
-            ))}
+                  <span class="font-bold text-sm">{opt.label}</span>
+                  {selected && (
+                    <Icon
+                      name="checkmark-circle"
+                      class="ml-auto"
+                      style={`color: ${rowColor};`}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1413,8 +1439,8 @@ export default function BookEditor(
   // page instead of book pages. Purely visual — nothing is stored.
   const [showingNotesPage, setShowingNotesPage] = useState(false);
   const notesPageHtml = useMemo(
-    () => renderNotesPageHtml(dimensions),
-    [dimensions],
+    () => renderNotesPageHtml(dimensions, themeId),
+    [dimensions, themeId],
   );
 
   useEffect(() => {
@@ -1671,6 +1697,11 @@ export default function BookEditor(
       label: "Babbl Theme",
       value: "babbl_theme",
       icon: "babbl-bubble-icon",
+    },
+    {
+      label: "Bubble Pop",
+      value: "bubble_pop",
+      icon: "blue-orange-circle-icon",
     },
   ];
 

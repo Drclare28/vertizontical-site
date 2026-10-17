@@ -21,6 +21,27 @@ function getAgeLabel(dobString?: string | null, quoteDateString?: string | null)
   return ` (${age} yr${age > 1 ? "s" : ""})`;
 }
 
+/**
+ * Read + combine the book CSS with every theme file that lives in
+ * assets/css/themes/. One CSS file per theme keeps colorway overrides
+ * separate; print output must inline them all because the rendered HTML
+ * carries .theme-* classes for whichever theme the book was saved with.
+ * Relative url(...)s are resolved against bookBuilderUrl.
+ */
+async function loadInlineBookCss(): Promise<string> {
+  const bookCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/book.css");
+  // Remove @imports — book.css and each theme file are concatenated below
+  // instead, so no fetch/re-parse of an unresolvable relative import happens.
+  let inlineCss = bookCss.replace(/@import\s+["'][^"']+["'];/g, "");
+  for await (const f of Deno.readDir(Deno.cwd() + "/assets/css/themes")) {
+    if (f.isFile && f.name.endsWith(".css")) {
+      inlineCss += "\n" +
+        await Deno.readTextFile(`${Deno.cwd()}/assets/css/themes/${f.name}`);
+    }
+  }
+  return inlineCss;
+}
+
 function formatDate(dateStr?: string): string {
   if (!dateStr) return "";
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -31,12 +52,14 @@ function formatDate(dateStr?: string): string {
 function renderPage(
   page: BookPageData,
   dim: { w: number; h: number; inW: number; inH: number },
-  extra?: { childrenProfiles?: BabblQuote["child"][]; yearRange?: string; format?: string }
+  extra?: { childrenProfiles?: BabblQuote["child"][]; yearRange?: string; format?: string; theme?: string }
 ): string {
   const layout = page.layout_style;
   const q = page.quote;
+  const themeClass = `theme-${extra?.theme || "babbl_theme"}`;
 
   const containerStyle = `width:${dim.w}px;height:${dim.h}px;overflow:hidden;position:relative;flex-shrink:0;`;
+  const T = themeClass || ""; // shorthand for template interpolation
 
   const childName = () => q?.child?.nickname || q?.child?.name || "";
   const childAge = () => getAgeLabel(q?.child?.date_of_birth, q?.date);
@@ -55,14 +78,14 @@ function renderPage(
       avatarsHtml = `<div class="child-avatar-container"><img crossorigin="anonymous" src="${photoUrl}" alt="Cover Default" /></div>`;
     }
 
-    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
+    return `<div class="print-page ${T} format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-cover" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="bg-shape-1"></div>
         <div class="bg-shape-2"></div>
         <div class="bg-shape-3"></div>
         <div class="title-container">
           <div class="text">
-            <h1>${page.title || "Book Title"}</h1>
+            <h1 style="font-size:${coverTitleFontSizeEm(page.title || "Book Title")}em">${page.title || "Book Title"}</h1>
             ${extra?.yearRange ? `<div class="date-range">${extra.yearRange}</div>` : ""}
           </div>
         </div>
@@ -72,14 +95,14 @@ function renderPage(
   }
 
   if (layout === "back_cover") {
-    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
+    return `<div class="print-page ${T} format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-back_cover" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <img src="/images/babbl-book.svg" alt="Back Cover" />
       </div>
     </div>`;
   }
 
-  if (!q) return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}"></div>`;
+  if (!q) return `<div class="print-page ${T} format-${extra?.format || 'mini'}" style="${containerStyle}"></div>`;
 
   if (layout === "circle_photo") {
     const qText = q.text || "";
@@ -87,7 +110,7 @@ function renderPage(
     const topOffset = -(3.5 / fontSize);
     const h3Style = `font-size:${fontSize}em;top:${topOffset}em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal;`;
 
-    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
+    return `<div class="print-page ${T} format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-circle_photo" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="bg-image">${photoUrl ? `<img crossorigin="anonymous" src="${photoUrl}" alt="Background" />` : `<span>No image available.</span>`}</div>
         <div class="content-card">
@@ -100,7 +123,7 @@ function renderPage(
   }
 
   if (layout === "quote_top_photo_bottom") {
-    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
+    return `<div class="print-page ${T} format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-quote_top_photo_bottom" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="quote-section">
           ${avatarUrl ? `<div class="avatar-container"><img crossorigin="anonymous" src="${avatarUrl}" alt="Child" /></div>` : ""}
@@ -119,7 +142,7 @@ function renderPage(
   }
 
   if (layout === "full_page_photo_quote_centered") {
-    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
+    return `<div class="print-page ${T} format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-full_page_photo_quote_centered" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="author-pill">
           ${avatarUrl ? `<div class="author-avatar"><img crossorigin="anonymous" src="${avatarUrl}" alt="Child" /></div>` : ""}
@@ -133,7 +156,7 @@ function renderPage(
   }
 
   if (layout === "full_width_photo_top_quote_bottom") {
-    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
+    return `<div class="print-page ${T} format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-full_width_photo_top_quote_bottom" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="image-section">${photoUrl ? `<img crossorigin="anonymous" src="${photoUrl}" alt="Photo" />` : `<span>No image available.</span>`}</div>
         <div class="quote-section">
@@ -149,7 +172,7 @@ function renderPage(
   }
 
   if (layout === "full_screen_photo_short_quote") {
-    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
+    return `<div class="print-page ${T} format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-full_screen_photo_short_quote" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="quote-section">
           <div class="main-text"><h3>"${q.text}"</h3><div class="meta-row">${photoDate()}</div></div>
@@ -164,7 +187,7 @@ function renderPage(
   }
 
   if (layout === "photo_window_top_quote_bottom") {
-    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
+    return `<div class="print-page ${T} format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-photo_window_top_quote_bottom" style="width:100%;height:100%;overflow:hidden;position:relative;">
         <div class="bg-photo">${photoUrl ? `<img crossorigin="anonymous" src="${photoUrl}" alt="Photo" />` : `<span>No image available.</span>`}</div>
         <div class="quote-card">
@@ -183,7 +206,7 @@ function renderPage(
   }
 
   if (layout === "quote_only_centered") {
-    return `<div class="print-page theme-babbl_theme format-${extra?.format || 'mini'}" style="${containerStyle}">
+    return `<div class="print-page ${T} format-${extra?.format || 'mini'}" style="${containerStyle}">
       <div class="page-layout layout-quote_only_centered" style="width:100%;height:100%;overflow:hidden;position:relative;">
         ${avatarUrl ? `<div class="avatar-container"><img crossorigin="anonymous" src="${avatarUrl}" alt="Child" /></div>` : ""}
         <div class="quote-section">
@@ -219,6 +242,7 @@ function renderGelatoSpread(
   frontHtml: string,
   backHtml: string,
   spineTitle: string,
+  theme: string,
 ): string {
   const px = (mm: number) => MM2PX(mm).toFixed(2);
   const spineRight = p.spineLeft + p.spineW;
@@ -251,7 +275,7 @@ function renderGelatoSpread(
 
   // Each region's bleed uses the same theme magenta so the stitched cover
   // reads as one continuous background across back, spine, and front.
-  return `<div class="print-page gelato-spread theme-babbl_theme" style="width:${px(p.coverW)}px;height:${px(p.coverH)}px;position:relative;overflow:hidden;">
+  return `<div class="print-page gelato-spread theme-${theme || "babbl_theme"}" style="width:${px(p.coverW)}px;height:${px(p.coverH)}px;position:relative;overflow:hidden;">
     <div style="position:absolute;left:0;top:0;width:${px(p.spineLeft)}px;height:100%;overflow:hidden;background:var(--babbl-accent-dark);">
       ${designBox(p.backLeft, backHtml)}
     </div>
@@ -267,8 +291,9 @@ function renderGelatoTitlePage(
   bookTitle: string,
   yearRange: string,
   format: string,
+  theme: string,
 ): string {
-  return `<div class="print-page theme-babbl_theme format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;">
+  return `<div class="print-page theme-${theme || "babbl_theme"} format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;">
     <div style="position:absolute;top:-4em;right:-4em;width:11em;height:11em;background:var(--babbl-accent-coral);opacity:0.25;border-radius:9999px;"></div>
     <div style="position:absolute;bottom:-5em;left:-5em;width:13em;height:13em;background:var(--babbl-text-primary);opacity:0.18;border-radius:9999px;"></div>
     <div style="position:relative;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10%;text-align:center;">
@@ -282,6 +307,7 @@ function renderGelatoTitlePage(
 function renderGelatoNotesPage(
   dim: { w: number; h: number },
   format: string,
+  theme: string,
 ): string {
   // White background with theme-colored ruled lines for handwritten notes
   // (user-requested "notes page" style). Line pitch scales with page size.
@@ -289,10 +315,10 @@ function renderGelatoNotesPage(
   // invisibly thin on a real book (order a538a08c), so they were thickened.
   // MUST stay in sync with islands/pageHtml.ts renderNotesPageHtml — the
   // editor preview is a literal WYSIWYG of this.
-  return `<div class="print-page theme-babbl_theme format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;">
+  return `<div class="print-page theme-${theme || "babbl_theme"} format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;">
     <div style="position:absolute;top:9%;left:10%;right:10%;bottom:9%;display:flex;flex-direction:column;">
-      <div style="font-family:var(--babbl-font-heading,'Yomogi',sans-serif);font-weight:500;font-size:1.1em;color:var(--babbl-text-primary);margin-bottom:0.6em;">Notes</div>
-      <div style="flex:1;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 2.4em, rgba(182,49,152,0.55) 2.4em, rgba(182,49,152,0.55) calc(2.4em + 2px));"></div>
+      <div style="font-family:var(--babbl-font-heading,'Yomogi',sans-serif);font-weight:500;font-size:1.1em;color:var(--babbl-text-primary,#6b5646);margin-bottom:0.6em;">Notes</div>
+      <div style="flex:1;background-image:repeating-linear-gradient(to bottom, transparent 0, transparent 2.4em, var(--babbl-note-line,rgba(182,49,152,0.55)) 2.4em, var(--babbl-note-line,rgba(182,49,152,0.55)) calc(2.4em + 2px));"></div>
     </div>
   </div>`;
 }
@@ -300,11 +326,12 @@ function renderGelatoNotesPage(
 // Standalone renderer used by the book builder to preview the Notes page that
 // the print pipeline appends after the last Babbl. Lives in islands/pageHtml.ts
 // (client-safe) and is re-exported here for the print route.
-export { renderNotesPageHtml } from "../../../../islands/pageHtml.ts";
+export { renderNotesPageHtml, coverTitleFontSizeEm } from "../../../../islands/pageHtml.ts";
+import { coverTitleFontSizeEm } from "../../../../islands/pageHtml.ts";
 
-function renderGelatoBlankPage(dim: { w: number; h: number }, format: string): string {
+function renderGelatoBlankPage(dim: { w: number; h: number }, format: string, theme: string): string {
   // Blank endpaper - must stay completely unprinted per Gelato spec.
-  return `<div class="print-page theme-babbl_theme format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;"></div>`;
+  return `<div class="print-page theme-${theme || "babbl_theme"} format-${format}" style="width:${dim.w}px;height:${dim.h}px;position:relative;overflow:hidden;background:#ffffff;"></div>`;
 }
 
 export const handler = define.handlers({
@@ -464,6 +491,7 @@ export const handler = define.handlers({
       };
       const bookBuilderUrl = Deno.env.get("BOOK_BUILDER_URL") ??
         "https://vertizonticalstudios.com";
+      const bookTheme = book.theme_id || "babbl_theme";
 
       let bodyHtml: string;
       let pageWpx: number, pageHpx: number, pageWIn: number, pageHIn: number;
@@ -474,18 +502,19 @@ export const handler = define.handlers({
         const frontHtml = renderPage(
           { page_number: -1, layout_style: "cover", title: book.title },
           contentDim,
-          { childrenProfiles, yearRange, format: finalFormat },
+          { childrenProfiles, yearRange, format: finalFormat, theme: bookTheme },
         );
         const backHtml = renderPage(
           { page_number: -2, layout_style: "back_cover" },
           contentDim,
-          { format: finalFormat },
+          { format: finalFormat, theme: bookTheme },
         );
         bodyHtml = renderGelatoSpread(
           p,
           frontHtml,
           backHtml,
           escapeHtml(book.title || "Our Babbl Book"),
+          bookTheme,
         );
         pageWpx = MM2PX(p.coverW);
         pageHpx = MM2PX(p.coverH);
@@ -495,20 +524,20 @@ export const handler = define.handlers({
         // Interior: [blank endpaper] + title + quotes + notes padding + [blank endpaper]
         const innerSlots = Math.max(3, num("innerSlots", 29));
         const contentPages: string[] = [];
-        contentPages.push(renderGelatoBlankPage(trimDim, finalFormat));
+        contentPages.push(renderGelatoBlankPage(trimDim, finalFormat, bookTheme));
         contentPages.push(
-          renderGelatoTitlePage(trimDim, book.title || "Our Book", yearRange, finalFormat),
+          renderGelatoTitlePage(trimDim, book.title || "Our Book", yearRange, finalFormat, bookTheme),
         );
         for (const q of innerPages) {
-          contentPages.push(renderPage(q, trimDim, { format: finalFormat }));
+          contentPages.push(renderPage(q, trimDim, { format: finalFormat, theme: bookTheme }));
         }
         // contentPages[0] is the leading blank endpaper, so the loop runs
         // until length == innerSlots + 1, leaving exactly `innerSlots`
         // content slots (title + quotes + notes) between the two endpapers.
         while (contentPages.length < innerSlots + 1) {
-          contentPages.push(renderGelatoNotesPage(trimDim, finalFormat));
+          contentPages.push(renderGelatoNotesPage(trimDim, finalFormat, bookTheme));
         }
-        contentPages.push(renderGelatoBlankPage(trimDim, finalFormat));
+        contentPages.push(renderGelatoBlankPage(trimDim, finalFormat, bookTheme));
         bodyHtml = contentPages.join("\n");
         pageWpx = trimDim.w;
         pageHpx = trimDim.h;
@@ -518,15 +547,18 @@ export const handler = define.handlers({
 
       let inlineCss = "";
       try {
-        const bookCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/book.css");
-        const babblCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/themes/babbl.css");
-        const cleanBookCss = bookCss.replace(/@import\s+["'].*babbl\.css["'];/g, "");
-        inlineCss = cleanBookCss + "\n" + babblCss;
+        inlineCss = await loadInlineBookCss();
         inlineCss = inlineCss.replace(
           /url\(["']?([^"']*(?:images|fonts)[^"']*)["']?\)/g,
           (_match, path) => {
             if (path.startsWith("http") || path.startsWith("data:")) return `url("${path}")`;
-            const cleanPath = path.replace(/^(\.\.\/|\.\/|\/)/, "");
+            // Normalize ANY relative prefix (../, ./, /) to a site-root path.
+            // The `static/` dir maps to the site root in prod (and dev), so
+            // `../../static/fonts/...` serves at `/fonts/...`.
+            const cleanPath = path
+              .replace(/^(?:\.\.?\/)+/, "")
+              .replace(/^\//, "")
+              .replace(/^static\//, "");
             return `url("${bookBuilderUrl}/${cleanPath}")`;
           },
         );
@@ -588,18 +620,15 @@ ${bodyHtml}
       { page_number: innerPages.length + 1, layout_style: "back_cover" },
     ];
 
-    const renderedPages = allPages.map((p) => renderPage(p, dim, { childrenProfiles, yearRange, format: finalFormat })).join("\n");
+    const bookTheme = book.theme_id || "babbl_theme";
+
+    const renderedPages = allPages.map((p) => renderPage(p, dim, { childrenProfiles, yearRange, format: finalFormat, theme: bookTheme })).join("\n");
 
     const bookBuilderUrl = Deno.env.get("BOOK_BUILDER_URL") ?? "https://vertizonticalstudios.com";
 
     let inlineCss = "";
     try {
-      const bookCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/book.css");
-      const babblCss = await Deno.readTextFile(Deno.cwd() + "/assets/css/themes/babbl.css");
-      
-      // Remove @import from bookCss to prevent redundant/broken loading of babbl.css
-      const cleanBookCss = bookCss.replace(/@import\s+["'].*babbl\.css["'];/g, "");
-      inlineCss = cleanBookCss + "\n" + babblCss;
+      inlineCss = await loadInlineBookCss();
       
       // Fix relative/absolute asset paths in the inline CSS by substituting with the absolute URL
       inlineCss = inlineCss.replace(/url\(["']?([^"']*(?:images|fonts)[^"']*)["']?\)/g, (_match, path) => {

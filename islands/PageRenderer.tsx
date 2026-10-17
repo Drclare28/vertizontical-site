@@ -3,6 +3,7 @@ import {
   BookFormat,
   BookPageData,
 } from "../routes/apps/babbl/book/_data.ts";
+import { coverTitleFontSizeEm } from "./pageHtml.ts";
 
 function getAgeLabel(dobString?: string, quoteDateString?: string) {
   if (!dobString || !quoteDateString) return "";
@@ -83,7 +84,7 @@ export default function PageRenderer(
         {/* --- 1. Cover --- */}
         {page.layout_style === "cover" && (
           <>
-            {themeId === "babbl_theme" && (
+            {(themeId === "babbl_theme" || themeId === "bubble_pop") && (
               <>
                 <div class="bg-shape-1" />
                 <div class="bg-shape-2" />
@@ -92,7 +93,9 @@ export default function PageRenderer(
             )}
             <div class="title-container">
               <div class="text">
-                <h1>{page.title || "Book Title"}</h1>
+                <h1 style={{ fontSize: `${coverTitleFontSizeEm(page.title || "Book Title")}em` }}>
+                  {page.title || "Book Title"}
+                </h1>
                 <div class="date-range">{yearRange}</div>
               </div>
             </div>
