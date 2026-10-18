@@ -700,13 +700,13 @@ export default function BookEditor(
 
   const coverSnapshotRef = useRef<HTMLDivElement>(null);
   const isInitialSnapshotMount = useRef(true);
+  const coverCaptureSeq = useRef(0);
 
   const dimensions = BOOK_DIMENSIONS[format];
 
   // Convert a fully-loaded, CORS-clean <img> to a data URL via canvas — no
   // network needed. Returns null if the canvas is tainted (cross-origin image
-  // without CORS headers); in that case we leave the src alone and let
-  // html-to-image's own fetch path try.
+  // without CORS headers); in that case we fall back to fetchToDataUrl.
   const imageToDataUrl = (img: HTMLImageElement): string | null => {
     try {
       if (!img.naturalWidth || !img.naturalHeight) return null;
@@ -724,12 +724,15 @@ export default function BookEditor(
 
   // Convert an image URL to a data URL over the network — the fallback when
   // canvas conversion fails (tainted canvas from a non-CORS cached image, or
-  // an image that never decoded). The cache-busting query defeats the
-  // WebView's poisoned cache entry.
+  // an image that never decoded). The cache-busting query + cache: "reload"
+  // defeats the WebView's poisoned cache entry.
   const fetchToDataUrl = async (url: string): Promise<string | null> => {
     try {
       const bust = url.includes("?") ? "&" : "?";
-      const res = await fetch(`${url}${bust}cover_capture=${Date.now()}`, { mode: "cors" });
+      const res = await fetch(`${url}${bust}cover_capture=${Date.now()}`, {
+        mode: "cors",
+        cache: "reload",
+      });
       if (!res.ok) return null;
       const blob = await res.blob();
       return await new Promise<string | null>((resolve) => {
@@ -743,9 +746,26 @@ export default function BookEditor(
     }
   };
 
-  const generateAndUploadCover = async () => {
+  // Decode a data URL into a standalone HTMLImageElement so we never rely on
+  // mutating a live DOM <img> that previously failed CORS or hasn't finished
+  // decoding before html-to-image snapshots it.
+  const decodeDataUrlImage = (dataUrl: string): Promise<HTMLImageElement | null> =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        if (typeof img.decode === "function") {
+          img.decode().then(() => resolve(img)).catch(() => resolve(img));
+        } else {
+          resolve(img);
+        }
+      };
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    });
+
+  const generateAndUploadCover = async (seq: number) => {
     const snapshotEl = coverSnapshotRef.current;
-    if (!snapshotEl) return;
+    if (!snapshotEl || !supabase || seq !== coverCaptureSeq.current) return;
     // Gate: never heal-capture while the book data is still loading. If the
     // pages haven't arrived yet, the cover renders WITHOUT photo <img> tags,
     // giving the photo-verification gate nothing to verify — a blank
@@ -755,6 +775,9 @@ export default function BookEditor(
       console.log("Cover capture skipped — book pages not loaded yet.");
       return;
     }
+    const captureFormat = format;
+    const captureThemeId = themeId;
+
     // html-to-image re-fetches every <img> over the network before capture and,
     // when a fetch fails (WebView CORS quirks, bot protection, flaky network),
     // silently embeds an EMPTY image and caches that failure — producing
@@ -772,36 +795,43 @@ export default function BookEditor(
           }),
       ),
     );
+    if (seq !== coverCaptureSeq.current) return;
 
     // One full swap -> capture -> verify cycle. Returns the verified blob, or
     // null if any gate refused (the stored thumbnail is then left untouched).
     const captureVerifiedBlob = async (): Promise<Blob | null> => {
       const originals = new Map<HTMLImageElement, string>();
+      const decodedTargets = new Map<HTMLImageElement, HTMLImageElement>();
       const failedSrcs: string[] = [];
       try {
         for (const im of imgs) {
           if (!im.src || im.src.startsWith("data:")) continue;
+          const originalSrc = im.getAttribute("src") || im.src;
           let dataUrl = imageToDataUrl(im);
           // Canvas conversion fails when the image was cached without CORS
           // headers (tainted canvas) or is not decodable. Retry over the
           // network with a cache-busting URL before giving up on this photo.
           if (!dataUrl) dataUrl = await fetchToDataUrl(im.src);
-          if (dataUrl) {
-            originals.set(im, im.src);
+          const decoded = dataUrl ? await decodeDataUrlImage(dataUrl) : null;
+          if (dataUrl && decoded && decoded.naturalWidth > 0 && decoded.naturalHeight > 0) {
+            originals.set(im, originalSrc);
+            decodedTargets.set(im, decoded);
+            im.removeAttribute("crossorigin");
             im.src = dataUrl;
           } else {
             failedSrcs.push(im.src);
           }
         }
         // html-to-image copies pixels from the live DOM. If we swapped in data
-        // URLs, force a decode pass so the canvas isn't snapshotted mid-swap
-        // (on slow WebViews the swap can land between the layout and capture,
-        // leaving photos as empty boxes in the blob even though the fetch
-        // gates passed).
+        // URLs, force a decode pass + animation frame so the SVG foreignObject
+        // in WebKit/WKWebView isn't rasterized before the new data URLs paint.
         if (originals.size > 0) {
           await Promise.all(
-            Array.from(originals.keys()).map((im) => im.decode().catch(() => {})),
+            Array.from(originals.keys()).map((im) =>
+              typeof im.decode === "function" ? im.decode().catch(() => {}) : Promise.resolve()
+            ),
           );
+          await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
         }
         // Hard gate: if any photo couldn't be converted to a data URL,
         // html-to-image would fall back to its network re-fetch path — the
@@ -811,6 +841,15 @@ export default function BookEditor(
           console.error(
             "Cover capture attempt refused — photos failed data-URL conversion (would render blank):",
             failedSrcs,
+          );
+          return null;
+        }
+        // Belt-and-braces: if the book HAS cover photos but the snapshot has
+        // zero <img> tags, the cover rendered from stale/empty state — refuse
+        // rather than verify a photo-free capture of a photo-bearing book.
+        if (originals.size === 0 && imgs.length === 0 && (uniqueChildren.length > 0 || localPages[0]?.quote?.photo_url)) {
+          console.error(
+            "Cover capture refused — book has photos but the cover rendered none (stale editor state).",
           );
           return null;
         }
@@ -833,60 +872,87 @@ export default function BookEditor(
         // Final gate: actually VERIFY the photos are in the capture. A silent
         // html-to-image failure (or a mid-swap decode race in some WebViews)
         // can still emit a full-size blob with empty photo boxes. Compare each
-        // converted photo against the blob's pixels via a small canvas match.
-        // Belt-and-braces: if the book HAS cover photos but the snapshot has
-        // zero <img> tags, the cover rendered from stale/empty state — refuse
-        // rather than verify a photo-free capture of a photo-bearing book.
-        if (originals.size === 0 && imgs.length === 0 && (uniqueChildren.length > 0 || localPages[0]?.quote?.photo_url)) {
-          console.error(
-            "Cover capture refused — book has photos but the cover rendered none (stale editor state).",
-          );
-          return null;
-        }
+        // decoded source photo's center crop against the blob's pixels using
+        // per-pixel L1 distance AND verify the captured region isn't a flat
+        // solid background color.
         const blobBitmap = await createImageBitmap(blob);
         const matchCanvas = document.createElement("canvas");
         matchCanvas.width = 24;
         matchCanvas.height = 24;
         const matchCtx = matchCanvas.getContext("2d", { willReadFrequently: true });
-        if (matchCtx && originals.size > 0) {
-          const avg = (px: Uint8ClampedArray) => {
-            let r = 0, g = 0, b = 0;
-            const n = px.length / 4;
-            for (let i = 0; i < px.length; i += 4) { r += px[i]; g += px[i + 1]; b += px[i + 2]; }
-            return [r / n, g / n, b / n];
-          };
+        if (matchCtx && decodedTargets.size > 0) {
           const mismatched: string[] = [];
-          for (const im of originals.keys()) {
+          const snapRect = snapshotEl.getBoundingClientRect();
+          for (const [im, srcImg] of decodedTargets.entries()) {
             try {
-              matchCtx.clearRect(0, 0, 24, 24);
-              matchCtx.drawImage(im, 0, 0, 24, 24);
-              const target = matchCtx.getImageData(0, 0, 24, 24).data;
-              // Sample the blob at the photo's viewport position.
               const rect = im.getBoundingClientRect();
-              const snapRect = snapshotEl.getBoundingClientRect();
-              const cx = Math.round(((rect.left + rect.width / 2 - snapRect.left) / snapRect.width) * blobBitmap.width);
-              const cy = Math.round(((rect.top + rect.height / 2 - snapRect.top) / snapRect.height) * blobBitmap.height);
-              const sx = Math.max(0, Math.min(blobBitmap.width - 8, cx - 4));
-              const sy = Math.max(0, Math.min(blobBitmap.height - 8, cy - 4));
-              matchCtx.clearRect(0, 0, 24, 24);
-              matchCtx.drawImage(blobBitmap, sx, sy, 8, 8, 0, 0, 24, 24);
-              const actual = matchCtx.getImageData(0, 0, 24, 24).data;
-              const targetAvg = avg(target);
-              const actualAvg = avg(actual);
-              // An EMPTY render is near-uniform theme color. Require plausible
-              // color agreement between capture and source photo; allow
-              // generous drift for scaling and cropping artifacts.
-              const dist = Math.abs(targetAvg[0] - actualAvg[0]) + Math.abs(targetAvg[1] - actualAvg[1]) + Math.abs(targetAvg[2] - actualAvg[2]);
-              if (dist > 210) {
-                mismatched.push(im.src.slice(0, 120) + `(\u0394${dist})`);
+              if (!rect.width || !rect.height || !snapRect.width || !snapRect.height) {
+                mismatched.push("zero-rect");
+                continue;
               }
-            } catch { /* treat unverifiable photos as OK — don't block good captures */ }
+              // Sample the center 30% of the avatar (well inside its circular
+              // border) in both the decoded source image and the captured blob.
+              const side = Math.min(srcImg.naturalWidth, srcImg.naturalHeight);
+              const srcPatch = Math.max(8, Math.round(side * 0.3));
+              const srcOx = Math.round((srcImg.naturalWidth - srcPatch) / 2);
+              const srcOy = Math.round((srcImg.naturalHeight - srcPatch) / 2);
+              matchCtx.clearRect(0, 0, 24, 24);
+              matchCtx.drawImage(srcImg, srcOx, srcOy, srcPatch, srcPatch, 0, 0, 24, 24);
+              const target = matchCtx.getImageData(0, 0, 24, 24).data;
+
+              const cx = ((rect.left + rect.width / 2 - snapRect.left) / snapRect.width) * blobBitmap.width;
+              const cy = ((rect.top + rect.height / 2 - snapRect.top) / snapRect.height) * blobBitmap.height;
+              const half = Math.max(4, Math.round(((rect.width * 0.15) / snapRect.width) * blobBitmap.width));
+              const sx = Math.max(0, Math.min(blobBitmap.width - half * 2, Math.round(cx) - half));
+              const sy = Math.max(0, Math.min(blobBitmap.height - half * 2, Math.round(cy) - half));
+              matchCtx.clearRect(0, 0, 24, 24);
+              matchCtx.drawImage(blobBitmap, sx, sy, half * 2, half * 2, 0, 0, 24, 24);
+              const actual = matchCtx.getImageData(0, 0, 24, 24).data;
+
+              let mad = 0;
+              let grad = 0;
+              const n = actual.length / 4;
+              for (let y = 0; y < 24; y++) {
+                for (let x = 0; x < 24; x++) {
+                  const i = (y * 24 + x) * 4;
+                  mad += Math.abs(actual[i] - target[i]) +
+                    Math.abs(actual[i + 1] - target[i + 1]) +
+                    Math.abs(actual[i + 2] - target[i + 2]);
+                  if (x < 23) {
+                    const j = i + 4;
+                    grad += Math.abs(actual[i] - actual[j]) +
+                      Math.abs(actual[i + 1] - actual[j + 1]) +
+                      Math.abs(actual[i + 2] - actual[j + 2]);
+                  }
+                  if (y < 23) {
+                    const j = i + 24 * 4;
+                    grad += Math.abs(actual[i] - actual[j]) +
+                      Math.abs(actual[i + 1] - actual[j + 1]) +
+                      Math.abs(actual[i + 2] - actual[j + 2]);
+                  }
+                }
+              }
+              const meanL1 = mad / n;
+              const meanGrad = grad / (2 * 23 * 24);
+              // A real rendered photo matches its source (meanL1 ~ 10-70) and
+              // has non-zero local gradient; an empty circle is flat theme
+              // background (meanL1 > 120, meanGrad ~ 0-6).
+              if (meanL1 > 110 || meanGrad < 8) {
+                mismatched.push(
+                  `${(originals.get(im) || "").slice(-36)}(L1=${Math.round(meanL1)},grad=${meanGrad.toFixed(1)})`,
+                );
+              }
+            } catch (verifyErr) {
+              mismatched.push(`verify-error:${String(verifyErr)}`);
+            }
           }
           blobBitmap.close?.();
           if (mismatched.length > 0) {
             console.error("Cover capture attempt refused — photos missing from capture:", mismatched);
             return null;
           }
+        } else {
+          blobBitmap.close?.();
         }
         return blob;
       } catch (e) {
@@ -894,6 +960,7 @@ export default function BookEditor(
         return null;
       } finally {
         originals.forEach((src, im) => {
+          im.setAttribute("crossorigin", "anonymous");
           im.src = src;
         });
       }
@@ -905,17 +972,20 @@ export default function BookEditor(
     // place forever. Only an all-attempts failure keeps the old thumbnail.
     let verifiedBlob: Blob | null = null;
     for (let attempt = 1; attempt <= 3 && !verifiedBlob; attempt++) {
+      if (seq !== coverCaptureSeq.current) return;
       verifiedBlob = await captureVerifiedBlob();
       if (!verifiedBlob && attempt < 3) {
         await new Promise((r) => setTimeout(r, 1500 * attempt));
       }
     }
-    if (!verifiedBlob) {
-      console.error("Cover capture failed after 3 attempts — keeping the existing stored thumbnail.");
+    if (!verifiedBlob || seq !== coverCaptureSeq.current) {
+      if (!verifiedBlob) {
+        console.error("Cover capture failed after 3 attempts — keeping the existing stored thumbnail.");
+      }
       return;
     }
 
-    const fileName = `cover_${bookId}_${format}_${themeId}.png`;
+    const fileName = `cover_${bookId}_${captureFormat}_${captureThemeId}.png`;
 
     // Upload the verified image blob to our Supabase Storage
     const { error: uploadErr } = await supabase.storage
@@ -926,6 +996,7 @@ export default function BookEditor(
       console.error("Cover upload error:", uploadErr);
       return;
     }
+    if (seq !== coverCaptureSeq.current) return;
 
     // Retrieve public URL
     const { data: { publicUrl } } = supabase.storage
@@ -949,12 +1020,13 @@ export default function BookEditor(
   useEffect(() => {
     const initialMount = isInitialSnapshotMount.current;
     if (initialMount) isInitialSnapshotMount.current = false;
+    const seq = ++coverCaptureSeq.current;
     // The initial mount gets a longer warm-up: the SSR snapshot renders before
     // images and data settle, and this mount run is also the HEAL path — a
     // previously broken stored thumbnail only recovers when the book is
     // opened, because theme/format/title changes are the only other triggers.
     const timer = setTimeout(() => {
-      generateAndUploadCover();
+      generateAndUploadCover(seq);
     }, initialMount ? 5000 : 2500);
     return () => clearTimeout(timer);
   }, [themeId, format, localPages.length > 0 ? localPages[0].title : ""]);
@@ -2305,6 +2377,7 @@ export default function BookEditor(
                             {c.avatar_url
                               ? (
                                 <img
+                                  crossOrigin="anonymous"
                                   src={c.avatar_url}
                                   alt={c.name}
                                   class="w-5 h-5 rounded-full object-cover"
@@ -2343,6 +2416,7 @@ export default function BookEditor(
                               {q.child?.avatar_url
                                 ? (
                                   <img
+                                    crossOrigin="anonymous"
                                     src={q.child.avatar_url}
                                     alt={q.child.name}
                                     class="w-9 h-9 rounded-full object-cover shrink-0"
