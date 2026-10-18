@@ -547,6 +547,17 @@ function CustomSelect(
   );
 }
 
+// Short, stable fingerprint (FNV-1a) of the inputs that define a cover.
+function hashCoverInputs(input: unknown): string {
+  const text = JSON.stringify(input);
+  let hash = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
 export default function BookEditor(
   {
     initialFormat = "mini",
@@ -699,8 +710,13 @@ export default function BookEditor(
   const sortableRef = useRef<Sortable | null>(null);
 
   const coverSnapshotRef = useRef<HTMLDivElement>(null);
-  const isInitialSnapshotMount = useRef(true);
   const coverCaptureSeq = useRef(0);
+  // Signature of the cover currently stored in books.cover_url. `checked` is
+  // false until the first editor load reads it from the database.
+  const coverStoredSigRef = useRef<{ checked: boolean; sig: string | null }>({
+    checked: false,
+    sig: null,
+  });
 
   const dimensions = BOOK_DIMENSIONS[format];
 
@@ -763,7 +779,7 @@ export default function BookEditor(
       img.src = dataUrl;
     });
 
-  const generateAndUploadCover = async (seq: number) => {
+  const generateAndUploadCover = async (seq: number, signature: string) => {
     const snapshotEl = coverSnapshotRef.current;
     if (!snapshotEl || !supabase || seq !== coverCaptureSeq.current) return;
     // Gate: never heal-capture while the book data is still loading. If the
@@ -1004,7 +1020,7 @@ export default function BookEditor(
       .getPublicUrl(fileName);
 
     // Save URL path to DB
-    const finalUrl = `${publicUrl}?t=${Date.now()}`;
+    const finalUrl = `${publicUrl}?sig=${signature}&t=${Date.now()}`;
     const { error: dbErr } = await supabase.from("books").update({
       cover_url: finalUrl,
     }).eq("id", bookId);
@@ -1013,23 +1029,10 @@ export default function BookEditor(
       // stale cover_url forever (the app only reads books.cover_url).
       console.error("Cover thumbnail DB update failed:", dbErr.message);
     } else {
+      coverStoredSigRef.current = { checked: true, sig: signature };
       console.log("Cover thumbnail successfully synced to DB!");
     }
   };
-
-  useEffect(() => {
-    const initialMount = isInitialSnapshotMount.current;
-    if (initialMount) isInitialSnapshotMount.current = false;
-    const seq = ++coverCaptureSeq.current;
-    // The initial mount gets a longer warm-up: the SSR snapshot renders before
-    // images and data settle, and this mount run is also the HEAL path — a
-    // previously broken stored thumbnail only recovers when the book is
-    // opened, because theme/format/title changes are the only other triggers.
-    const timer = setTimeout(() => {
-      generateAndUploadCover(seq);
-    }, initialMount ? 5000 : 2500);
-    return () => clearTimeout(timer);
-  }, [themeId, format, localPages.length > 0 ? localPages[0].title : ""]);
 
   useEffect(() => {
     if (!isGridView) {
@@ -1297,6 +1300,51 @@ export default function BookEditor(
     });
     return Array.from(childrenMap.values());
   }, [pages]);
+
+  // Everything that changes what the cover shows: format, theme, title (on the
+  // cover page), the children on the book and the year range.
+  const coverSignature = useMemo(
+    () =>
+      hashCoverInputs({
+        format,
+        themeId,
+        coverPage: localPages[0] ?? null,
+        children: uniqueChildren,
+        yearRange,
+      }),
+    [format, themeId, localPages, uniqueChildren, yearRange],
+  );
+
+  const syncCover = async (seq: number, signature: string) => {
+    if (!supabase || seq !== coverCaptureSeq.current) return;
+    if (!coverStoredSigRef.current.checked) {
+      // First check this session: read which signature the stored cover has.
+      const { data } = await supabase.from("books").select("cover_url").eq("id", bookId)
+        .maybeSingle();
+      if (seq !== coverCaptureSeq.current) return;
+      const storedUrl: string = data?.cover_url ?? "";
+      coverStoredSigRef.current = {
+        checked: true,
+        sig: storedUrl.match(/[?&]sig=([^&]+)/)?.[1] ?? null,
+      };
+    }
+    // Unchanged inputs and a matching stored cover: leave the thumbnail alone.
+    if (coverStoredSigRef.current.sig === signature) return;
+    await generateAndUploadCover(seq, signature);
+  };
+
+  // Re-capture whenever the cover inputs change, including on first load when
+  // the stored cover was made from different inputs (or predates signatures).
+  // Unchanged covers are not overwritten.
+  useEffect(() => {
+    if (!supabase || pages.length === 0) return;
+    const seq = ++coverCaptureSeq.current;
+    // Debounce so rapid edits coalesce and the snapshot re-renders first.
+    const timer = setTimeout(() => {
+      void syncCover(seq, coverSignature);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, [coverSignature]);
 
   // Sync with props if they change from parent, but don't overwrite if we just updated locally unless length changed
   useEffect(() => {
