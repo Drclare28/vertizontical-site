@@ -80,6 +80,15 @@ const SVG_ICONS: Record<
       <path fill="#f97316" d="M12 2a10 10 0 0 1 0 20z" />
     </svg>
   ),
+  "green-yellow-circle-icon": (props) => (
+    <svg {...props} fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      {/* Fixed duotone circle: left half earth green, right half earthy
+          yellow — never re-tinted by the select's accent, so the theme
+          swatch reads the same everywhere. */}
+      <path fill="#4a5e34" d="M12 2a10 10 0 0 0 0 20z" />
+      <path fill="#bfa145" d="M12 2a10 10 0 0 1 0 20z" />
+    </svg>
+  ),
   "color-palette-outline": (props) => (
     <svg {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path
@@ -1702,6 +1711,11 @@ export default function BookEditor(
       label: "Bubble Pop",
       value: "bubble_pop",
       icon: "blue-orange-circle-icon",
+    },
+    {
+      label: "Bubble Earth",
+      value: "bubble_earth",
+      icon: "green-yellow-circle-icon",
     },
   ];
 

@@ -1,0 +1,1063 @@
+/**
+ * Base styles for the Bubble Earth Theme and its layouts — a colorway
+ * variant of the Babbl theme. Identical structure to bubble_pop.css; only
+ * the earth palette differs:
+ *   - cover/back background: deep forest green (--babbl-accent-dark)
+ *   - accent: earthy ochre yellow (bubble outline, meta/author colors)
+ *   - third color: brick red --babbl-accent-brick (cover photo ring)
+ */
+
+.theme-bubble_earth {
+  /* Colors */
+  --babbl-primary: #6e7f3e;
+  --babbl-primary-rgb: 110, 127, 62;
+  --babbl-primary-light: #dfe6c8;
+  --babbl-card-bg: #f2f5e9;
+  --babbl-text-primary: #3f5227;
+  --babbl-text-primary-rgb: 63,82,39;
+  --babbl-accent-dark: #40512d;
+  --babbl-accent-coral: #bfa145;
+  --babbl-accent-light: #f0dfb8;
+  /* Third color, brick red: cover photo ring. */
+  --babbl-accent-brick: #a0522d;
+  --babbl-gray-600: #5f6659;
+  --babbl-gray-500: #7d8276;
+  --babbl-gray-100: #f3f4ef;
+  --babbl-gray-400: #a2a79b;
+
+  /* Fonts — print extras (spine text, title-page heading) read this var so
+     the theme stays the single source of truth. Yomogi (handwritten) matches
+     the cover title face; the book body remains Charter. */
+  --babbl-font-heading: "Yomogi", "Trebuchet MS", sans-serif;
+  /* Ruled-line color for printed/previewed Notes pages. */
+  --babbl-note-line: rgba(110, 127, 62, 0.55);
+
+  background: var(--babbl-accent-dark);
+  font-family: "Charter", serif;
+
+  /* Shared Page Layout Container */
+  .page-layout {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* margin: -1rem; */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    top: 0 !important;
+    left: 0 !important;
+
+    .image-section, .bg-photo {
+      background-color: var(--babbl-gray-100);
+    }
+
+    .image-section span,
+    .bg-photo span {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      padding: 10%;
+      text-align: center;
+      font-style: italic;
+      color: var(--babbl-gray-600);
+      font-size: 1.1em;
+    }
+  }
+
+  /* --- 1. Cover --- */
+  .layout-cover {
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+
+    .bg-shape-1 {
+      position: absolute;
+      width: 13em;
+      height: 13em;
+      background-color: white;
+      border-radius: 9999px;
+      top: 30%;
+      left: 20%;
+      opacity: 0.5;
+    }
+
+    .bg-shape-2 {
+      position: absolute;
+      position: absolute;
+      width: 8em;
+      height: 8em;
+      background-color: white;
+      opacity: 0.4;
+      border-radius: 9999px;
+      top: -2em;
+      right: -2em;
+    }
+
+    .bg-shape-3 {
+      position: absolute;
+      position: absolute;
+      width: 7em;
+      height: 7em;
+      background-color: white;
+      border-radius: 9999px;
+      bottom: -2%;
+      left: 10%;
+      opacity: 0.2;
+    }
+
+    .title-container {
+      z-index: 100;
+      position: absolute;
+      top: -1.5em;
+      /* Fixed-size bubble: the background SVG needs a constant box, so the
+         container no longer grows with the title. Long titles must shrink
+         their font (renderers set h1 font-size by title length) and wrap
+         instead of stretching the bubble off the page. */
+      box-sizing: border-box;
+      width: 32em;
+      /* left: -4.25em; */
+      /* Classic position: nudged right of the old -14.5em (now -12.5em after a
+         second 1em nudge per request). */
+      margin-left: -12.5em;
+      background: url("/images/babbl-bubble-outlined-earth.svg") bottom right;
+      /* Fill the whole box instead of cover: the box is content-heighted,
+         and cover cropped the artwork's right side when the box got taller
+         than the SVG's 240:125 aspect. 100% 100% always paints the full
+         bubble outline (minor stretch at most). */
+      background-size: 100% 100%;
+      background-repeat: no-repeat;
+      padding: 4em 5em 5em;
+    }
+
+    .text {
+      font-family: "Yomogi", sans-serif;
+      padding-left: 6rem;
+      transform: rotate(-1.25deg);
+    }
+
+    h1 {
+      color: var(--babbl-text-primary);
+      font-weight: bold;
+      line-height: 1;
+      letter-spacing: -0.035em;
+      /* Default size for short titles; length tiers are applied inline by
+         PageRenderer/print.tsx for longer ones. */
+      font-size: 4em;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      -webkit-text-stroke: 0.0175em var(--babbl-text-primary);
+    }
+
+    .date-range {
+      color: var(--babbl-accent-dark);
+      font-weight: bold;
+      margin-top: 0.5rem;
+      -webkit-text-stroke: 0.01em var(--babbl-accent-dark);
+      font-size: 1.4em;
+    }
+
+    .image-container {
+      z-index: 10;
+      position: relative;
+      flex: 1 1 0%;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 2rem;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    img {
+      border-radius: 9999px;
+      object-fit: cover;
+      border: 0.5em solid var(--babbl-accent-brick);
+      position: relative;
+      /* CRITICAL: object-fit requires explicit width/height and aspect-ratio */
+      width: 100%;
+      height: 100%;
+      aspect-ratio: 1 / 1;
+    }
+
+    .child-avatar-container {
+      position: absolute;
+
+      &:last-child {
+        bottom: -15%;
+        right: -17.5%;
+        width: 82.5%;
+      }
+
+      &:nth-last-child(2) {
+        width: 40%;
+        left: 5%;
+        bottom: 15%;
+
+        img {
+          border-width: 1em;
+        }
+      }
+
+      &:nth-last-child(3) {
+        width: 30%;
+        top: 7.5%;
+        right: 0;
+
+        img {
+          border-width: 0.75em;
+        }
+      }
+
+      &:nth-last-child(n+4) {
+        display: none;
+      }
+    }
+  }
+
+  /* --- 2. Back Cover --- */
+  .layout-back_cover {
+    background-color: var(--babbl-accent-dark);
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+
+    img {
+      width: 20%;
+    }
+  }
+
+  /* --- 3. Circle Photo --- */
+  .layout-circle_photo {
+    background: white;
+
+    .bg-image {
+      position: absolute;
+      inset: 0;
+      width: 130%;
+      height: 130%;
+      border-radius: 100em;
+      max-width: none;
+      left: -30%;
+      top: -60%;
+      border: 0.35em solid var(--babbl-accent-coral);
+      object-position: top;
+      overflow: hidden;
+
+      img {
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+        position: relative;
+        top: 30%;
+      }
+
+      span {
+        color: black;
+        display: block;
+        width: 100%;
+        height: 100%;
+        padding: 10em;
+        position: relative;
+        top: 35%;
+        left: 10%;
+      }
+    }
+
+    .content-card {
+      position: absolute;
+      bottom: 0.45in;
+      left: 0.5in;
+      right: 0.5in;
+    }
+
+    .avatar-container {
+      position: absolute;
+      top: -12em;
+      right: 0.5em;
+      width: 7em;
+      height: 7em;
+      border-radius: 9999px;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    h3 {
+      font-family: "Charter", sans-serif;
+      color: var(--babbl-text-primary);
+      line-height: 1.25;
+      margin-bottom: 1em;
+      font-weight: bold;
+      text-align: right;
+      font-size: 2.5em;
+      position: absolute;
+      top: -1.5em;
+      right: 0.2in;
+    }
+
+    .meta-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+    }
+
+    .meta-date {
+      color: var(--babbl-accent-coral);
+      font-size: 0.75em;
+    }
+
+    .meta-separator {
+      color: var(--babbl-accent-coral);
+      opacity: 0.5;
+      margin-top: -0.25em;
+    }
+
+    .meta-author {
+      color: var(--babbl-accent-coral);
+      font-size: 0.75em;
+    }
+  }
+
+  /* --- 4. Quote Top, Photo Bottom --- */
+  .layout-quote_top_photo_bottom {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+
+    .quote-section {
+      background-color: white;
+      padding: 0;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      flex-shrink: 0;
+    }
+
+    .quote-text {
+      flex-grow: 1;
+      justify-content: center;
+      display: flex;
+      flex-direction: column;
+      padding: 1em 9%;
+      padding-right: 33%;
+    }
+
+    .avatar-container {
+      position: absolute;
+      top: 0.4in;
+      right: 0.4in;
+      width: 2.5em;
+      height: 2.5em;
+      border-radius: 9999px;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    h3 {
+      font-family: "Charter", sans-serif;
+      color: var(--babbl-text-primary);
+      line-height: 1.25;
+      margin-bottom: 0.25em;
+      font-size: 1.425em;
+      font-weight: bold;
+    }
+
+    .author-details {
+      color: var(--babbl-accent-coral);
+      font-size: 0.8em;
+    }
+
+    .meta-date {
+      color: var(--babbl-gray-400);
+      font-weight: 500;
+      font-size: 0.6em;
+    }
+
+    .image-context-wrapper {
+      width: 100%;
+      max-height: 65%;
+      flex-shrink: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+
+      .image-section {
+        flex-grow: 1;
+        flex-shrink: 1;
+        min-height: 0;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        &:has(.no-image-text) {
+          min-height: 50%;
+        }
+      }
+
+      .context-box {
+        display: flex;
+        gap: 0.5em;
+        background: rgba(var(--babbl-text-primary-rgb), 0.8);
+        color: white;
+        width: 30%;
+        /* min-height: 52.5%; */
+        padding: 1.5em 1em;
+        position: absolute;
+        flex-direction: column;
+        right: 0.5in;
+        bottom: 0.5in;
+        border-radius: 1em;
+        backdrop-filter: blur(0.25em);
+
+        .parent-avatar {
+          width: 1.5em;
+          height: 1.5em;
+          border-radius: 9999px;
+          overflow: hidden;
+          flex-shrink: 0;
+          order: 0;
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+        }
+
+        .context-text {
+          font-size: 0.6em;
+          margin: 0;
+          text-align: left;
+          order: 0;
+          line-height: 1.25;
+        }
+
+        .meta-date {
+          color: white;
+          font-weight: bold;
+          margin-top: -0.25em; /* subtle pull to stay close to context text */
+        }
+      }
+    }
+  }
+
+  /* --- 5. Full Page Photo, Quote Centered --- */
+  .layout-full_page_photo_quote_centered {
+    background-color: white;
+
+    .quote-section {
+      height: 100%;
+      width: 100%;
+      position: relative;
+      padding: 0 15%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    h3 {
+      font-family: "Charter", sans-serif;
+      color: var(--babbl-accent-dark);
+      line-height: 1.25;
+      margin-bottom: 0.5em;
+      z-index: 10;
+      font-size: 1.35em;
+      font-weight: bold;
+      filter: drop-shadow(0 0 0.25em white) drop-shadow(0 0 0.35em white)
+        drop-shadow(0 0 0.5em white) drop-shadow(0 0 1em white) drop-shadow(
+        0
+        0
+        2em
+        white
+      ) drop-shadow(0 0 3em white) drop-shadow(0 0 4em white) drop-shadow(
+        0
+        0
+        5em
+        white
+      );
+      margin-top: -1em;
+    }
+
+    .context-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25em;
+      z-index: 10;
+      margin-bottom: 0.5em;
+      position: absolute;
+      background: rgba(var(--babbl-text-primary-rgb), 0.8);
+      color: white;
+      bottom: 0.45in;
+      right: 0;
+      padding: 0.35em 0.75em;
+      padding-right: 0.5in;
+      border-radius: 0.5em 0 0 0.5em;
+      backdrop-filter: blur(0.25em);
+      max-width: 75%;
+      line-height: 1.25;
+    }
+
+    .context-text {
+      font-size: 0.6em;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      justify-content: space-between;
+    }
+
+    .parent-avatar {
+      width: 1.25em;
+      height: 1.25em;
+      border-radius: 9999px;
+      overflow: hidden;
+      flex-shrink: 0;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .meta-details {
+      display: flex;
+      align-items: center;
+      gap: 0.25em;
+      font-size: 0.6em;
+      font-weight: bold;
+    }
+
+    .meta-parent {
+      color: var(--babbl-text-primary);
+      font-weight: bold;
+    }
+
+    .meta-separator {
+      color: var(--babbl-gray-400);
+    }
+
+    .meta-date {
+      color: var(--babbl-gray-500);
+    }
+
+    .author-pill {
+      position: absolute;
+      top: 0.425in;
+      left: 0.4in;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      padding: 0.5em 1em;
+
+      .author-avatar {
+        width: 3.35em;
+        height: 3.35em;
+        border-radius: 9999px;
+        overflow: hidden;
+        margin-right: 0.5em;
+        border: 0.325em solid white;
+        position: relative;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+
+      .author-name {
+        color: var(--babbl-accent-dark);
+        /* font-weight: bold; */
+        font-size: 0.75em;
+        background: white;
+        padding: 0.25em 0.75em 0.25em 2em;
+        border-radius: 9999px;
+        margin-left: -2.25em;
+      }
+    }
+
+    .image-section {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      z-index: 0;
+
+      img.main-photo {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+  }
+
+  /* --- 6. Full width photo top, quote bottom --- */
+  .layout-full_width_photo_top_quote_bottom {
+    background-color: white;
+    padding: 0.45in 0.45in 1.5em;
+
+    .image-section {
+      height: 60%;
+      width: 100%;
+      position: relative;
+      border-radius: 2.75em 5.5em;
+      overflow: hidden;
+      border: 0.325em solid var(--babbl-accent-dark);
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .quote-section {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding: 0 0.5em;
+      position: relative;
+      margin-top: 1em;
+    }
+
+    h3 {
+      font-family: "Charter", sans-serif;
+      color: var(--babbl-text-primary);
+      line-height: 1.15;
+      font-size: 1.75em;
+      margin-bottom: 0.5rem;
+      text-align: left;
+    }
+
+    .meta-date {
+      color: var(--babbl-gray-400);
+      font-size: 0.8759em;
+    }
+
+    .author-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.75em;
+      width: 100%;
+      position: absolute;
+      bottom: 0.125in;
+      right: 0.05in;
+
+      .author-details {
+        color: var(--babbl-accent-coral);
+        text-align: right;
+      }
+
+      .author-avatar {
+        width: 4em;
+        height: 4em;
+        border-radius: 9999px;
+        overflow: hidden;
+        background-color: white;
+        flex-shrink: 0;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+    }
+  }
+
+  /* --- 7. Full screen photo, short quote --- */
+  .layout-full_screen_photo_short_quote {
+    background-color: white;
+
+    .quote-section {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: absolute;
+      z-index: 20;
+      bottom: 17.5%;
+      left: 12.5%;
+      /* Cap the section's width so its right edge never reaches the page
+         edge: the author-pill hangs 2em past the section's right edge, and
+         a long quote used to push that overhang off the page ("Let's play
+         'who hit the baby?'"). 87.5% = 100% - the 12.5% left offset; the
+         extra 3em keeps the pill's overhang just inside the page edge. */
+      max-width: calc(87.5% - 3em);
+
+      .main-text {
+        background-color: white;
+        border-radius: 1em;
+        padding: 0.65em 1.25em;
+      }
+    }
+
+    .author-pill {
+      position: absolute;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      padding: 0.5em 1em;
+      bottom: -1.85em;
+      /* Deliberate 2em overhang past the section's right edge (the original
+         printed design). The section's max-width above guarantees the
+         overhang stays on the page for any quote length. */
+      right: -2em;
+
+      .author-avatar {
+        width: 2.5em;
+        height: 2.5em;
+        border-radius: 9999px;
+        overflow: hidden;
+        border: 0.325em solid white;
+        position: relative;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+
+      .author-name {
+        color: var(--babbl-text-primary);
+        /* font-weight: bold; */
+        font-size: 0.75em;
+        background: white;
+        padding: 0.25em 2em 0.25em 0.75em;
+        border-radius: 9999px;
+        /* Names + age stay on ONE line; the pill is absolutely positioned
+           and sizes to its content, so long names grow leftward instead of
+           wrapping ("Puppy Bear (9 yrs)" must never break in two). */
+        white-space: nowrap;
+        margin-right: -1.85em;
+      }
+    }
+
+    h3 {
+      font-family: "Charter", sans-serif;
+      color: var(--babbl-accent-dark);
+      line-height: 1;
+      font-size: 2.75em;
+      font-weight: bold;
+    }
+
+    .meta-row {
+      color: var(--babbl-accent-coral);
+      font-size: 0.6em;
+      margin-left: 1.5em;
+    }
+
+    .image-section {
+      height: 100%;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 10;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+  }
+
+  /* --- 8. Photo window top, quote bottom --- */
+  .layout-photo_window_top_quote_bottom {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+
+    .bg-photo {
+      width: 100%;
+      max-height: 65%;
+      flex-shrink: 1;
+      min-height: 0;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      &:has(.no-image-text) {
+        min-height: 50%;
+      }
+    }
+
+    .quote-card {
+      background-color: white;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+      flex-shrink: 0;
+    }
+
+    .quote-text {
+      flex-grow: 1;
+      justify-content: center;
+      display: flex;
+      flex-direction: column;
+      padding: 1em 9%;
+    }
+
+    h3 {
+      font-family: "Charter", sans-serif;
+      color: var(--babbl-accent-dark);
+      line-height: 1.25;
+      margin-bottom: 0.25em;
+      font-size: 1.425em;
+      font-weight: bold;
+    }
+
+    .context-container {
+      display: flex;
+      gap: 1em;
+      background: var(--babbl-text-primary);
+      color: white;
+      width: 100%;
+      padding: 0.5em 9% 0.45in;
+      justify-content: space-between;
+
+      .parent-avatar {
+        width: 1.5em;
+        height: 1.5em;
+        border-radius: 9999px;
+        overflow: hidden;
+        flex-shrink: 0;
+        order: 1;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+    }
+
+    .context-text {
+      font-size: 0.6em;
+      margin: 0;
+      text-align: left;
+      order: 0;
+      line-height: 1.25;
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 0.75em;
+
+      .author-date {
+        font-size: 0.65em;
+        color: var(--babbl-accent-coral);
+      }
+    }
+
+    .author-pill {
+      position: absolute;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      padding: 0.5em 1em;
+      top: 0.35in;
+      right: 0.3in;
+
+      .author-avatar {
+        width: 3.25em;
+        height: 3.25em;
+        border-radius: 9999px;
+        overflow: hidden;
+        border: 0.325em solid white;
+        position: relative;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+
+      .author-name {
+        color: var(--babbl-accent-dark);
+        /* font-weight: bold; */
+        font-size: 0.75em;
+        background: white;
+        padding: 0.25em 2.3em 0.25em 1em;
+        border-radius: 9999px;
+        margin-right: -1.85em;
+      }
+    }
+  }
+
+  /* --- 9. Quote only, centered --- */
+  .layout-quote_only_centered {
+    background-color: white;
+    align-items: center;
+    padding: 0 4em 5em 3em;
+    gap: 0.75em;
+    justify-content: center;
+
+    .avatar-container {
+      width: 7em;
+      height: 7em;
+      border-radius: 9999px;
+      overflow: hidden;
+      flex-shrink: 0;
+      z-index: 20;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .quote-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1em;
+      font-size: 1.25em;
+    }
+
+    h3 {
+      color: var(--babbl-text-primary);
+      line-height: 1.25;
+      text-align: center;
+      font-size: 1.5em;
+    }
+
+    .author-name {
+      color: var(--babbl-accent-coral);
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .author-details {
+      color: var(--babbl-accent-coral);
+    }
+
+    .context-bar {
+      width: 100%;
+      background-color: var(--babbl-accent-dark);
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: flex-end;
+      flex-direction: column;
+      padding: 1em 3em 0.45in;
+
+      .context-row {
+        display: flex;
+        align-items: center;
+        gap: 0.25em;
+        align-items: flex-start;
+      }
+
+      .text-container {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.5em;
+      }
+
+      .parent-avatar {
+        width: 2.5em;
+        height: 2.5em;
+        border-radius: 9999px;
+        overflow: hidden;
+        margin-right: 0.75em;
+        flex-shrink: 0;
+        margin-top: -0.15em;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
+
+      .context-text {
+        color: white;
+        font-size: 0.6em;
+        line-height: 1.25;
+        flex: 1;
+      }
+
+      .context-date {
+        color: var(--babbl-accent-dark);
+        font-weight: bold;
+        font-size: 0.6em;
+        margin-left: 1em;
+        flex-shrink: 0;
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 0.25em 1em;
+        border-radius: 100em;
+        text-align: center;
+        display: inline-block;
+        width: max-content;
+        align-self: flex-end;
+      }
+    }
+  }
+
+  /* Fallback message */
+  .unrecognized-layout {
+    color: var(--babbl-gray-400);
+    font-style: italic;
+    text-align: center;
+  }
+
+  /* Format Modifiers (Responsive) */
+
+  &.format-classic {
+    font-size: 1.45rem;
+  }
+
+  /* Mini covers: the bubble graphic is tuned for the classic page box,
+     so at mini size the text sits too far right inside the bubble and the
+     bubble's right edge clips at the cover edge. Compromise shift: nudge
+     the whole bubble slightly left AND the text partially left inside it
+     (half the original bubble-only shift, half the text-only shift).
+     Later nudged 1em right (now -15em) per request. */
+  &.format-mini {
+    .layout-cover .title-container {
+      margin-left: -15em;
+      /* Mini: nudge the whole bubble + text down a touch from the shared
+         top: -1.5em baseline (which pokes the swash off the top edge). */
+      margin-top: 1em;
+    }
+    .layout-cover .text {
+      padding-left: 5.25rem;
+      margin-left: -0.875rem;
+    }
+  }
+}

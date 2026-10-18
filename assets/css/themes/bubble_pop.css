@@ -694,6 +694,12 @@
       z-index: 20;
       bottom: 17.5%;
       left: 12.5%;
+      /* Cap the section's width so its right edge never reaches the page
+         edge: the author-pill hangs 2em past the section's right edge, and
+         a long quote used to push that overhang off the page ("Let's play
+         'who hit the baby?'"). 87.5% = 100% - the 12.5% left offset; the
+         extra 3em keeps the pill's overhang just inside the page edge. */
+      max-width: calc(87.5% - 3em);
 
       .main-text {
         background-color: white;
@@ -709,6 +715,9 @@
       align-items: center;
       padding: 0.5em 1em;
       bottom: -1.85em;
+      /* Deliberate 2em overhang past the section's right edge (the original
+         printed design). The section's max-width above guarantees the
+         overhang stays on the page for any quote length. */
       right: -2em;
 
       .author-avatar {
@@ -733,6 +742,10 @@
         background: white;
         padding: 0.25em 2em 0.25em 0.75em;
         border-radius: 9999px;
+        /* Names + age stay on ONE line; the pill is absolutely positioned
+           and sizes to its content, so long names grow leftward instead of
+           wrapping ("Puppy Bear (9 yrs)" must never break in two). */
+        white-space: nowrap;
         margin-right: -1.85em;
       }
     }

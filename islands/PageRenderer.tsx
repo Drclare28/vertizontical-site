@@ -84,7 +84,7 @@ export default function PageRenderer(
         {/* --- 1. Cover --- */}
         {page.layout_style === "cover" && (
           <>
-            {(themeId === "babbl_theme" || themeId === "bubble_pop") && (
+            {(themeId === "babbl_theme" || themeId === "bubble_pop" || themeId === "bubble_earth") && (
               <>
                 <div class="bg-shape-1" />
                 <div class="bg-shape-2" />

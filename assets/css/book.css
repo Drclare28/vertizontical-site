@@ -3,6 +3,7 @@
 /* Entry point for all book-related styles */
 @import "./themes/babbl.css";
 @import "./themes/bubble_pop.css";
+@import "./themes/bubble_earth.css";
 
 @font-face {
     font-family: 'Charter';

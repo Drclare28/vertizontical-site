@@ -24,6 +24,7 @@ const NOTE_LINE_FALLBACK = "rgba(182, 49, 152, 0.55)";
 const THEME_NOTE_LINES: Record<string, string> = {
   babbl_theme: "rgba(182, 49, 152, 0.55)",
   bubble_pop: "rgba(37, 99, 235, 0.55)",
+  bubble_earth: "rgba(110, 127, 62, 0.55)",
 };
 
 export function renderNotesPageHtml(
