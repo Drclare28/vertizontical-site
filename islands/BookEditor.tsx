@@ -720,19 +720,38 @@ export default function BookEditor(
 
   const dimensions = BOOK_DIMENSIONS[format];
 
+  // Photos are drawn at roughly 180px on the cover, so a full-resolution photo
+  // is wasted pixels. It matters beyond speed: the capture inlines every photo
+  // as a data URL inside the SVG that html-to-image rasterizes, and WebKit
+  // silently drops the multi-megabyte data URLs — the cover then captures with
+  // empty photo boxes, the verification gate refuses it, and the thumbnail
+  // never updates (this is exactly what the iOS app did). Downscaling keeps the
+  // SVG small enough for WebKit.
+  const COVER_PHOTO_MAX_PX = 720;
+
   // Convert a fully-loaded, CORS-clean <img> to a data URL via canvas — no
   // network needed. Returns null if the canvas is tainted (cross-origin image
   // without CORS headers); in that case we fall back to fetchToDataUrl.
   const imageToDataUrl = (img: HTMLImageElement): string | null => {
     try {
       if (!img.naturalWidth || !img.naturalHeight) return null;
+      const scale = Math.min(
+        1,
+        COVER_PHOTO_MAX_PX / Math.max(img.naturalWidth, img.naturalHeight),
+      );
+      const width = Math.max(1, Math.round(img.naturalWidth * scale));
+      const height = Math.max(1, Math.round(img.naturalHeight * scale));
       const canvas = document.createElement("canvas");
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext("2d");
       if (!ctx) return null;
-      ctx.drawImage(img, 0, 0);
-      return canvas.toDataURL("image/png");
+      ctx.drawImage(img, 0, 0, width, height);
+      // JPEG keeps opaque photos tiny; PNG is kept for anything that may carry
+      // transparency, since JPEG would fill it with black.
+      return /\.(jpe?g)(\?|$)/i.test(img.src)
+        ? canvas.toDataURL("image/jpeg", 0.9)
+        : canvas.toDataURL("image/png");
     } catch {
       return null;
     }
@@ -778,6 +797,127 @@ export default function BookEditor(
       img.onerror = () => resolve(null);
       img.src = dataUrl;
     });
+
+  // WebKit (the iOS app's WebView) does not paint <img> elements inside the
+  // SVG foreignObject that html-to-image rasterizes: the captured cover comes
+  // back with empty photo holes and the ring borders missing, so the photo
+  // gate refused every attempt and the stored thumbnail never changed. Draw
+  // each photo onto the captured bitmap ourselves, using the live DOM for
+  // exact geometry, radius, object-fit and border ring.
+  const compositePhotosOntoCover = async (
+    blob: Blob,
+    snapshotEl: HTMLElement,
+    targets: Map<HTMLImageElement, HTMLImageElement>,
+  ): Promise<Blob> => {
+    try {
+      if (targets.size === 0) return blob;
+      const snapRect = snapshotEl.getBoundingClientRect();
+      if (!snapRect.width || !snapRect.height) return blob;
+      const bitmap = await createImageBitmap(blob);
+      const canvas = document.createElement("canvas");
+      canvas.width = bitmap.width;
+      canvas.height = bitmap.height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        bitmap.close?.();
+        return blob;
+      }
+      ctx.drawImage(bitmap, 0, 0);
+      bitmap.close?.();
+
+      const sx = canvas.width / snapRect.width;
+      const sy = canvas.height / snapRect.height;
+      const len = (value: string, basis: number) =>
+        value.endsWith("%")
+          ? (parseFloat(value) / 100) * basis
+          : parseFloat(value) || 0;
+
+      for (const [img, source] of targets) {
+        const rect = img.getBoundingClientRect();
+        if (!rect.width || !rect.height) continue;
+        if (
+          rect.right < snapRect.left || rect.left > snapRect.right ||
+          rect.bottom < snapRect.top || rect.top > snapRect.bottom
+        ) continue;
+        const style = getComputedStyle(img);
+        const borderTop = parseFloat(style.borderTopWidth) || 0;
+        const borderLeft = parseFloat(style.borderLeftWidth) || 0;
+        const borderRight = parseFloat(style.borderRightWidth) || 0;
+        const borderBottom = parseFloat(style.borderBottomWidth) || 0;
+
+        const boxX = (rect.left - snapRect.left) * sx;
+        const boxY = (rect.top - snapRect.top) * sy;
+        const boxW = rect.width * sx;
+        const boxH = rect.height * sy;
+        const x = boxX + borderLeft * sx;
+        const y = boxY + borderTop * sy;
+        const w = boxW - (borderLeft + borderRight) * sx;
+        const h = boxH - (borderTop + borderBottom) * sy;
+        if (w <= 0 || h <= 0) continue;
+
+        const radiusH = len(style.borderTopLeftRadius, w);
+        const radiusV = len(style.borderTopLeftRadius, h);
+        const isCircle = radiusH >= w / 2 - 0.5 && radiusV >= h / 2 - 0.5;
+        const rounded = Math.min(radiusH, w / 2, h / 2);
+
+        const shape = (ix: number, iy: number, iw: number, ih: number, r: number) => {
+          const path = new Path2D();
+          if (isCircle) {
+            path.arc(ix + iw / 2, iy + ih / 2, Math.min(iw, ih) / 2, 0, Math.PI * 2);
+          } else if (typeof path.roundRect === "function") {
+            path.roundRect(ix, iy, iw, ih, Math.max(0, r));
+          } else {
+            path.rect(ix, iy, iw, ih);
+          }
+          return path;
+        };
+
+        // object-fit for the photo inside its box.
+        const fit = style.objectFit || "cover";
+        const scale = fit === "contain"
+          ? Math.min(w / source.naturalWidth, h / source.naturalHeight)
+          : Math.max(w / source.naturalWidth, h / source.naturalHeight);
+        const drawW = source.naturalWidth * scale;
+        const drawH = source.naturalHeight * scale;
+        const focusX = style.objectPosition?.includes("left")
+          ? x
+          : style.objectPosition?.includes("right")
+          ? x + w - drawW
+          : x + (w - drawW) / 2;
+        const focusY = style.objectPosition?.includes("top")
+          ? y
+          : style.objectPosition?.includes("bottom")
+          ? y + h - drawH
+          : y + (h - drawH) / 2;
+
+        ctx.save();
+        ctx.clip(shape(x, y, w, h, rounded));
+        ctx.drawImage(source, focusX, focusY, drawW, drawH);
+        ctx.restore();
+
+        // The ring is a CSS border on the <img>, so it is missing from the
+        // capture too. Stroke it on the border box.
+        const ringWidth = Math.max(borderTop, borderLeft, borderRight, borderBottom);
+        const ringColor = style.borderTopColor;
+        if (ringWidth > 0 && ringColor && ringColor !== "rgba(0, 0, 0, 0)") {
+          ctx.save();
+          ctx.lineWidth = ringWidth * Math.max(sx, sy);
+          ctx.strokeStyle = ringColor;
+          const half = ctx.lineWidth / 2;
+          ctx.stroke(shape(boxX + half, boxY + half, boxW - half * 2, boxH - half * 2, rounded + half));
+          ctx.restore();
+        }
+      }
+
+      const composed = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((result) => resolve(result), "image/png");
+      });
+      return composed ?? blob;
+    } catch (compositeErr) {
+      console.error("Cover photo compositing failed:", compositeErr);
+      return blob;
+    }
+  };
 
   const generateAndUploadCover = async (seq: number, signature: string) => {
     const snapshotEl = coverSnapshotRef.current;
@@ -870,13 +1010,16 @@ export default function BookEditor(
           return null;
         }
         const { toBlob } = await import("html-to-image");
-        const blob = await toBlob(snapshotEl, {
+        let blob = await toBlob(snapshotEl, {
           canvasWidth: dimensions.widthInches * 96,
           canvasHeight: dimensions.heightInches * 96,
           pixelRatio: 1,
         });
 
         if (!blob) return null;
+        // WebKit drops <img> from the rasterized clone, so put the photos (and
+        // their rings) back before anything verifies or stores the cover.
+        blob = await compositePhotosOntoCover(blob, snapshotEl, decodedTargets);
         // Gate: a cover that should contain photos but captured tiny is
         // blank — refuse to overwrite the stored thumbnail with it.
         if (imgs.length > 0 && blob.size < 20_000) {
