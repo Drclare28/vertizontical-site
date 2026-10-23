@@ -1371,6 +1371,19 @@ export default function BookEditor(
       });
       return;
     }
+    // Never open the payment sheet on a guessed total: the app charges the
+    // live Gelato quote, so a stale fallback would show the customer one price
+    // and bill another. Make them retry the quote instead.
+    if (isQuoting || !checkoutQuote?.price) {
+      setAddressError(
+        "We couldn't price your book just now. Please check your connection and try again.",
+      );
+      addressSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      return;
+    }
     setAddressError(null);
     // Dismiss modal first so it doesn't show behind native sheet
     setIsCheckoutModalOpen(false);
@@ -1384,7 +1397,7 @@ export default function BookEditor(
 
     // @ts-ignore: Checking bridge availability
     if (win && win.ReactNativeWebView && win.ReactNativeWebView.postMessage) {
-      const totalCost = checkoutQuote?.price || "39.99";
+      const totalCost = checkoutQuote.price;
 
       // @ts-ignore: Posting to bridge
       win.ReactNativeWebView.postMessage(JSON.stringify({

@@ -461,7 +461,7 @@ export const handler = define.handlers({
       // mini. stitch-pdf always sends the real numbers from the
       // cover-dimensions API; these only cover unreachable-API cases.
       const fallback = finalFormat === "mini"
-        ? { coverW: 288.72, coverH: 146, backLeft: 3, backTop: 3, contentW: 140, contentH: 140, spineLeft: 143, spineW: 2.72, frontLeft: 145.72 }
+        ? { coverW: 289.34, coverH: 146, backLeft: 3, backTop: 3, contentW: 140, contentH: 140, spineLeft: 143, spineW: 3.34, frontLeft: 146.34 }
         : { coverW: 458, coverH: 246, backLeft: 20, backTop: 20, contentW: 198, contentH: 206, spineLeft: 226, spineW: 6, frontLeft: 240 };
       const p = {
         coverW: num("coverW", fallback.coverW),
@@ -480,14 +480,16 @@ export const handler = define.handlers({
         inW: mm2in(p.contentW),
         inH: mm2in(p.contentH),
       };
-      // Interior pages are always rendered at the photobook TRIM size
-      // (200x200mm for the 8x8 hardcover) — never at the cover's safe-area
-      // rect, which is a different shape (198x206 incl. board wrap bleed).
+      // Interior pages are rendered at the photobook TRIM size plus 3mm bleed
+      // per side (206x206mm for the 8x8 hardcover, 146x146mm for the 5.5x5.5
+      // mini) — never at the cover's safe-area rect, which is a different
+      // shape (198x206 incl. board wrap bleed).
+      const interiorFallback = finalFormat === "mini" ? 146 : 200;
       const trimDim = {
-        w: MM2PX(num("interiorW", finalFormat === "mini" ? 140 : 200)),
-        h: MM2PX(num("interiorH", finalFormat === "mini" ? 140 : 200)),
-        inW: mm2in(num("interiorW", finalFormat === "mini" ? 140 : 200)),
-        inH: mm2in(num("interiorH", finalFormat === "mini" ? 140 : 200)),
+        w: MM2PX(num("interiorW", interiorFallback)),
+        h: MM2PX(num("interiorH", interiorFallback)),
+        inW: mm2in(num("interiorW", interiorFallback)),
+        inH: mm2in(num("interiorH", interiorFallback)),
       };
       const bookBuilderUrl = Deno.env.get("BOOK_BUILDER_URL") ??
         "https://vertizonticalstudios.com";
