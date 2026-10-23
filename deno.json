@@ -5,6 +5,7 @@
     "dev": "vite --host",
     "build": "vite build",
     "start": "deno serve -A _fresh/server.js",
+    "proof": "deno run -A --env-file=.env scripts/print-proof.ts",
     "update": "deno run -A -r jsr:@fresh/update ."
   },
   "lint": { "rules": { "tags": ["fresh", "recommended"] } },

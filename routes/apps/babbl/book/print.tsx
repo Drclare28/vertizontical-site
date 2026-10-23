@@ -400,7 +400,13 @@ export const handler = define.handlers({
       return new Response(`Error loading quotes: ${quotesError.message}`, { status: 500 });
     }
 
-    const finalFormat = (book.book_size || "mini").toLowerCase();
+    // Admin-only print proofs may override the trim size (`&format=mini`),
+    // so a book can be rendered at either format without rewriting its saved
+    // book_size. Unknown values fall back to the book's real size.
+    const formatOverride = (url.searchParams.get("format") || "").toLowerCase();
+    const finalFormat = BOOK_PX[formatOverride]
+      ? formatOverride
+      : (book.book_size || "mini").toLowerCase();
     const dim = BOOK_PX[finalFormat] || BOOK_PX.mini;
 
     // Map quotes to pages
