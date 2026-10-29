@@ -6,6 +6,10 @@ import type { FreshContext } from "fresh";
 // gross margin (x1.6). This endpoint mirrors that exact math so the displayed
 // total equals the amount on the Stripe payment sheet.
 //
+// Within that total, shipping is shown at Gelato's own rate with no markup and
+// the book price carries the whole margin, so postage never looks inflated
+// against a cheap book. Moving the split must not move the total.
+//
 // Keep in sync with kid-quotes: supabase/functions/create-payment-intent/index.ts
 
 // Hardcover-only sales, both sizes: the Classic 8x8 has a true Gelato
@@ -125,13 +129,21 @@ export const handler = {
       console.error("Gelato quote fetch failed, using fallback:", err);
     }
 
-    // Same math as create-payment-intent: (print + shipping totals) x 1.6, rounded up.
+    // Same total as create-payment-intent: (print + shipping totals) x 1.6,
+    // rounded up. Only the split below changes, never this total.
     const totalCostCents = printCostPerUnitCents * quantity + shipTotalCents;
     const totalPriceCents = Math.ceil(totalCostCents * MARKUP_MULTIPLIER);
 
-    // Per-unit marked-up breakdown for the builder's line items.
-    const printMarkup = (printCostPerUnitCents * MARKUP_MULTIPLIER) / 100;
-    const shippingMarkup = (shipTotalCents * MARKUP_MULTIPLIER / quantity) / 100;
+    // Shipping passes through at Gelato's exact rate with no markup, so the
+    // customer sees real postage instead of a marked-up shipping line. The
+    // margin that used to sit on shipping is folded into the book price, which
+    // keeps the order total (and the Stripe charge) identical.
+    const shippingTotalCents = shipTotalCents;
+    const printTotalCents = totalPriceCents - shippingTotalCents;
+
+    // Per-unit figures (informational; the builder bills the *Total fields).
+    const printMarkup = printTotalCents / quantity / 100;
+    const shippingMarkup = shippingTotalCents / quantity / 100;
     const costPerUnit =
       (printCostPerUnitCents + shipTotalCents / quantity) / 100;
 
@@ -144,6 +156,8 @@ export const handler = {
       JSON.stringify({
         print: printMarkup.toFixed(2),
         shipping: shippingMarkup.toFixed(2),
+        printTotal: (printTotalCents / 100).toFixed(2),
+        shippingTotal: (shippingTotalCents / 100).toFixed(2),
         cost: costPerUnit.toFixed(2),
         price: (totalPriceCents / 100).toFixed(2),
         binding,

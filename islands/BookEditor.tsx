@@ -676,6 +676,8 @@ export default function BookEditor(
     {
       print: string;
       shipping: string;
+      printTotal: string;
+      shippingTotal: string;
       cost: string;
       price: string;
       totalPages: number;
@@ -2981,8 +2983,6 @@ export default function BookEditor(
                               class={`${addressInputClass} min-w-0 flex-1`}
                             />
                           </div>
-                        </div>
-                        <div class="flex gap-2.5">
                           <input
                             type="email"
                             value={contactEmail}
@@ -2992,7 +2992,7 @@ export default function BookEditor(
                               )}
                             placeholder="Email for shipping notifications"
                             autoComplete="email"
-                            class={`${addressInputClass} flex-1`}
+                            class={`${addressInputClass} w-full`}
                           />
                         </div>
                         {addressError && (
@@ -3034,8 +3034,8 @@ export default function BookEditor(
                                   Printing & Production
                                 </span>
                                 <span class="font-bold text-gray-900">
-                                  ${(parseFloat(checkoutQuote?.print || "0") *
-                                    quantity).toFixed(2)}
+                                  ${parseFloat(checkoutQuote?.printTotal || "0")
+                                    .toFixed(2)}
                                 </span>
                               </div>
                               <div class="flex justify-between items-center mb-4">
@@ -3043,8 +3043,8 @@ export default function BookEditor(
                                   Standard Shipping
                                 </span>
                                 <span class="font-bold text-gray-900">
-                                  ${(parseFloat(checkoutQuote?.shipping || "0") *
-                                    quantity).toFixed(2)}
+                                  ${parseFloat(checkoutQuote?.shippingTotal || "0")
+                                    .toFixed(2)}
                                 </span>
                               </div>
                               <div class="h-px w-full bg-gray-300 mb-4" />
