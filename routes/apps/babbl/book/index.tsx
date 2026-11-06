@@ -115,7 +115,7 @@ export default define.page(async function Book(ctx) {
           theme: book.theme_id,
           status: book.status,
           created_at: book.created_at,
-          format: book.book_size || "mini",
+          format: book.book_size || "classic",
         },
         pages: [
           {

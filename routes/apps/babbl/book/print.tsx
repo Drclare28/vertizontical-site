@@ -406,7 +406,7 @@ export const handler = define.handlers({
     const formatOverride = (url.searchParams.get("format") || "").toLowerCase();
     const finalFormat = BOOK_PX[formatOverride]
       ? formatOverride
-      : (book.book_size || "mini").toLowerCase();
+      : (book.book_size || "classic").toLowerCase();
     const dim = BOOK_PX[finalFormat] || BOOK_PX.mini;
 
     // Map quotes to pages

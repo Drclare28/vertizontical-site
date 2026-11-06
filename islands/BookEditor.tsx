@@ -560,7 +560,7 @@ function hashCoverInputs(input: unknown): string {
 
 export default function BookEditor(
   {
-    initialFormat = "mini",
+    initialFormat = "classic",
     initialTheme = "babbl_theme",
     pages,
     bookId,
@@ -571,7 +571,7 @@ export default function BookEditor(
     familyId,
   }: BookEditorProps,
 ) {
-  const [format, setFormat] = useState<BookFormat>(initialFormat);
+  const [format] = useState<BookFormat>(initialFormat);
   const [themeId, setThemeId] = useState(initialTheme);
   
   const isPrintMode = useMemo(() => {
@@ -1914,19 +1914,6 @@ export default function BookEditor(
     }
   };
 
-  const handleFormatChange = async (newFormat: BookFormat) => {
-    setFormat(newFormat);
-    try {
-      const { error } = await supabase.from("books").update({
-        book_size: newFormat,
-      }).eq("id", bookId);
-      if (error) throw error;
-    } catch (err) {
-      console.error("Save Format Error:", err);
-      setFormat(format);
-    }
-  };
-
   const handleLayoutChange = async (newLayout: string) => {
     const currentPage = localPages[currentPageIndex];
     if (!currentPage.quote) return;
@@ -2061,46 +2048,9 @@ export default function BookEditor(
             />
           </div>
 
-          {/* Two sizes: Mini 5.5" (softcover — Gelato has no hardcover mini)
-              and Classic 8" (hardcover). */}
-          <div class="flex bg-gray-100/50 backdrop-blur-sm p-1 rounded-2xl shadow-inner border border-gray-200/50 h-14 items-center shrink-0">
-            <button
-              type="button"
-              onClick={() => handleFormatChange("mini")}
-              class={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 h-full rounded-xl text-xs font-bold transition-all ${
-                format === "mini"
-                  ? "bg-white text-[#9B51E0] shadow-sm"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <Icon name="book-outline" style={{ fontSize: "14px" }} />
-              <div class="flex flex-col items-center leading-tight whitespace-nowrap">
-                <div class="flex items-center">
-                  <span>Mini&nbsp;</span>
-                  <span class="text-[10px] font-semibold opacity-60">5.5x5.5"</span>
-                </div>
-                <span class="text-[10px] font-medium opacity-60">Softcover</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => handleFormatChange("classic")}
-              class={`flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 h-full rounded-xl text-xs font-bold transition-all ${
-                format === "classic"
-                  ? "bg-white text-[#9B51E0] shadow-sm"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
-            >
-              <Icon name="book-outline" style={{ fontSize: "22px" }} />
-              <div class="flex flex-col items-center leading-tight whitespace-nowrap">
-                <div class="flex items-center">
-                  <span>Classic&nbsp;</span>
-                  <span class="text-[10px] font-semibold opacity-60">8x8"</span>
-                </div>
-                <span class="text-[10px] font-medium opacity-60">Hardcover</span>
-              </div>
-            </button>
-          </div>
+          {/* One size only (8x8 hardcover), so there is no size picker.
+              The format plumbing (BOOK_DIMENSIONS, PageRenderer, format-*
+              CSS) is intact, so a toggle can be added back if mini returns. */}
         </header>
       )}
 
@@ -2239,7 +2189,7 @@ export default function BookEditor(
               Return to Book
             </button>
             <p class="text-xs text-gray-500 text-center leading-relaxed max-w-md">
-              Your book prints {format === "mini" ? "as a softcover" : "as a hardcover"} with
+              Your book prints with
               at least 32 pages: cover, blank endpapers, your Babbls, Notes
               pages (after the last Babbl), and the back cover.
               {printedNotesPages > 0
@@ -2774,10 +2724,6 @@ export default function BookEditor(
                             {localPages[0].title || "My Babbl Book"}
                           </h3>
                           <p class="text-gray-500 text-sm mb-1.5">
-                            {format === "mini"
-                              ? "5.5x5.5 Softcover"
-                              : "8x8 Hardcover"} •
-                            {" "}
                             {quoteCount} Babbl{quoteCount !== 1 ? "s" : ""}
                           </p>
 
@@ -2787,7 +2733,7 @@ export default function BookEditor(
                               class="text-sm mt-0.5 shrink-0"
                             />
                             <span>
-                              Prints {format === "mini" ? "softcover" : "hardcover"} with
+                              Prints with
                               at least 32 pages: cover, blank endpapers,
                               your Babbls, Notes pages (after the last Babbl),
                               and the back cover.
